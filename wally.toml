@@ -1,0 +1,8 @@
+[package]
+name = "ootsquad/scam-with-friends"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[dependencies]
+ByteNetMax = "elitriare/bytenet-max@0.2.7"

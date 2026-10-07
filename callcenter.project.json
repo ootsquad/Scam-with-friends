@@ -1,0 +1,61 @@
+{
+  "name": "Call Center Place",
+  "servePort": 34873,
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "Arrival": {
+        "$path": "src/callcenter/ReplicatedFirst/Arrival.client.luau"
+      },
+      "LoadingScreen": {
+        "$path": "src/ReplicatedFirst/LoadingScreen.model.json"
+      }
+    },
+
+    "ReplicatedStorage": {
+      "Packages": {
+        "$path": "Packages"
+      },
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/callcenter/server"
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/callcenter/client",
+          "Ui": {
+            "$path": "src/client/Ui"
+          },
+          "Controllers": {
+            "$className": "Folder",
+            "LoadingController": {
+              "$path": "src/client/Controllers/LoadingController.luau"
+            }
+          }
+        }
+      }
+    },
+
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$path": "src/callcenter/StarterGui",
+      "$ignoreUnknownInstances": true
+    },
+
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}
