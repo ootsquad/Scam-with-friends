@@ -1,0 +1,1047 @@
+{
+	"ClassName": "ScreenGui",
+	"Properties": {
+		"IgnoreGuiInset": true,
+		"ResetOnSpawn": false,
+		"ZIndexBehavior": "Sibling",
+		"DisplayOrder": 100
+	},
+	"Children": [
+		{
+			"Name": "Root",
+			"ClassName": "CanvasGroup",
+			"Properties": {
+				"BorderSizePixel": 0,
+				"Position": {
+					"UDim2": [
+						[
+							0,
+							0
+						],
+						[
+							0,
+							0
+						]
+					]
+				},
+				"Size": {
+					"UDim2": [
+						[
+							1,
+							0
+						],
+						[
+							1,
+							0
+						]
+					]
+				},
+				"BackgroundColor3": [
+					0.0,
+					0.0,
+					0.0
+				]
+			},
+			"Children": [
+				{
+					"Name": "Canvas",
+					"ClassName": "Frame",
+					"Properties": {
+						"BorderSizePixel": 0,
+						"Position": {
+							"UDim2": [
+								[
+									0.5,
+									0
+								],
+								[
+									0.5,
+									0
+								]
+							]
+						},
+						"Size": {
+							"UDim2": [
+								[
+									0,
+									1280
+								],
+								[
+									0,
+									720
+								]
+							]
+						},
+						"BackgroundTransparency": 1,
+						"AnchorPoint": [
+							0.5,
+							0.5
+						]
+					},
+					"Children": [
+						{
+							"Name": "AutoScale",
+							"ClassName": "UIScale",
+							"Properties": {
+								"Scale": 1
+							}
+						},
+						{
+							"Name": "Logo",
+							"ClassName": "Frame",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											598
+										],
+										[
+											0,
+											186
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											84
+										],
+										[
+											0,
+											84
+										]
+									]
+								},
+								"BackgroundColor3": [
+									0.1176,
+									0.5569,
+									0.2431
+								]
+							},
+							"Children": [
+								{
+									"Name": "BandClip",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													13
+												],
+												[
+													0,
+													10
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													57
+												],
+												[
+													0,
+													30
+												]
+											]
+										},
+										"BackgroundTransparency": 1,
+										"ClipsDescendants": true
+									},
+									"Children": [
+										{
+											"Name": "Band",
+											"ClassName": "Frame",
+											"Properties": {
+												"BorderSizePixel": 0,
+												"Position": {
+													"UDim2": [
+														[
+															0,
+															6
+														],
+														[
+															0,
+															6
+														]
+													]
+												},
+												"Size": {
+													"UDim2": [
+														[
+															0,
+															45
+														],
+														[
+															0,
+															45
+														]
+													]
+												},
+												"BackgroundTransparency": 1
+											},
+											"Children": [
+												{
+													"Name": "Corner",
+													"ClassName": "UICorner",
+													"Properties": {
+														"CornerRadius": {
+															"UDim": [
+																0.5,
+																0
+															]
+														}
+													}
+												},
+												{
+													"Name": "Stroke",
+													"ClassName": "UIStroke",
+													"Properties": {
+														"Color": [
+															1.0,
+															1.0,
+															1.0
+														],
+														"Thickness": 6,
+														"ApplyStrokeMode": "Border"
+													}
+												}
+											]
+										}
+									]
+								},
+								{
+									"Name": "CupL",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													11
+												],
+												[
+													0,
+													34
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													15
+												],
+												[
+													0,
+													24
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										]
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0,
+														3
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"Name": "CupR",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													58
+												],
+												[
+													0,
+													34
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													15
+												],
+												[
+													0,
+													24
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										]
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0,
+														3
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"Name": "Boom",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													42
+												],
+												[
+													0,
+													60
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													24
+												],
+												[
+													0,
+													5
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										]
+									}
+								},
+								{
+									"Name": "Mic",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													34
+												],
+												[
+													0,
+													58
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													10
+												],
+												[
+													0,
+													10
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										]
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"Name": "Wordmark",
+							"ClassName": "TextLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											340
+										],
+										[
+											0,
+											288
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											600
+										],
+										[
+											0,
+											56
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"Text": "Cha<font color=\"#4ADE80\">OS</font>",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/Roboto.json",
+									"weight": "Bold",
+									"style": "Normal"
+								},
+								"TextSize": 46,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								],
+								"RichText": true
+							}
+						},
+						{
+							"Name": "Product",
+							"ClassName": "TextLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											340
+										],
+										[
+											0,
+											344
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											600
+										],
+										[
+											0,
+											20
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"Text": "CALL CENTER CHAOS",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/RobotoCondensed.json",
+									"weight": "Bold",
+									"style": "Normal"
+								},
+								"TextSize": 15,
+								"TextColor3": [
+									0.5412,
+									0.5412,
+									0.5412
+								]
+							}
+						},
+						{
+							"Name": "Spinner",
+							"ClassName": "Frame",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											620
+										],
+										[
+											0,
+											408
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											40
+										],
+										[
+											0,
+											40
+										]
+									]
+								},
+								"BackgroundTransparency": 1
+							},
+							"Children": [
+								{
+									"Name": "Dot1",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													17
+												],
+												[
+													0,
+													2
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													6
+												],
+												[
+													0,
+													6
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										]
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"Name": "Dot2",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													30
+												],
+												[
+													0,
+													10
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													6
+												],
+												[
+													0,
+													6
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										],
+										"BackgroundTransparency": 0.14
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"Name": "Dot3",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													30
+												],
+												[
+													0,
+													24
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													6
+												],
+												[
+													0,
+													6
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										],
+										"BackgroundTransparency": 0.28
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"Name": "Dot4",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													17
+												],
+												[
+													0,
+													32
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													6
+												],
+												[
+													0,
+													6
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										],
+										"BackgroundTransparency": 0.42000000000000004
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"Name": "Dot5",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													4
+												],
+												[
+													0,
+													24
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													6
+												],
+												[
+													0,
+													6
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										],
+										"BackgroundTransparency": 0.56
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
+										}
+									]
+								},
+								{
+									"Name": "Dot6",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													4
+												],
+												[
+													0,
+													9
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													6
+												],
+												[
+													0,
+													6
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										],
+										"BackgroundTransparency": 0.7000000000000001
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"Name": "Status",
+							"ClassName": "TextLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											240
+										],
+										[
+											0,
+											466
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											800
+										],
+										[
+											0,
+											24
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"Text": "Starting ChaOS…",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/Roboto.json",
+									"weight": "Regular",
+									"style": "Normal"
+								},
+								"TextSize": 16,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								]
+							}
+						},
+						{
+							"Name": "Track",
+							"ClassName": "Frame",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											540
+										],
+										[
+											0,
+											500
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											200
+										],
+										[
+											0,
+											3
+										]
+									]
+								},
+								"BackgroundColor3": [
+									0.149,
+									0.149,
+									0.149
+								]
+							},
+							"Children": [
+								{
+									"Name": "Fill",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0.3,
+													0
+												],
+												[
+													1,
+													0
+												]
+											]
+										},
+										"BackgroundColor3": [
+											0.1843,
+											0.502,
+											0.9294
+										]
+									}
+								}
+							]
+						},
+						{
+							"Name": "Tip",
+							"ClassName": "TextLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											190
+										],
+										[
+											0,
+											640
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											900
+										],
+										[
+											0,
+											20
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"Text": "TIP · Switching schemes mid-call costs trust. Pick one and commit.",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/Roboto.json",
+									"weight": "Regular",
+									"style": "Normal"
+								},
+								"TextSize": 13,
+								"TextColor3": [
+									0.5412,
+									0.5412,
+									0.5412
+								]
+							}
+						},
+						{
+							"Name": "Version",
+							"ClassName": "TextLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											16
+										],
+										[
+											0,
+											692
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											400
+										],
+										[
+											0,
+											18
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"Text": "ChaOS · build 0.3",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/RobotoMono.json",
+									"weight": "Regular",
+									"style": "Normal"
+								},
+								"TextSize": 12,
+								"TextColor3": [
+									0.2902,
+									0.2902,
+									0.2902
+								],
+								"TextXAlignment": "Left"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
