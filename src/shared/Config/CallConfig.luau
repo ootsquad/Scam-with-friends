@@ -23,6 +23,18 @@ local CallConfig = {
 	MaxSayLength = 300, -- characters per line you say
 	MaxReplyLength = 280, -- caller lines stay under the 300-character text-to-speech limit
 
+	-- Your mic (speech-to-text). What it hears only becomes a line if it sounds like you really talked, so
+	-- mouse clicks, desk bumps and the caller's voice coming out of your speakers don't put words in your mouth.
+	-- In Studio, the Output window says why each ignored transcript was dropped.
+	Mic = {
+		MinVoiceSeconds = 0.4, -- Roblox has to detect a voice for at least this long
+		MaxWordsPerSecond = 6, -- more words than this per second of voice means the transcriber is guessing
+		ExtraWords = 3, -- slack on top of MaxWordsPerSecond for short lines
+		MinWordsUnchecked = 2, -- on a device that never reports a voice, lines need at least this many words
+		EchoTail = 3, -- seconds after the caller's voice stops that their words still count as echo
+		EchoShare = 0.75, -- share of your words matching the caller's line for it to count as echo
+	},
+
 	-- Leads (the people in your Phone app)
 	LeadsPerPlayer = 6,
 	RingTime = { Min = 2, Max = 4 }, -- seconds an outgoing call rings
