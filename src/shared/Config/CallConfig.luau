@@ -22,6 +22,9 @@ local CallConfig = {
 
 	MaxSayLength = 300, -- characters per line you say
 	MaxReplyLength = 280, -- caller lines stay under the 300-character text-to-speech limit
+	-- Roblox's text filter can hide a whole caller line as ####. When at least this share of a line is hidden,
+	-- the caller is asked to say it again in other words; if that's hidden too, you hear a crackle instead.
+	BlockedLineShare = 0.5,
 
 	-- Your mic (speech-to-text). What it hears only becomes a line if it sounds like you really talked, so
 	-- mouse clicks, desk bumps and the caller's voice coming out of your speakers don't put words in your mouth.

@@ -7,7 +7,9 @@
 	Incoming: while you're logged in and free, leads call you every so often.
 
 	Once connected, every line you say (typed, spoken or Roblox chat) goes through Roblox's text filter and
-	then to Claude, which answers in character with a trust change. Callers pay once their trust reaches
+	then to Claude, which answers in character with a trust change. The caller's lines go through the filter
+	too; if it hides most of a line, Claude is asked once to say it in other words, and if that's hidden as
+	well you get a crackle on the line instead of a wall of ####. Callers pay once their trust reaches
 	CallConfig.PayTrust and you've asked; they hang up if it drops to CallConfig.HangUpTrust.
 
 	Paying is handled by PaymentService: for gift cards and credit cards the game makes up the code or card
@@ -59,6 +61,7 @@ type Session = {
 	pending: { string },
 	heard: string, -- everything you've said this call (for the fundraiser ID check)
 	note: string?, -- added to your next line for the caller (e.g. why their payment failed)
+	details: string?, -- the code / card details the caller read out, for when you ask them to repeat it
 	paid: boolean,
 	ended: boolean,
 }
@@ -155,8 +158,18 @@ end
 -- Call flow
 -- ---------------------------------------------------------------------------
 
+-- How much of `original` Roblox's filter replaced with # (0 to 1).
+local function hiddenShare(original: string, filtered: string): number
+	if #original == 0 then
+		return 0
+	end
+	local _, before = string.gsub(original, "#", "")
+	local _, after = string.gsub(filtered, "#", "")
+	return math.clamp((after - before) / #original, 0, 1)
+end
+
 local scheduleIncoming: (Player) -> ()
-local requestReply: (Session) -> ()
+local requestReply: (Session, string?) -> ()
 
 local function endCall(session: Session, outcome: number)
 	if session.ended then
@@ -230,11 +243,26 @@ local function addTurn(session: Session, text: string)
 	requestReply(session)
 end
 
-local function applyReply(session: Session, reply: ClaudeClient.Reply)
+local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased: boolean)
 	local player = session.player
 	local spoken = clean(reply.Say, CallConfig.MaxReplyLength)
 	if spoken == "" then
 		spoken = "..."
+	end
+
+	-- Roblox's filter can hide a whole line (it does that for anything that looks like personal info).
+	-- Ask for the line again in other words once; if that's hidden too, it's a crackle on the line.
+	local shown = filterFor(player, spoken)
+	if session.ended then
+		return
+	end
+	if shown and hiddenShare(spoken, shown) >= CallConfig.BlockedLineShare then
+		print(`[CallService] Roblox's text filter hid a caller line{if rephrased then " again" else ""}: "{spoken}"`)
+		if not rephrased then
+			requestReply(session, spoken)
+			return
+		end
+		shown = nil
 	end
 
 	-- The greeting doesn't move trust; after that the caller decides.
@@ -247,16 +275,22 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply)
 	-- Payment details are made up by the game, so they're added after the filtered line.
 	local wasPaid = session.paid
 	local details = if reply.Pay and not session.paid then tryPay(session, reply.Pay) else nil
+	if details then
+		session.details = details
+	elseif reply.RepeatPayment and session.details then
+		details = session.details
+	end
 	local method = if session.paid and not wasPaid and reply.Pay then reply.Pay.Method else ""
 	table.insert(session.messages, {
 		role = "assistant",
 		content = if details then `{spoken} {details}` else spoken,
 	})
-
-	local shown = filterFor(player, spoken) or "(the line crackles)"
-	if session.ended then
-		return
+	if not shown then
+		session.note = CallerPrompt.BAD_LINE
+		shown = if details then "(The line crackles.)" else "(The line crackles. You couldn't make out what they said.)"
 	end
+
+	session.thinking = false
 	Call.packets.Line.sendTo({
 		CallId = session.id,
 		Text = if details then `{shown} {details}` else shown,
@@ -278,21 +312,31 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply)
 	end
 end
 
-requestReply = function(session: Session)
+-- Asks Claude for the caller's next line. With `blockedLine`, asks for that line again in other words.
+requestReply = function(session: Session, blockedLine: string?)
 	session.thinking = true
 	pushState(session)
 	task.spawn(function()
-		local reply, err, detail = ClaudeClient.Respond(session.system, session.messages)
+		local messages = session.messages
+		if blockedLine then
+			messages = table.clone(session.messages)
+			local last = messages[#messages]
+			messages[#messages] = {
+				role = last.role,
+				content = `{last.content}\n\n{CallerPrompt.blocked(blockedLine)}`,
+			}
+		end
+		local reply, err, detail = ClaudeClient.Respond(session.system, messages)
 		if session.ended then
 			return
 		end
-		session.thinking = false
 		if not reply then
+			session.thinking = false
 			notice(session.player, ClaudeClient.Describe(err, detail))
 			endCall(session, Outcome.LineDown)
 			return
 		end
-		applyReply(session, reply)
+		applyReply(session, reply, blockedLine ~= nil)
 	end)
 end
 
@@ -325,6 +369,7 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		pending = {},
 		heard = "",
 		note = nil,
+		details = nil,
 		paid = false,
 		ended = false,
 	}
