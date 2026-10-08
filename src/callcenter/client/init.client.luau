@@ -2,18 +2,18 @@
 	Client entry point, Call Center Place (StarterPlayerScripts/Client)
 
 	The boot screen is already up (ReplicatedFirst/Arrival picked it up from the teleport).
-		1. Clocking in            build the ByteNet-Max namespaces
-		2. Finding your desk      wait for ShiftService to publish this crew's shift
-		3. Opening the phones     shift HUD
+		1. Clocking in               build the ByteNet-Max namespaces
+		2. Finding your desk         wait for ShiftService to publish this crew's shift
+		3. Booting the workstations  leads, phone and apps (hidden until you sit at a Computer)
 
 	Ui/ and Controllers/LoadingController are shared with the lobby place (see callcenter.project.json).
-	Code that only exists here lives in Shift/.
+	Code that only exists here lives in Workstation/.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LoadingController = require(script:WaitForChild("Controllers"):WaitForChild("LoadingController"))
-local Shift = script:WaitForChild("Shift")
+local Workstation = script:WaitForChild("Workstation")
 
 local SHIFT_TIMEOUT = 30
 
@@ -41,14 +41,16 @@ local booted = LoadingController.RunSteps({
 		run = waitForShift,
 	},
 	{
-		status = "Opening the phones…",
+		status = "Booting the workstations…",
 		run = function()
-			require(Shift.ShiftHud).Start()
+			require(Workstation.CallStore).Start()
+			require(Workstation.WorkstationController).Start()
 		end,
 	},
-}, "Shift started. Good luck.")
+}, "Grab an empty desk and sit down.")
 
 if booted then
+	task.wait(1)
 	LoadingController.Hide()
 	print(`[Call Center Chaos] Clocked in to shift {ReplicatedStorage:GetAttribute("ShiftCode")}`)
 end

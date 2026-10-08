@@ -19,6 +19,7 @@
 
 	ShiftService.Start()
 	ShiftService.Get() -> ShiftInfo?
+	ShiftService.SendToLobby(player, kickMessage)   back to the lobby place (kicks with the message if it can't)
 ]]
 
 local MemoryStoreService = game:GetService("MemoryStoreService")
@@ -257,6 +258,10 @@ end
 
 function ShiftService.Get(): ShiftInfo?
 	return shift
+end
+
+function ShiftService.SendToLobby(player: Player, kickMessage: string): boolean
+	return sendToLobby(player, kickMessage)
 end
 
 function ShiftService.Start()
