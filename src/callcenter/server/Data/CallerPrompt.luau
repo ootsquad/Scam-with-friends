@@ -26,9 +26,9 @@ local METHOD_WORDS = {
 }
 
 local HOW_HARD = {
-	"fairly trusting",
-	"average: not easy, not impossible",
-	"hard to fool: you've been warned about phone scams",
+	"very trusting: you believe most of what you're told",
+	"fairly trusting: a little careful at first, but easy to win over",
+	"a bit careful: you've heard about phone scams, but a good story still gets you",
 }
 
 -- Roblox's text filter hides a whole line when it looks like personal info or contact off Roblox, so the
@@ -94,7 +94,8 @@ function CallerPrompt.system(persona: any, context: Context): string
 	return table.concat({
 		"You are playing a character in Call Center Chaos, a comedy Roblox game. The player works at a silly fake "
 			.. "\"call center\" and is trying to scam you over the phone. You play the person on the other end. React "
-			.. "like a real person would, so a sloppy scam fails and a convincing one can work.",
+			.. "like a real person, but on the trusting side: give them the benefit of the doubt, so a decent story "
+			.. "usually works and only a really sloppy one fails.",
 		"",
 		"YOUR CHARACTER (all made up)",
 		`Name: {persona.Name}, {persona.Age}, {persona.Job} from {persona.Town}.`,
@@ -111,12 +112,12 @@ function CallerPrompt.system(persona: any, context: Context): string
 		"- " .. CHAT_SAFE,
 		"- Each message shows your current trust in the other person (0-100). After every line, set trust_change for "
 			.. "how what they just said affects it:",
-		`  - Up (+3 to +{CallConfig.MaxTrustGain}) when they're believable, patient, consistent, sound like who they `
-			.. "claim to be, or play to your soft spot.",
-		`  - Down (-5 to -{CallConfig.MaxTrustLoss}) when they're pushy, rude, inconsistent, vague about who they are, `
-			.. "hit your red flag, or ask for money too early.",
-		"  - Around 0 for small talk.",
-		`- Only agree to pay when your trust is at least {CallConfig.PayTrust} and they have clearly asked you for money `
+		`  - Up (+5 to +{CallConfig.MaxTrustGain}) when they sound friendly, believable or patient, give a reason that `
+			.. "makes sense, or play to your soft spot. A good story or your soft spot is worth a big jump.",
+		`  - Down (-3 to -{CallConfig.MaxTrustLoss}) only for clear problems: they're rude, obviously contradict `
+			.. "themselves, hit your red flag, or demand money before saying why. Small slip-ups barely matter.",
+		"  - 0 to +3 for small talk: being chatty and friendly slowly wins you over.",
+		`- Only agree to pay when your trust is at least {CallConfig.PayTrust} and they have asked you for money `
 			.. "or payment details. Then fill in pay with one of your payment methods and an amount no more than your "
 			.. "limit, and say in one short sentence that you're doing it (\"Okay, I bought it. Here's the code.\"). "
 			.. "The game reads out the actual gift card code or card details right after your line, so never make up "

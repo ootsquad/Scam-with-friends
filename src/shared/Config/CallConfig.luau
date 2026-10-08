@@ -14,11 +14,11 @@ local CallConfig = {
 
 	-- Trust (0-100). Every call starts at StartTrust; callers only pay at PayTrust or above.
 	StartTrust = 50,
-	PayTrust = 70,
-	HangUpTrust = 10,
-	MaxTrustGain = 15, -- per line
-	MaxTrustLoss = 25, -- per line
-	MaxTurns = 20, -- your lines per call before the caller has to go
+	PayTrust = 65,
+	HangUpTrust = 5,
+	MaxTrustGain = 20, -- per line
+	MaxTrustLoss = 18, -- per line
+	MaxTurns = 25, -- your lines per call before the caller has to go
 
 	MaxSayLength = 300, -- characters per line you say
 	MaxReplyLength = 280, -- caller lines stay under the 300-character text-to-speech limit
