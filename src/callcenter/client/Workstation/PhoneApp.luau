@@ -12,6 +12,7 @@ local TextService = game:GetService("TextService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local Format = require(Shared.Util.Format)
 
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
@@ -73,17 +74,7 @@ local function firstName(name: string): string
 	return string.match(name, "^(%S+)") or name
 end
 
-local function money(amount: number): string
-	local text = tostring(math.floor(amount))
-	while true do
-		local replaced, count = string.gsub(text, "^(%d+)(%d%d%d)", "%1,%2")
-		text = replaced
-		if count == 0 then
-			break
-		end
-	end
-	return "$" .. text
-end
+local money = Format.money
 
 local function trustColor(trust: number): Color3
 	if trust >= payAt then
@@ -171,6 +162,16 @@ end
 local function renderLeads()
 	local leads = CallStore.Leads
 	local busy = CallStore.State ~= nil and CallStore.State.Phase ~= Phase.Ended
+	local open = 0
+	for _, lead in leads do
+		if lead.Status == Status.Available then
+			open += 1
+		end
+	end
+	local hint = ui.leads:FindFirstChild("Hint")
+	if hint then
+		hint.Text = if #leads == 0 then "loading…" else `{open} of {#leads} open`
+	end
 	for slot = 1, CallConfig.LeadsPerPlayer do
 		local row = ui.leads:FindFirstChild(`Lead{slot}`)
 		if row then
@@ -196,9 +197,11 @@ local function renderLeads()
 	end
 end
 
+local dialing = false
+
 local function callLead(slot: number)
 	local lead = CallStore.Leads[slot]
-	if not lead then
+	if not lead or dialing then
 		return
 	end
 	if CallStore.State and CallStore.State.Phase ~= Phase.Ended then
@@ -214,7 +217,9 @@ local function callLead(slot: number)
 		Notify.show("Phone", reasons[lead.Status] or "They can't take a call right now.", Theme.Yellow)
 		return
 	end
+	dialing = true
 	local result = CallStore.StartCall(lead.Id)
+	dialing = false
 	if not result.Ok then
 		Notify.show("Phone", result.Message, Theme.Red)
 	end
@@ -322,6 +327,7 @@ local function renderCall(state: any, previous: any)
 	local card = ui.card
 	if state.CallId ~= shownCallId then
 		shownCallId = state.CallId
+		CallVoice.StopSpeaking() -- the last caller's backlog doesn't spill into this call
 		lastPaid = 0
 		clearTranscript()
 		LeadAvatar.render(card.Portrait.View, state.Lead)
@@ -349,6 +355,13 @@ local function renderCall(state: any, previous: any)
 
 	payAt = state.PayAt or payAt
 	renderTrust(state.Trust)
+	local lines = card.Trust:FindFirstChild("Lines")
+	if lines then
+		local left = state.LinesLeft or CallConfig.MaxTurns
+		lines.Visible = state.Phase == Phase.Connected
+		lines.Text = `{left} {if left == 1 then "LINE" else "LINES"} LEFT`
+		lines.TextColor3 = if left <= 5 then Theme.TrustLow else Theme.DarkMuted
+	end
 	card.PaidBadge.Visible = state.Paid
 	if state.Paid and lastPaid > 0 then
 		card.PaidBadge.Text = `PAID {money(lastPaid)}`

@@ -1,0 +1,68 @@
+# Building the office (Call Center Place)
+
+The game finds everything in your office by **tags** (Studio: select a part or model, then Properties > Tags,
+or the Tag Editor) and a few names. Nothing here has to be finished for the game to run.
+
+## Desks
+
+- Tag each desk's **Seat** with `Computer`, or tag the whole desk **Model** with `Computer`; a Seat inside is used.
+- Optional: give the Seat a text attribute `DeskName` (for example `3`). It's shown on the prompt and the login screen.
+- Every desk gets a **Sit down** prompt automatically.
+- Name the monitor part `Monitor`, `Computer` or `Screen` to choose which part smokes when the computer breaks.
+  Otherwise the tallest part on the desk is used.
+
+## The six floors
+
+The crew starts every shift on floor 1 and moves up one floor after each passed review.
+
+| Floor | Name |
+| --- | --- |
+| 1 | Basement Boiler Room |
+| 2 | Cubicle Farm |
+| 3 | Sales Floor |
+| 4 | Middle Management |
+| 5 | Corner Offices |
+| 6 | Executive Penthouse |
+
+For each floor:
+
+1. Put everything for that floor in one **Model** or **Folder**, and tag it `OfficeFloor`.
+2. Give it a **number attribute** named `Floor`, set to 1–6.
+3. Put that floor's desks (tagged `Computer`) inside it.
+4. Add a **Part named `FloorSpawn`** inside it, where the crew arrives. Make it anchored, can't collide, and
+   transparent.
+
+**How moving up works**
+
+- Floors can be stacked, or built far apart: the crew is moved, so you don't need a working elevator.
+- When the crew moves up, everyone sees the elevator screen and is moved to the new floor's `FloorSpawn`.
+- Desks on other floors can't be used.
+- Players who join or respawn arrive on the crew's floor too.
+
+**If floors are missing**
+
+- If the floor the crew is heading to isn't built yet, they stay on the highest built floor below it. The
+  perks still go up.
+- With no floors built at all, the whole place is one office.
+
+**Signs:** tag a Part (or a model with SurfaceGuis) `FloorSign`. Its TextLabels show `FLOOR 3 · SALES FLOOR`.
+
+- A sign inside a floor shows that floor.
+- A sign anywhere else, like a lobby or an elevator, shows the crew's current floor.
+
+## Chores (optional)
+
+All three tags are optional; chores still show up without them.
+
+| Tag | On | What it does |
+| --- | --- | --- |
+| `TrashSpot` | Parts on the floor | Trash bags appear here. Without them, trash appears next to desks. |
+| `TrashBin` | Parts | With bins on a floor, players carry each bag to a bin. Without them, picking it up is enough. |
+| `Equipment` | Parts (a router, a server rack, a printer) | These can break. A broken one makes calls worse on the whole floor. Without any, desk computers break instead. |
+
+## Checklist
+
+- [ ] Desks tagged `Computer`, a few per floor (crews are up to 4 players).
+- [ ] Floors 1–6, each tagged `OfficeFloor`, with a `Floor` number attribute and a `FloorSpawn` part.
+- [ ] Optional: `FloorSign`, `TrashSpot`, `TrashBin`, `Equipment`.
+- [ ] Game Settings > Avatar > **R15**, so players look like their own avatars.

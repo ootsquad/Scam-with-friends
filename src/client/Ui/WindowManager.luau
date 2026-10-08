@@ -8,6 +8,8 @@
 		launch(): called instead of a plain open when the window is closed (e.g. Play creates a lobby)
 	WindowManager.open(name) / close(name) / minimize(name) / toggle(name) / focus(name)
 	WindowManager.isOpen(name) -> boolean
+	WindowManager.raise(frame)        puts a dialog (not a registered window) above every window
+	WindowManager.styleClose(button)  the red X close button look, for dialogs
 	WindowManager.Changed:Connect(function(name, state) end)   state: "open" | "minimized" | "closed"
 ]]
 
@@ -203,6 +205,31 @@ function WindowManager.isOpen(name: string): boolean
 	return entry ~= nil and entry.state == "open"
 end
 
+function WindowManager.raise(frame: GuiObject)
+	topZ += 1
+	frame.ZIndex = topZ
+end
+
+-- Close: red X at rest, white X on a red square when hovered (like Windows).
+function WindowManager.styleClose(close: GuiButton)
+	close.BackgroundColor3 = Theme.RedHover
+	ButtonFx.highlight(close, 0)
+	local function paint(hovered: boolean)
+		for _, bar in close:GetChildren() do
+			if bar:IsA("Frame") then
+				bar.BackgroundColor3 = if hovered then Theme.White else Theme.Red
+			end
+		end
+	end
+	paint(false)
+	close.MouseEnter:Connect(function()
+		paint(true)
+	end)
+	close.MouseLeave:Connect(function()
+		paint(false)
+	end)
+end
+
 function WindowManager.register(name: string, frame: Frame, taskButton: GuiButton?, launch: (() -> ())?)
 	local zoom = frame:FindFirstChild("Zoom") :: UIScale?
 	if not zoom then
@@ -255,22 +282,7 @@ function WindowManager.register(name: string, frame: Frame, taskButton: GuiButto
 		button.BackgroundColor3 = Theme.TitleHover
 		ButtonFx.highlight(button, 0)
 	end
-	-- Close: red X at rest, white X on a red square when hovered (like Windows).
-	close.BackgroundColor3 = Theme.RedHover
-	ButtonFx.highlight(close, 0)
-	local function paintClose(hovered: boolean)
-		for _, bar in close:GetChildren() do
-			if bar:IsA("Frame") then
-				bar.BackgroundColor3 = if hovered then Theme.White else Theme.Red
-			end
-		end
-	end
-	close.MouseEnter:Connect(function()
-		paintClose(true)
-	end)
-	close.MouseLeave:Connect(function()
-		paintClose(false)
-	end)
+	WindowManager.styleClose(close)
 	minimize.MouseButton1Click:Connect(function()
 		WindowManager.minimize(name)
 	end)

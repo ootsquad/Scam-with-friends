@@ -50,7 +50,27 @@ local DESCRIPTIONS = {
 	bad_response = "The line crackled and the call dropped. Try again.",
 }
 
+-- Problems that won't fix themselves; anything else (busy, a bad reply) is worth trying again.
+local LINE_DOWN = { missing_key = true, http_disabled = true, bad_key = true }
+
 local ClaudeClient = {}
+
+-- The PhoneLine attribute the Phone app shows: "ok", or why calls can't work. Only setup problems mark the
+-- line down, and any answer from Claude marks it up again.
+local function reportLine(err: string?, detail: string?)
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	if err == nil then
+		if ReplicatedStorage:GetAttribute("PhoneLine") ~= "ok" then
+			ReplicatedStorage:SetAttribute("PhoneLine", "ok")
+		end
+	elseif LINE_DOWN[err] then
+		local text = DESCRIPTIONS[err]
+		if detail and RunService:IsStudio() then
+			text ..= ` ({detail})`
+		end
+		ReplicatedStorage:SetAttribute("PhoneLine", text)
+	end
+end
 
 -- ---------------------------------------------------------------------------
 -- Finding the key
@@ -277,6 +297,7 @@ function ClaudeClient.Respond(system: string, messages: { Message }): (Reply?, s
 		tools = { CallerPrompt.TOOL },
 		tool_choice = { type = "tool", name = CallerPrompt.TOOL.name },
 	})
+	reportLine(err, detail)
 	if not response then
 		return nil, err, detail
 	end
@@ -303,14 +324,13 @@ end
 
 -- Logs whether the key is found and whether the API accepts it. Costs one tiny request.
 function ClaudeClient.Check()
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local key, where = findKey()
 	if not key then
 		warn(
 			`[ClaudeClient] no API key: put a StringValue named "{CallConfig.ApiKeyValue}" in ServerStorage of this place. `
 				.. `StringValues in ServerStorage: {describeStringValues()}`
 		)
-		ReplicatedStorage:SetAttribute("PhoneLine", DESCRIPTIONS.missing_key)
+		reportLine("missing_key")
 		return
 	end
 	print(`[ClaudeClient] using the API key in {where} ({string.sub(key, 1, 10)}…, {#key} characters)`)
@@ -319,13 +339,11 @@ function ClaudeClient.Check()
 		max_tokens = 5,
 		messages = { { role = "user", content = "Say OK." } },
 	})
+	reportLine(err, detail)
 	if response then
 		print(`[ClaudeClient] {CallConfig.Model} is answering. Phone lines are open.`)
-		ReplicatedStorage:SetAttribute("PhoneLine", "ok")
 	else
-		local reason = `{DESCRIPTIONS[err or ""] or DESCRIPTIONS.bad_response} {detail or ""}`
-		warn(`[ClaudeClient] key check failed: {reason}`)
-		ReplicatedStorage:SetAttribute("PhoneLine", reason)
+		warn(`[ClaudeClient] key check failed: {DESCRIPTIONS[err or ""] or DESCRIPTIONS.bad_response} {detail or ""}`)
 	end
 end
 

@@ -23,7 +23,8 @@ local PlayerLookService = {}
 local descriptions: { [number]: HumanoidDescription } = {}
 local warnedR6 = false
 
-local function descriptionFor(userId: number): HumanoidDescription?
+local function descriptionFor(player: Player): HumanoidDescription?
+	local userId = player.UserId
 	local cached = descriptions[userId]
 	if cached then
 		return cached
@@ -31,11 +32,15 @@ local function descriptionFor(userId: number): HumanoidDescription?
 	local ok, description = pcall(function()
 		return Players:GetHumanoidDescriptionFromUserId(userId)
 	end)
-	if ok and description then
-		descriptions[userId] = description
-		return description
+	if not ok or not description then
+		return nil
 	end
-	return nil
+	if not player.Parent then
+		description:Destroy() -- left while we were looking them up
+		return nil
+	end
+	descriptions[userId] = description
+	return description
 end
 
 local function apply(player: Player, character: Model)
@@ -67,7 +72,7 @@ local function apply(player: Player, character: Model)
 	if not loaded or not character.Parent then
 		return
 	end
-	local description = descriptionFor(player.UserId)
+	local description = descriptionFor(player)
 	if not description then
 		return
 	end

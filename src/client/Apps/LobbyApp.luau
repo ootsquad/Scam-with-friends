@@ -183,8 +183,7 @@ local function render(state: any, previous: any)
 		ui.title.Text = "Party"
 		countdownToken += 1
 		if previous then
-			WindowManager.close("Lobby")
-			Notify.show("Party", `You're out of party {previous.Code}.`, Theme.DarkMuted)
+			WindowManager.close("Lobby") -- the server's notice says why (left, removed, closed...)
 		end
 		return
 	end

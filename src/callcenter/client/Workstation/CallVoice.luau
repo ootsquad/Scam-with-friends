@@ -16,6 +16,7 @@
 
 	CallVoice.Speak(text, voiceId)   CallVoice.StopSpeaking()
 	CallVoice.SetVoiceEnabled(on)    CallVoice.VoiceEnabled
+	CallVoice.SetVolume(0..1)        caller voice volume (Settings: master x voices)
 	CallVoice.SetMic(on) -> (ok, message?)   CallVoice.MicOn   CallVoice.Hearing (voice detected)
 	CallVoice.Changed()              fires when VoiceEnabled / MicOn / Hearing change
 	CallVoice.Heard(text)            fires with each transcribed sentence that passed MicFilter
@@ -52,6 +53,7 @@ local CallVoice = {
 -- ---------------------------------------------------------------------------
 
 local speaker: any = nil
+local volume = 1
 local queue: { { text: string, voice: string } } = {}
 local speaking = false
 local speakToken = 0
@@ -104,6 +106,7 @@ local function ensureSpeaker(): boolean
 		wire.TargetInstance = output
 		wire.Parent = tts
 		output.Parent = SoundService
+		tts.Volume = volume
 		tts.Parent = SoundService
 		speaker = tts
 	end)
@@ -185,7 +188,10 @@ local function pump()
 		local item = table.remove(queue, 1) :: any
 		playOne(item.text, item.voice, token)
 	end
-	speaking = false
+	-- StopSpeaking may have handed the speaker to a newer pump while this one was waiting.
+	if token == speakToken then
+		speaking = false
+	end
 end
 
 function CallVoice.Speak(text: string, voiceId: string)
@@ -209,6 +215,15 @@ function CallVoice.StopSpeaking()
 	if speaker then
 		pcall(function()
 			speaker:Pause()
+		end)
+	end
+end
+
+function CallVoice.SetVolume(value: number)
+	volume = math.clamp(value, 0, 1)
+	if speaker then
+		pcall(function()
+			speaker.Volume = volume
 		end)
 	end
 end
@@ -238,7 +253,10 @@ local function canUseVoice(): boolean
 		local ok, allowed = pcall(function()
 			return VoiceChatService:IsVoiceEnabledForUserIdAsync(player.UserId)
 		end)
-		voiceAllowed = ok and allowed == true
+		if not ok then
+			return false -- couldn't check (network blip): ask again next time
+		end
+		voiceAllowed = allowed == true
 	end
 	return voiceAllowed == true
 end

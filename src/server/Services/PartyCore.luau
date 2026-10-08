@@ -590,6 +590,7 @@ function PartyCore:Leave(player: any, force: boolean?)
 	self:_removeMember(code, player.UserId)
 	if not force then
 		self.deps.push(player, nil)
+		self.deps.notice(player, `You left party {code}.`)
 	end
 	self:_untrackIfEmpty(code)
 end

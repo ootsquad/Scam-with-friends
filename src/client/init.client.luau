@@ -57,7 +57,7 @@ local booted = LoadingController.RunSteps({
 			require(Controllers.DesktopController).Start()
 		end,
 	},
-})
+}, nil, "ChaOS couldn't start. Try rejoining.")
 
 if booted then
 	LoadingController.Hide()

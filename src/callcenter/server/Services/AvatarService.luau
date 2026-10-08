@@ -542,7 +542,11 @@ local function pump()
 		busy += 1
 		task.spawn(function()
 			if not removed[job.id] then
-				build(job.id, job.skin)
+				-- A build that errors must not take its worker down with it.
+				local ok, err = pcall(build, job.id, job.skin)
+				if not ok then
+					warn(`[AvatarService] building lead {job.id}'s avatar failed: {err}`)
+				end
 			else
 				removed[job.id] = nil
 			end

@@ -86,9 +86,15 @@ local LESSONS: { { title: string, text: string } } = {
 	},
 	{
 		title = "Quota and reviews",
-		text = "• The taskbar shows your money, the team total, the quota and the time left until the review.\n"
+		text = "• The taskbar shows your money, the team against the quota, your floor, your career cash, open "
+			.. "leads and the time left until the review.\n"
 			.. "• Make the easy money early: callers get sharper as the team gets closer to quota.\n"
-			.. "• Meet the quota and the next day starts with a bigger one. Miss it and the crew is fired.\n"
+			.. "• Meet the quota and the crew is promoted one floor up the tower, all the way to the Executive "
+			.. "Penthouse. Higher floors warm callers up and pay bonuses. Miss it and the crew is fired.\n"
+			.. "• Trash, messy desks and smoking computers show up around the office. Hold the prompt to fix them "
+			.. "for a small bonus; a tidy office warms callers up too.\n"
+			.. "• Everything you earn goes to your career cash. Spend it on headsets, computers and routers in the "
+			.. "Store.\n"
 			.. "• Leave shift from the Start menu to go back to the lobby.\n\n"
 			.. "<b>Real life tip:</b> this is a comedy game. Real companies never ask for gift cards, card numbers "
 			.. "or donations over the phone. If a caller does, hang up.",

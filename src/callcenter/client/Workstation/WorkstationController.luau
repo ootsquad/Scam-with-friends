@@ -1,10 +1,11 @@
 --[[
 	WorkstationController (client, Call Center Place)
 	The computer at your desk. Nothing shows until you sit in a seat tagged "Computer"; then the ChaOS login
-	screen appears. Log in with your Roblox username and you get the desktop: Phone, Gift Cards, Card Terminal,
-	GiveHope, Wallet and Training, a taskbar with your money / the team quota / the review timer, a Start
-	menu, incoming call pop-ups, the caller file pop-up and the end-of-day performance review. Stand up (or
-	Log off) and it goes away.
+	screen appears (after your first login of the shift, sitting down logs you straight in). Logged in, you
+	get the desktop: Phone, Gift Cards, Card Terminal, GiveHope, Wallet, Training, Store, Career and Settings,
+	a taskbar with your take / the team against the quota / the floor / your career cash / open leads / the
+	review timer, a Start menu, incoming call pop-ups, the caller file pop-up, the first-shift checklist and
+	the end-of-day performance review. Stand up (or Log off) and it goes away.
 
 	While you're seated the mouse works like a computer's: DeskInput stops the camera from zooming or turning
 	(and locking the mouse) and keeps the cursor free. Stand up is on the login screen and in the Start menu,
@@ -20,18 +21,27 @@ local TextChatService = game:GetService("TextChatService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local OfficeConfig = require(Shared.Config.OfficeConfig)
+local SettingsConfig = require(Shared.Config.SettingsConfig)
+local Format = require(Shared.Util.Format)
 local Network = require(Shared:WaitForChild("Network"))
 
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
 local Avatar = require(Ui.Avatar)
 local ButtonFx = require(Ui.ButtonFx)
+local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
 local Theme = require(Ui.Theme)
 local UiScale = require(Ui.UiScale)
+local Wallpaper = require(Ui.Wallpaper)
 local WindowManager = require(Ui.WindowManager)
+local SettingsStore = require(Client:WaitForChild("Stores"):WaitForChild("SettingsStore"))
 
 local CallStore = require(script.Parent.CallStore)
+local CareerApp = require(script.Parent.CareerApp)
+local CareerStore = require(script.Parent.CareerStore)
+local Checklist = require(script.Parent.Checklist)
 local DeskInput = require(script.Parent.DeskInput)
 local CallerFileApp = require(script.Parent.CallerFileApp)
 local CallVoice = require(script.Parent.CallVoice)
@@ -39,27 +49,26 @@ local CashApps = require(script.Parent.CashApps)
 local LeadAvatar = require(script.Parent.LeadAvatar)
 local Ledger = require(script.Parent.Ledger)
 local PhoneApp = require(script.Parent.PhoneApp)
+local SettingsApp = require(script.Parent.SettingsApp)
+local Sfx = require(script.Parent.Sfx)
+local StoreApp = require(script.Parent.StoreApp)
 local TrainingApp = require(script.Parent.TrainingApp)
 local WalletApp = require(script.Parent.WalletApp)
 
 local Phase = CallConfig.Phase
 local TAG = "Computer"
-local WEEKDAYS = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }
-local LONG_WEEKDAYS = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" }
-local MONTHS = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" }
-local LONG_MONTHS = {
-	"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November",
-	"December",
-}
 
 local APPS = {
-	-- window name, window frame, taskbar slot, desktop icon, start menu item
+	-- window name, window frame, taskbar slot (false = none), desktop icon, start menu item
 	{ "Phone", "PhoneWindow", "PhoneTask", "PhoneIcon", "Phone" },
 	{ "GiftCards", "GiftCardsWindow", "GiftCardsTask", "GiftCardsIcon", "GiftCards" },
 	{ "Terminal", "TerminalWindow", "TerminalTask", "TerminalIcon", "Terminal" },
 	{ "Donations", "DonationsWindow", "DonationsTask", "DonationsIcon", "Donations" },
 	{ "Wallet", "WalletWindow", "WalletTask", "WalletIcon", "Wallet" },
 	{ "Training", "TrainingWindow", "TrainingTask", "TrainingIcon", "Training" },
+	{ "Store", "StoreWindow", false, "StoreIcon", "Store" },
+	{ "Career", "CareerWindow", false, "CareerIcon", "Career" },
+	{ "Settings", "SettingsWindow", false, "SettingsIcon", "Settings" },
 }
 
 local PAID_HINT = {
@@ -78,6 +87,7 @@ local login: Frame
 local seated = false
 local loggedIn = false
 local everLoggedIn = false
+local clock24 = false
 local humanoidConnection: RBXScriptConnection? = nil
 
 -- ---------------------------------------------------------------------------
@@ -95,14 +105,26 @@ local function isComputerSeat(seat: Instance?): boolean
 	return model ~= nil and CollectionService:HasTag(model, TAG)
 end
 
-local function clockText(): (string, string, string, string)
-	local now = os.date("*t")
-	local hour = now.hour % 12
-	local short = string.format("%d:%02d", if hour == 0 then 12 else hour, now.min)
-	local withAmPm = `{short} {if now.hour < 12 then "AM" else "PM"}`
-	local date = string.format("%s, %s %d, %d", WEEKDAYS[now.wday], MONTHS[now.month], now.day, now.year)
-	local longDate = `{LONG_WEEKDAYS[now.wday]}, {LONG_MONTHS[now.month]} {now.day}`
-	return short, withAmPm, date, longDate
+-- Dialogs open above every app window.
+local function showDialog(window: Frame)
+	window.Visible = true
+	WindowManager.raise(window)
+end
+
+local function wireDialogClose(window: Frame, onClose: () -> ())
+	local close = window.TitleBar.Close
+	WindowManager.styleClose(close)
+	close.MouseButton1Click:Connect(onClose)
+end
+
+local function openLeads(): number
+	local count = 0
+	for _, lead in CallStore.Leads do
+		if lead.Status == CallConfig.LeadStatus.Available then
+			count += 1
+		end
+	end
+	return count
 end
 
 -- ---------------------------------------------------------------------------
@@ -159,8 +181,11 @@ local function watchCharacter(character: Model)
 		humanoidConnection = nil
 	end
 	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
-	if not humanoid then
-		return
+	if not humanoid or character ~= player.Character then
+		return -- respawned again while we waited; that character's call takes over
+	end
+	if humanoidConnection then
+		humanoidConnection:Disconnect()
 	end
 	local function onSeat()
 		seated = isComputerSeat(humanoid.SeatPart)
@@ -201,6 +226,7 @@ local function wireLogin()
 		else
 			card.Status.Text = result.Message
 			card.Status.TextColor3 = Theme.LeadBlockedText
+			Sfx.Play("Error")
 		end
 		refresh()
 	end
@@ -236,9 +262,11 @@ local function wireStartMenu()
 	Avatar.apply(menu.Avatar, player.UserId, 150)
 	menu.DisplayName.Text = player.DisplayName
 	local function updateDesk()
-		menu.Desk.Text = `Desk {player:GetAttribute("Desk") or "?"} · @{player.Name}`
+		local floor = ReplicatedStorage:GetAttribute("OfficeFloor") or 1
+		menu.Desk.Text = `Desk {player:GetAttribute("Desk") or "?"} · floor {floor} · @{player.Name}`
 	end
 	player:GetAttributeChangedSignal("Desk"):Connect(updateDesk)
+	ReplicatedStorage:GetAttributeChangedSignal("OfficeFloor"):Connect(updateDesk)
 	updateDesk()
 
 	startButton.BackgroundColor3 = Theme.White
@@ -254,7 +282,7 @@ local function wireStartMenu()
 		LogOff = CallStore.Logoff,
 		StandUp = standUp,
 		LeaveShift = function()
-			desktop.Windows.LeaveWindow.Visible = true
+			showDialog(desktop.Windows.LeaveWindow)
 		end,
 	}
 	for _, app in APPS do
@@ -273,27 +301,6 @@ local function wireStartMenu()
 			end)
 		end
 	end
-end
-
-local function wireDialogClose(window: Frame, onClose: () -> ())
-	local close = window.TitleBar.Close
-	close.BackgroundColor3 = Theme.RedHover
-	local function paint(hover: boolean)
-		close.BackgroundTransparency = if hover then 0 else 1
-		close.BarA.BackgroundColor3 = if hover then Theme.White else Theme.Red
-		close.BarB.BackgroundColor3 = if hover then Theme.White else Theme.Red
-	end
-	paint(false)
-	close.MouseEnter:Connect(function()
-		paint(true)
-	end)
-	close.MouseLeave:Connect(function()
-		paint(false)
-	end)
-	close.MouseButton1Click:Connect(function()
-		paint(false)
-		onClose()
-	end)
 end
 
 local function wireLeaveDialog()
@@ -324,6 +331,7 @@ local function wireLeaveDialog()
 		leaving = false
 		body.LeaveButton.Text = "Leave shift"
 		Notify.show("Shift", message, Theme.Yellow)
+		Sfx.Play("Notify")
 	end)
 end
 
@@ -346,15 +354,18 @@ local function wireReview()
 		banner.BackgroundColor3 = if review.Passed then Theme.Green else Theme.Red
 		banner.Day.Text = `PERFORMANCE REVIEW · DAY {review.Day}`
 		banner.Result.Text = if review.Passed then "QUOTA MET" else "YOU'RE FIRED"
+		local nextFloor = math.min(review.Day + 1, #OfficeConfig.Floors)
 		banner.Comment.Text = if review.Passed
-			then "The boss is pleased. Don't get comfortable."
+			then (if nextFloor > review.Day
+				then `Promoted! The crew moves up to floor {nextFloor}.`
+				else "The penthouse suits you. Don't get comfortable.")
 			else "The boss has seen enough. Clear your desks."
-		body.Row1.Value.Text = Ledger.money(review.Team)
-		body.Row2.Value.Text = Ledger.money(review.Quota)
-		body.Row3.Value.Text = if review.TopName ~= "" then `{review.TopName} · {Ledger.money(review.TopAmount)}` else "Nobody"
+		body.Row1.Value.Text = Format.money(review.Team)
+		body.Row2.Value.Text = Format.money(review.Quota)
+		body.Row3.Value.Text = if review.TopName ~= "" then `{review.TopName} · {Format.money(review.TopAmount)}` else "Nobody"
 		body.OkButton.Text = if review.Passed then "Back to work" else "Okay"
-		window.Visible = true
-		window.ZIndex = 50
+		showDialog(window)
+		Sfx.Play(if review.Passed then "Payout" else "Error")
 
 		local seconds = if review.Passed then CallConfig.ReviewTime else CallConfig.FiredReturnDelay
 		task.spawn(function()
@@ -363,7 +374,7 @@ local function wireReview()
 					return
 				end
 				body.Next.Text = if review.Passed
-					then `Day {review.Day + 1} quota: {Ledger.money(review.NextQuota)}. Back to work in {left}s.`
+					then `Day {review.Day + 1} quota: {Format.money(review.NextQuota)}. Back to work in {left}s.`
 					else `Back to the lobby in {left}s.`
 				task.wait(1)
 			end
@@ -380,16 +391,23 @@ local function wireIncoming()
 		CallStore.Answer(true)
 		WindowManager.open("Phone")
 		popup.Visible = false
+		Sfx.SetRinging(false)
 	end)
 	ButtonFx.attach(popup.DeclineButton, 1.03, 0.96)
 	popup.DeclineButton.MouseButton1Click:Connect(function()
 		CallStore.Answer(false)
 		popup.Visible = false
+		Sfx.SetRinging(false)
 	end)
 
+	local ringing = false
 	CallStore.Changed:Connect(function(state, previous)
 		local incoming = state ~= nil and state.Phase == Phase.Incoming
 		popup.Visible = incoming
+		if incoming ~= ringing then
+			ringing = incoming
+			Sfx.SetRinging(incoming)
+		end
 		if incoming and state.CallId ~= shownCall then
 			shownCall = state.CallId
 			popup.DisplayName.Text = state.Lead.DisplayName
@@ -416,23 +434,44 @@ local function updateTray()
 	local team = ReplicatedStorage:GetAttribute("ShiftTeam") or 0
 	local quota = ReplicatedStorage:GetAttribute("ShiftQuota") or 0
 	local day = ReplicatedStorage:GetAttribute("ShiftDay") or 1
-	stats.Personal.Text = `PERSONAL {Ledger.money(personal)}`
-	stats.Team.Text = `TEAM {Ledger.money(team)}`
+	local floor = ReplicatedStorage:GetAttribute("OfficeFloor") or 1
+	local data = CareerStore.Data
+	stats.Personal.Text = `PERSONAL {Format.money(personal)}`
+	stats.Team.Text = `TEAM {Format.money(team)} / {Format.money(quota)}`
 	stats.Team.TextColor3 = if quota > 0 and team >= quota then Theme.GreenText else Theme.White
-	stats.Quota.Text = `QUOTA {Ledger.money(quota)}`
+	stats.Floor.Text = `FLOOR {floor}`
+	stats.Career.Text = `CAREER {Format.money(if data then data.Cash else 0)}`
+	local leads = openLeads()
+	stats.Leads.Text = `{leads} {if leads == 1 then "LEAD" else "LEADS"} OPEN`
+	stats.Leads.TextColor3 = if leads == 0 then Theme.TrayReview else Theme.White
 	local left = WalletApp.timeLeft()
-	stats.Review.Text = if left then `DAY {day} · REVIEW {left}` else `DAY {day} · CLOCK STARTS AT LOGIN`
+	stats.Review.Text = if left
+		then `DAY {day} · REVIEW {left}`
+		elseif ReplicatedStorage:GetAttribute("ShiftReviewing") then `DAY {day} · REVIEW NOW`
+		else `DAY {day} · STARTS AT LOGIN`
 
-	local _, withAmPm, date = clockText()
+	local time, _, date = Format.clock(clock24)
 	local clock = desktop.Taskbar.Tray.Clock
-	clock.Time.Text = withAmPm
+	clock.Time.Text = time
 	clock.Date.Text = date
 end
 
 local function updateLockClock()
-	local short, _, _, longDate = clockText()
+	local _, short, _, longDate = Format.clock(clock24)
 	login.Clock.Time.Text = short
 	login.Clock.Date.Text = longDate
+end
+
+local function applySettings(settings: any)
+	Wallpaper.apply(root.Wallpaper, settings.Wallpaper)
+	local size = SettingsConfig.UiSizes[settings.UiSize] or SettingsConfig.UiSizes[2]
+	UiScale.SetMultiplier(size.Scale)
+	Motion.Enabled = not settings.ReduceMotion
+	clock24 = settings.Clock24 == true
+	if desktop.Visible then
+		updateTray()
+	end
+	updateLockClock()
 end
 
 -- Roblox chat typed while on a call is heard by the caller too.
@@ -467,7 +506,12 @@ function WorkstationController.Start()
 	WindowManager.init(root, windows)
 	Notify.init(desktop.Notifications)
 	for _, app in APPS do
-		WindowManager.register(app[1], windows[app[2]], apps[app[3]])
+		local window = windows:FindFirstChild(app[2])
+		if window then
+			WindowManager.register(app[1], window, if app[3] then apps:FindFirstChild(app[3]) else nil)
+		else
+			warn(`[Workstation] the GUI has no {app[2]}`)
+		end
 	end
 	WindowManager.register("CallerFile", windows.CallerFileWindow)
 
@@ -477,6 +521,9 @@ function WorkstationController.Start()
 	CashApps.StartDonations(windows.DonationsWindow)
 	WalletApp.Start(windows.WalletWindow)
 	TrainingApp.Start(windows.TrainingWindow)
+	StoreApp.Start(windows.StoreWindow)
+	CareerApp.Start(windows.CareerWindow)
+	SettingsApp.Start(windows.SettingsWindow)
 	CallerFileApp.Start(windows.CallerFileWindow)
 	local fileButton = windows.PhoneWindow.Body.CallView.CallerCard.FileButton
 	ButtonFx.attach(fileButton, 1.05, 0.95)
@@ -499,17 +546,31 @@ function WorkstationController.Start()
 	wireReview()
 	wireIncoming()
 	forwardChat()
+	Checklist.bind(desktop.Checklist)
 
 	CallStore.Notice:Connect(function(message: string)
 		Notify.show("Phone", message, Theme.Yellow)
+		Sfx.Play("Notify")
 	end)
 	CallStore.Payout:Connect(function(payout)
-		Notify.show("Payout", `+{Ledger.money(payout.Amount)} from {payout.LeadName} ({string.lower(payout.Label)})`, Theme.Green)
+		local bonus = if (payout.Bonus or 0) > 0 then `, +{Format.money(payout.Bonus)} bonus` else ""
+		Notify.show(
+			"Payout",
+			`+{Format.money(payout.Amount)} from {payout.LeadName} ({string.lower(payout.Label)}{bonus})`,
+			Theme.Green
+		)
+		Sfx.Play("Payout")
 	end)
 	CallStore.Line:Connect(function(line)
 		local hint = PAID_HINT[line.Method]
 		if hint then
 			Notify.show("Phone", hint[2], Theme.Green)
+			Sfx.Play("Notify")
+		end
+	end)
+	CareerStore.Chore:Connect(function(done)
+		if loggedIn then
+			Notify.show("Chores", `+{Format.money(done.Reward)} for pitching in around the office.`, Theme.Green)
 		end
 	end)
 
@@ -526,6 +587,9 @@ function WorkstationController.Start()
 		end
 	end)
 
+	SettingsStore.Changed:Connect(applySettings)
+	applySettings(SettingsStore.Settings)
+
 	player:GetAttributeChangedSignal("LoggedIn"):Connect(refresh)
 	player:GetAttributeChangedSignal("Desk"):Connect(refresh)
 	player.CharacterAdded:Connect(watchCharacter)
@@ -533,7 +597,6 @@ function WorkstationController.Start()
 		task.spawn(watchCharacter, player.Character)
 	end
 	updateTray()
-	updateLockClock()
 	refresh()
 end
 

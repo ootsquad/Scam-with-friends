@@ -14,6 +14,9 @@ export type SettingsData = {
 	UiSize: number,
 	Clock24: boolean,
 	ReduceMotion: boolean,
+	MasterVolume: number,
+	VoiceVolume: number,
+	EffectsVolume: number,
 }
 
 export type Loaded = {
@@ -27,6 +30,9 @@ return Namespace.define("Settings", function()
 		UiSize = ByteNet.uint8,
 		Clock24 = ByteNet.bool,
 		ReduceMotion = ByteNet.bool,
+		MasterVolume = ByteNet.uint8,
+		VoiceVolume = ByteNet.uint8,
+		EffectsVolume = ByteNet.uint8,
 	})
 
 	local Loaded = ByteNet.struct({

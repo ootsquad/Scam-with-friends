@@ -24,6 +24,7 @@ local TeleportService = game:GetService("TeleportService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Lobby = require(Shared.Network.Lobby)
+local Namespace = require(Shared.Network.Namespace)
 local LobbyConfig = require(Shared.Config.LobbyConfig)
 local PartyBackend = require(script.Parent.PartyBackend)
 local PartyCore = require(script.Parent.PartyCore)
@@ -279,9 +280,11 @@ function LobbyService.Start()
 		random = Random.new(),
 	})
 
-	Lobby.queries.GetLobby.listen(onGetLobby)
-	Lobby.queries.CreateLobby.listen(onCreateLobby)
-	Lobby.queries.JoinLobby.listen(onJoinLobby)
+	Namespace.listen(Lobby.queries.GetLobby, onGetLobby, function()
+		return nil
+	end)
+	Namespace.listen(Lobby.queries.CreateLobby, onCreateLobby, Namespace.busy)
+	Namespace.listen(Lobby.queries.JoinLobby, onJoinLobby, Namespace.busy)
 	Lobby.packets.LeaveLobby.listen(guarded(function(player)
 		core:Leave(player)
 	end))

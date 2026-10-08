@@ -16,6 +16,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Lobby = require(Shared.Network.Lobby)
+local Namespace = require(Shared.Network.Namespace)
 local Signal = require(Shared.Util.Signal)
 
 type LobbyState = Lobby.LobbyState
@@ -58,7 +59,7 @@ function LobbyStore.Start()
 		end
 	end)
 
-	local initial = Lobby.queries.GetLobby.invoke(nil)
+	local initial = Namespace.invoke(Lobby.queries.GetLobby, nil)
 	if not receivedPush then
 		apply(initial)
 	end
@@ -116,7 +117,7 @@ end
 -- ---------------------------------------------------------------------------
 
 local function invoke(query: any, request: any): Result
-	local result = query.invoke(request)
+	local result = Namespace.invoke(query, request)
 	if type(result) ~= "table" then
 		return { Ok = false, Message = "The server didn't answer. Try again." }
 	end
