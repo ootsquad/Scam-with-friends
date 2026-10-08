@@ -13,6 +13,7 @@
 	EconomyService.StartClock()
 	EconomyService.Award(player, amount)
 	EconomyService.IsFired() -> boolean
+	EconomyService.Progress() -> number   share of today's quota the crew has made (0 = nothing, 1 = quota met)
 ]]
 
 local Players = game:GetService("Players")
@@ -133,6 +134,11 @@ end
 
 function EconomyService.IsFired(): boolean
 	return fired
+end
+
+function EconomyService.Progress(): number
+	local quota = quotaFor(day)
+	return if quota > 0 then team / quota else 0
 end
 
 function EconomyService.Start()

@@ -1,22 +1,27 @@
 --[[
 	CallerPrompt (server only)
-	What the AI caller is told: who they are, how the call started, and how to react. Also the opening
-	message and the shape of each turn.
+	What the AI caller is told: who they are, how sharp they are right now, how the call started, and how to
+	react. Also the opening message, the shape of each turn, and the stock lines used when Roblox's text
+	filter hides what the caller wanted to say.
 
 	CallerPrompt.system(persona, context) -> string
 	CallerPrompt.opening(context, trust) -> string
 	CallerPrompt.turn(text, trust, turnsLeft, note?) -> string
-	CallerPrompt.blocked(line) -> string       asks for a rephrase of a line Roblox's text filter blocked
-	CallerPrompt.BAD_LINE                      note for the next turn when a line couldn't get through at all
+	CallerPrompt.blocked(line) -> string       asks for a rephrase of a line Roblox's text filter hid
+	CallerPrompt.safeLine(kind, random) -> string
+		kind "talk" | "pay" | "again" | "bye": a stock line that always gets through the filter
 	CallerPrompt.TOOL                          the "respond" tool Claude must answer with
 ]]
 
 local CallConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").Config.CallConfig)
 
+export type Smarts = { Name: string, From: number, PayTrust: number, MaxGain: number, MaxLoss: number }
+
 export type Context = {
 	incoming: boolean, -- they called you
 	reason: string?, -- why they called (incoming only)
-	difficulty: number, -- 1 Intern .. 3 Senior
+	smarts: Smarts, -- CallConfig.Smarts level for this call
+	level: number, -- its index in CallConfig.Smarts
 }
 
 local METHOD_WORDS = {
@@ -25,10 +30,17 @@ local METHOD_WORDS = {
 	donation = "donate to their fundraiser, but only once they've told you its fundraiser ID",
 }
 
-local HOW_HARD = {
-	"fairly trusting",
-	"average: not easy, not impossible",
-	"hard to fool: you've been warned about phone scams",
+-- One per CallConfig.Smarts level, dumbest first.
+local SMARTS_WORDS = {
+	"You are dumber than a rock. You believe almost anything anyone tells you, you get mixed up easily, you "
+		.. "never notice when a story doesn't add up, and you happily go along with whatever they say. Even a "
+		.. "so-so story wins you over fast.",
+	"You're gullible. You believe most stories and go along with them; only something really obviously fishy "
+		.. "makes you stop and ask a question.",
+	"You're getting a little suspicious. You'll go along with a story that mostly makes sense, but you notice "
+		.. "when something doesn't add up and ask about it.",
+	"You're sharp. You've heard about phone scams lately and want a story that makes sense before you hand "
+		.. "anything over, but a smooth, friendly talker can still win you over.",
 }
 
 -- Roblox's text filter hides a whole line when it looks like personal info or contact off Roblox, so the
@@ -40,10 +52,28 @@ local CHAT_SAFE = "Everything you say goes through Roblox's chat filter, which h
 	.. "don't name real companies, banks or brands (say \"my insurance company\", \"my bank\", \"your company\"). "
 	.. "Ask who they are with simple everyday words instead."
 
-local CallerPrompt = {}
+-- Said instead of a line the filter hid twice. Written to always get through.
+local SAFE_LINES = {
+	talk = {
+		"Sorry, you're breaking up. What were you saying?",
+		"Hello? This line is so bad. Can you say that again?",
+		"Sorry, I lost you there for a second. Go on?",
+		"Hang on, the phone made a funny noise. What was that?",
+	},
+	pay = {
+		"Okay, I did it. Here you go.",
+		"Alright, here it is.",
+	},
+	again = {
+		"Sure, here it is again.",
+	},
+	bye = {
+		"Sorry, I have to go now. Bye!",
+		"Oh, I need to run. Goodbye!",
+	},
+}
 
-CallerPrompt.BAD_LINE = "(The line was bad and they didn't hear your last line. Say it again in simpler words if it "
-	.. "still matters.)"
+local CallerPrompt = {}
 
 CallerPrompt.TOOL = {
 	name = "respond",
@@ -57,7 +87,7 @@ CallerPrompt.TOOL = {
 			},
 			trust_change = {
 				type = "integer",
-				description = `How much your trust changes because of their last line, from -{CallConfig.MaxTrustLoss} to {CallConfig.MaxTrustGain}.`,
+				description = "How much your trust changes because of their last line, within the ranges in your instructions.",
 			},
 			pay = {
 				type = "object",
@@ -83,6 +113,7 @@ CallerPrompt.TOOL = {
 }
 
 function CallerPrompt.system(persona: any, context: Context): string
+	local smarts = context.smarts
 	local methods = {}
 	for _, method in persona.Methods do
 		table.insert(methods, `{method} ({METHOD_WORDS[method] or method})`)
@@ -90,33 +121,40 @@ function CallerPrompt.system(persona: any, context: Context): string
 	local howStarted = if context.incoming
 		then `You are the one calling: {context.reason or "you got a message telling you to call this number"}.`
 		else "Your phone rang from a number you don't recognize and you picked up."
+	local smallGain = math.max(3, math.ceil(smarts.MaxGain / 3))
 
 	return table.concat({
 		"You are playing a character in Call Center Chaos, a comedy Roblox game. The player works at a silly fake "
-			.. "\"call center\" and is trying to scam you over the phone. You play the person on the other end. React "
-			.. "like a real person would, so a sloppy scam fails and a convincing one can work.",
+			.. "\"call center\" and is trying to scam you over the phone. You play the person on the other end, and "
+			.. "you're meant to be fun and easy to fool.",
 		"",
 		"YOUR CHARACTER (all made up)",
 		`Name: {persona.Name}, {persona.Age}, {persona.Job} from {persona.Town}.`,
 		`Personality: {persona.Personality}.`,
+		`Hobbies: {table.concat(persona.Hobbies or {}, " and ")}. Pet: {persona.Pet or "none"}.`,
+		`Family: {persona.Family or "keeps to themselves"}. Lately: {persona.Lately or "nothing much"}.`,
+		`With technology: {persona.Tech or "average"}.`,
 		`Soft spot: you're {persona.SoftSpot}.`,
 		`Big red flag for you: {persona.RedFlag}.`,
 		`Ways you could pay: {table.concat(methods, ", ")}. You could part with about ${persona.Budget} at most.`,
-		`How hard you are to fool: {HOW_HARD[context.difficulty] or HOW_HARD[2]}.`,
+		`How sharp you are: {SMARTS_WORDS[context.level] or SMARTS_WORDS[1]}`,
 		`How the call started: {howStarted}`,
 		"",
 		"HOW TO PLAY",
 		"- Speak like a real person on the phone: one or two short sentences, under 200 characters. Plain spoken "
-			.. "words only: no emojis, no actions in asterisks, no lists.",
+			.. "words only: no emojis, no actions in asterisks, no lists. Chat about your hobbies, pet and family "
+			.. "when it fits.",
 		"- " .. CHAT_SAFE,
+		"- Their lines can contain [static] where the bad phone line cut out. That's never their fault: don't lower "
+			.. "trust for it, just ask them to say that part again if you need it.",
 		"- Each message shows your current trust in the other person (0-100). After every line, set trust_change for "
 			.. "how what they just said affects it:",
-		`  - Up (+3 to +{CallConfig.MaxTrustGain}) when they're believable, patient, consistent, sound like who they `
-			.. "claim to be, or play to your soft spot.",
-		`  - Down (-5 to -{CallConfig.MaxTrustLoss}) when they're pushy, rude, inconsistent, vague about who they are, `
-			.. "hit your red flag, or ask for money too early.",
-		"  - Around 0 for small talk.",
-		`- Only agree to pay when your trust is at least {CallConfig.PayTrust} and they have clearly asked you for money `
+		`  - Up (+{smallGain} to +{smarts.MaxGain}) when they sound friendly or believable, give any reason that `
+			.. "makes sense to you, or play to your soft spot. A story about your soft spot is worth a big jump.",
+		`  - Down (-1 to -{smarts.MaxLoss}) only for clear problems: they're rude, obviously contradict themselves, `
+			.. "hit your red flag, or demand money before saying why. Small slip-ups don't matter.",
+		"  - 0 to +3 for small talk: being chatty and friendly slowly wins you over.",
+		`- Only agree to pay when your trust is at least {smarts.PayTrust} and they have asked you for money `
 			.. "or payment details. Then fill in pay with one of your payment methods and an amount no more than your "
 			.. "limit, and say in one short sentence that you're doing it (\"Okay, I bought it. Here's the code.\"). "
 			.. "The game reads out the actual gift card code or card details right after your line, so never make up "
@@ -143,6 +181,11 @@ end
 function CallerPrompt.blocked(line: string): string
 	return `(Roblox's chat filter hid your last try, so they didn't hear it: "{line}". Say what you meant again in `
 		.. "different, simpler words. " .. CHAT_SAFE .. ")"
+end
+
+function CallerPrompt.safeLine(kind: string, random: Random): string
+	local lines = SAFE_LINES[kind] or SAFE_LINES.talk
+	return lines[random:NextInteger(1, #lines)]
 end
 
 function CallerPrompt.turn(text: string, trust: number, turnsLeft: number, note: string?): string

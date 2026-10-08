@@ -1,7 +1,8 @@
 --[[
 	Personas (server only)
-	Makes up the people your crew calls: a Roblox-style display name and @username, a made-up life, how
-	they behave on the phone, how they can pay, a voice, and a random blocky avatar.
+	Makes up the people your crew calls: a Roblox-style display name and @username, a made-up life (job,
+	town, hobbies, pet, family, what they've been up to, how good they are with tech), how they behave on the
+	phone, how they can pay, a voice, and a random blocky avatar.
 
 	Personas.new(random) -> Generated
 	Personas.incomingReason(random) -> string
@@ -17,6 +18,11 @@ export type Persona = {
 	Job: string,
 	Town: string,
 	Personality: string,
+	Hobbies: { string },
+	Pet: string,
+	Family: string,
+	Lately: string,
+	Tech: string,
 	SoftSpot: string,
 	RedFlag: string,
 	Methods: { string },
@@ -124,6 +130,58 @@ local RED_FLAGS = {
 	"callers who don't know basic details they should know",
 }
 
+local HOBBIES = {
+	"bowling", "knitting", "bird watching", "collecting spoons", "karaoke", "gardening", "model trains", "fishing",
+	"baking pies", "crossword puzzles", "line dancing", "cooking shows", "bingo night", "fixing old cars",
+	"jigsaw puzzles", "yard sales", "pickleball", "scrapbooking", "ghost hunting shows", "competitive yo-yo",
+}
+
+local PET_KINDS = { "dog", "cat", "parrot", "goldfish", "hamster", "tortoise", "rabbit", "very old cat" }
+local PET_NAMES = {
+	"Biscuit", "Mr. Whiskers", "Pickles", "Duke", "Peanut", "Captain", "Noodle", "Muffin", "Ziggy", "Chester",
+	"Princess", "Sir Fluffington", "Tater", "Waffles",
+}
+local NO_PETS = { "no pets, just a houseplant named Steve", "no pets (allergic to everything)", "a pet rock named Gerald" }
+
+local FAMILY = {
+	"lives with their sister",
+	"has three grandkids who never call",
+	"married for thirty years",
+	"just moved in with their cousin",
+	"two teenagers at home",
+	"lives alone and likes it that way",
+	"takes care of their mom",
+	"just got married",
+	"has a twin who always borrows money",
+	"kid just left for college",
+}
+
+local LATELY = {
+	"just bought a new laptop",
+	"waiting on a package that never showed up",
+	"keeps getting weird pop-ups on their computer",
+	"got a new phone and can't figure it out",
+	"booked a cruise for next month",
+	"just retired",
+	"lost their wallet last week",
+	"ordered a blender online that never came",
+	"started selling candles online",
+	"got a scary-looking letter they didn't really read",
+	"entered a radio contest last week",
+	"had their card declined at the grocery store",
+}
+
+local TECH = {
+	"thinks the cloud is the weather",
+	"calls every computer problem a virus",
+	"writes passwords on sticky notes",
+	"still uses a flip phone",
+	"pretty good with computers",
+	"asks the grandkids to fix everything",
+	"clicks on every pop-up",
+	"just learned how to text",
+}
+
 local INCOMING_REASONS = {
 	"a scary pop-up on your computer said you have a virus and to call this number",
 	"you got a text saying your package couldn't be delivered and to call this number",
@@ -180,6 +238,23 @@ local function makeUsername(random: Random, first: string): string
 	return `{string.lower(first)}_the_{string.lower(pick(random, USERNAME_B))}`
 end
 
+-- `count` different items from `list`.
+local function pickSome(random: Random, list: { string }, count: number): { string }
+	local pool = table.clone(list)
+	local out = {}
+	for _ = 1, math.min(count, #pool) do
+		table.insert(out, table.remove(pool, random:NextInteger(1, #pool)) :: string)
+	end
+	return out
+end
+
+local function pickPet(random: Random): string
+	if random:NextNumber() < 0.2 then
+		return pick(random, NO_PETS)
+	end
+	return `a {pick(random, PET_KINDS)} named {pick(random, PET_NAMES)}`
+end
+
 local function pickMethods(random: Random, job: string): { string }
 	local methods = {}
 	for _, method in CallConfig.MethodOrder do
@@ -222,6 +297,11 @@ function Personas.new(random: Random): Generated
 			Job = string.lower(job.tag),
 			Town = pick(random, accent.towns),
 			Personality = pick(random, PERSONALITIES),
+			Hobbies = pickSome(random, HOBBIES, 2),
+			Pet = pickPet(random),
+			Family = pick(random, FAMILY),
+			Lately = pick(random, LATELY),
+			Tech = pick(random, TECH),
 			SoftSpot = pick(random, SOFT_SPOTS),
 			RedFlag = pick(random, RED_FLAGS),
 			Methods = pickMethods(random, job.tag),
