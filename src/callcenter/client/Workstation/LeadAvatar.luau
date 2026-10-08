@@ -3,17 +3,27 @@
 	Shows a lead's avatar in a ViewportFrame, framed on the head and shoulders like a profile picture.
 
 	The server dresses a rig for every lead (AvatarService) and puts it in ReplicatedStorage.LeadAvatars/<id>.
-	Until it shows up (or if dressing failed) a simple blocky stand-in is drawn from the lead's colors.
+	Until it shows up a simple blocky stand-in is drawn from the lead's colors, and the rig is swapped in as
+	soon as it arrives, however long that takes (dressing a whole office of callers can take a while).
 
 	LeadAvatar.render(viewport, lead)     lead = { Id, Look = { Skin, Shirt, Pants, Hat, HatColor } }
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local WAIT_FOR_AVATAR = 20 -- seconds
 local FACE = "rbxasset://textures/face.png"
 
 local LeadAvatar = {}
+
+local watchers: { [ViewportFrame]: RBXScriptConnection } = {}
+
+local function stopWatching(viewport: ViewportFrame)
+	local connection = watchers[viewport]
+	if connection then
+		connection:Disconnect()
+		watchers[viewport] = nil
+	end
+end
 
 local function clear(viewport: ViewportFrame)
 	for _, child in viewport:GetChildren() do
@@ -104,6 +114,7 @@ local function drawRig(viewport: ViewportFrame, source: Model): boolean
 end
 
 function LeadAvatar.render(viewport: ViewportFrame, lead: any)
+	stopWatching(viewport)
 	clear(viewport)
 	if not lead then
 		viewport:SetAttribute("LeadId", 0)
@@ -120,15 +131,27 @@ function LeadAvatar.render(viewport: ViewportFrame, lead: any)
 		drawStandIn(viewport, lead.Look)
 	end
 
-	-- Swap in the dressed rig when the server finishes it.
+	-- Swap in the dressed rig when the server finishes it (until this picture shows someone else).
+	local wanted = tostring(lead.Id)
+	local function arrived(source: Instance)
+		if source.Name ~= wanted or viewport:GetAttribute("LeadId") ~= lead.Id then
+			return
+		end
+		stopWatching(viewport)
+		clear(viewport)
+		if not drawRig(viewport, source :: Model) and lead.Look then
+			drawStandIn(viewport, lead.Look)
+		end
+	end
 	task.spawn(function()
-		local avatars = folder or ReplicatedStorage:WaitForChild("LeadAvatars", WAIT_FOR_AVATAR)
-		local arrived = avatars and avatars:WaitForChild(tostring(lead.Id), WAIT_FOR_AVATAR)
-		if arrived and viewport.Parent and viewport:GetAttribute("LeadId") == lead.Id then
-			clear(viewport)
-			if not drawRig(viewport, arrived :: Model) and lead.Look then
-				drawStandIn(viewport, lead.Look)
-			end
+		local avatars = folder or ReplicatedStorage:WaitForChild("LeadAvatars")
+		if viewport:GetAttribute("LeadId") ~= lead.Id then
+			return
+		end
+		watchers[viewport] = avatars.ChildAdded:Connect(arrived)
+		local already = avatars:FindFirstChild(wanted)
+		if already then
+			arrived(already)
 		end
 	end)
 end

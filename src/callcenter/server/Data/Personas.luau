@@ -199,7 +199,10 @@ local USERNAME_B = {
 	"Beans", "Llama", "Pickle", "Waffle", "Gecko",
 }
 
-local SKIN = { "#F5CD30", "#FFCC99", "#EAB892", "#CC8E69", "#A0715A", "#7C5C46", "#5A4031", "#D7C59A" }
+local SKIN = {
+	"#F5CD30", "#FDEA8D", "#FFE0BD", "#FFCC99", "#F1C27D", "#EAB892", "#E0AC69", "#D7C59A", "#CC8E69", "#C68642",
+	"#A0715A", "#8D5524", "#7C5C46", "#5C3A21", "#5A4031", "#3D2B1F",
+}
 local SHIRTS = { "#0D69AC", "#C4281C", "#287F47", "#6B327C", "#E8AB2D", "#1B2A35", "#FF66CC", "#E5E4DF", "#2B8CBE", "#8A5A2B" }
 local PANTS = { "#A4BD47", "#1B2A35", "#27466B", "#635F62", "#5A3C24", "#0D69AC", "#2D2D2D" }
 local HAT_COLORS = { "#1B2A35", "#C4281C", "#0D69AC", "#E8AB2D", "#287F47", "#F2F3F3", "#6B327C" }
