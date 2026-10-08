@@ -74,6 +74,10 @@ local Theme = {
 	PaymentCard = hex("#0F766E"),
 	PaymentDonation = hex("#E11D48"),
 
+	-- Training app
+	Training = hex("#EA580C"),
+	LessonIdle = hex("#F6F7F9"),
+
 	-- Index matches SettingsConfig.Wallpapers: Dusk, Overcast, Night
 	Wallpapers = {
 		{

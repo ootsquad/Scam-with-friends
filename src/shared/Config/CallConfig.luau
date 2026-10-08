@@ -12,18 +12,28 @@ local CallConfig = {
 	ApiVersion = "2023-06-01",
 	MaxTokens = 300,
 
-	-- Trust (0-100). Every call starts at StartTrust; callers only pay at PayTrust or above.
+	-- Trust (0-100). Every call starts at StartTrust; callers hang up at HangUpTrust or lower.
 	StartTrust = 50,
-	PayTrust = 65,
 	HangUpTrust = 5,
-	MaxTrustGain = 20, -- per line
-	MaxTrustLoss = 18, -- per line
 	MaxTurns = 25, -- your lines per call before the caller has to go
+
+	-- How sharp callers are. They start out dumber than rocks and get sharper the closer the crew gets to
+	-- today's quota (From = share of the quota already made). Each level sets the trust a caller needs before
+	-- they'll pay and how far one of your lines can move their trust. The lobby difficulty gives the crew a
+	-- head start (Intern) or a handicap (Senior) on that progress.
+	Smarts = {
+		{ Name = "Dumber than a rock", From = 0, PayTrust = 55, MaxGain = 25, MaxLoss = 6 },
+		{ Name = "Gullible", From = 0.35, PayTrust = 60, MaxGain = 20, MaxLoss = 10 },
+		{ Name = "Getting suspicious", From = 0.7, PayTrust = 65, MaxGain = 16, MaxLoss = 14 },
+		{ Name = "Sharp", From = 1, PayTrust = 70, MaxGain = 14, MaxLoss = 18 },
+	} :: { { Name: string, From: number, PayTrust: number, MaxGain: number, MaxLoss: number } },
+	SmartsHeadStart = { -0.15, 0, 0.15 }, -- added to quota progress for Intern, Associate, Senior
 
 	MaxSayLength = 300, -- characters per line you say
 	MaxReplyLength = 280, -- caller lines stay under the 300-character text-to-speech limit
 	-- Roblox's text filter can hide a whole caller line as ####. When at least this share of a line is hidden,
-	-- the caller is asked to say it again in other words; if that's hidden too, you hear a crackle instead.
+	-- the caller is asked to say it again in other words; if that's hidden too, they say a safe stock line
+	-- ("Sorry, you're breaking up...") instead. A hidden line never costs you trust.
 	BlockedLineShare = 0.5,
 
 	-- Your mic (speech-to-text). What it hears only becomes a line if it sounds like you really talked, so

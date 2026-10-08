@@ -67,6 +67,7 @@ local connectedAt = 0
 local order = 0
 local lastPaid = 0
 local sending = false
+local payAt = 70 -- the current caller's pay line (it depends on how sharp they are)
 
 local function firstName(name: string): string
 	return string.match(name, "^(%S+)") or name
@@ -85,7 +86,7 @@ local function money(amount: number): string
 end
 
 local function trustColor(trust: number): Color3
-	if trust >= CallConfig.PayTrust then
+	if trust >= payAt then
 		return Theme.TrustHigh
 	elseif trust >= 40 then
 		return Theme.TrustMid
@@ -225,6 +226,10 @@ end
 
 local function renderTrust(trust: number)
 	local panel = ui.card.Trust
+	local mark = panel.Bar:FindFirstChild("PayMark")
+	if mark then
+		mark.Position = UDim2.new(math.clamp(payAt / 100, 0, 1), -1, 0, 0)
+	end
 	local color = trustColor(trust)
 	panel.Value.Text = `{math.floor(trust)}%`
 	panel.Value.TextColor3 = color
@@ -342,6 +347,7 @@ local function renderCall(state: any, previous: any)
 		end
 	end
 
+	payAt = state.PayAt or payAt
 	renderTrust(state.Trust)
 	card.PaidBadge.Visible = state.Paid
 	if state.Paid and lastPaid > 0 then

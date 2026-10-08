@@ -15,6 +15,7 @@
 
 	Server -> client (only ever sent to the player on the call)
 		State     the current call (nil = no call)
+		File      the caller's file, sent when a call starts (shown in a pop-up)
 		Line      something the caller said, with their new trust
 		YourLine  what you said, after Roblox's text filter
 		Payout    the caller paid
@@ -51,6 +52,23 @@ export type CallState = {
 	VoiceId: string,
 	Thinking: boolean, -- the caller is working out what to say
 	Paid: boolean,
+	PayAt: number, -- trust this caller needs before they'll pay
+}
+
+export type CallerFile = {
+	CallId: number,
+	About: string, -- "71 · Dayton, Ohio"
+	Hobbies: string,
+	Pet: string,
+	Family: string,
+	Lately: string,
+	Tech: string,
+	SoftSpot: string,
+	RedFlag: string,
+	Methods: { string }, -- "gift_card" | "card" | "donation"
+	Wallet: number, -- about how much they could part with
+	Smarts: string, -- CallConfig.Smarts name
+	PayAt: number,
 }
 
 export type Line = {
@@ -101,6 +119,23 @@ return Namespace.define("Call", function()
 		VoiceId = ByteNet.string,
 		Thinking = ByteNet.bool,
 		Paid = ByteNet.bool,
+		PayAt = ByteNet.uint8,
+	})
+
+	local CallerFile = ByteNet.struct({
+		CallId = ByteNet.uint32,
+		About = ByteNet.string,
+		Hobbies = ByteNet.string,
+		Pet = ByteNet.string,
+		Family = ByteNet.string,
+		Lately = ByteNet.string,
+		Tech = ByteNet.string,
+		SoftSpot = ByteNet.string,
+		RedFlag = ByteNet.string,
+		Methods = ByteNet.array(ByteNet.string),
+		Wallet = ByteNet.uint32,
+		Smarts = ByteNet.string,
+		PayAt = ByteNet.uint8,
 	})
 
 	local Line = ByteNet.struct({
@@ -146,6 +181,7 @@ return Namespace.define("Call", function()
 
 			-- server -> client
 			State = ByteNet.definePacket({ value = ByteNet.optional(CallState) }),
+			File = ByteNet.definePacket({ value = CallerFile }),
 			Line = ByteNet.definePacket({ value = Line }),
 			YourLine = ByteNet.definePacket({ value = YourLine }),
 			Payout = ByteNet.definePacket({ value = Payout }),

@@ -4,8 +4,9 @@
 	requests that go to the server.
 
 	CallStore.Start()                           loads your leads (also tells the server you're ready)
-	CallStore.State / Leads / Payouts
-	CallStore.Changed(state, previous)  LeadsChanged(leads)  Line(line)  YourLine(line)  Payout(payout)  Notice(text)
+	CallStore.State / File / Leads / Payouts
+	CallStore.Changed(state, previous)  FileChanged(file)  LeadsChanged(leads)  Line(line)  YourLine(line)
+	CallStore.Payout(payout)  Notice(text)
 	CallStore.Login(username) -> Result     (yields)
 	CallStore.Logoff()
 	CallStore.StartCall(leadId) -> Result   (yields)
@@ -26,9 +27,11 @@ local MAX_PAYOUTS = 20
 
 local CallStore = {
 	State = nil :: any,
+	File = nil :: any, -- the caller file of the latest call
 	Leads = {} :: { any },
 	Payouts = {} :: { any }, -- newest first
 	Changed = Signal.new(),
+	FileChanged = Signal.new(),
 	LeadsChanged = Signal.new(),
 	Line = Signal.new(),
 	YourLine = Signal.new(),
@@ -115,6 +118,10 @@ function CallStore.Start()
 	Call = require(Shared:WaitForChild("Network")).Call
 
 	Call.packets.State.listen(setState)
+	Call.packets.File.listen(function(file)
+		CallStore.File = file
+		CallStore.FileChanged:Fire(file)
+	end)
 	Call.packets.Leads.listen(function(leads)
 		CallStore.Leads = leads
 		CallStore.LeadsChanged:Fire(leads)

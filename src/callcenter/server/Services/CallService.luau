@@ -7,10 +7,17 @@
 	Incoming: while you're logged in and free, leads call you every so often.
 
 	Once connected, every line you say (typed, spoken or Roblox chat) goes through Roblox's text filter and
-	then to Claude, which answers in character with a trust change. The caller's lines go through the filter
-	too; if it hides most of a line, Claude is asked once to say it in other words, and if that's hidden as
-	well you get a crackle on the line instead of a wall of ####. Callers pay once their trust reaches
-	CallConfig.PayTrust and you've asked; they hang up if it drops to CallConfig.HangUpTrust.
+	then to Claude, which answers in character with a trust change. How sharp the caller is depends on how
+	far the crew is into today's quota (CallConfig.Smarts): early on they're dumber than rocks, and they pay
+	at a lower trust. They hang up if trust drops to CallConfig.HangUpTrust.
+
+	Words the filter hides from your line reach the caller as [static], and static never costs you trust.
+	The caller's lines go through the filter too; if it hides most of a line, Claude is asked once to say it
+	in other words, and if that's hidden as well the caller says a stock line that always gets through
+	("Sorry, you're breaking up...") and doesn't lose trust in you for it.
+
+	When a call starts, the caller's file (job, hobbies, pet, soft spot, red flag, how they pay, how sharp
+	they are) is sent to the player for the pop-up.
 
 	Paying is handled by PaymentService: for gift cards and credit cards the game makes up the code or card
 	details and adds them to the caller's line, and you cash them in with the Gift Cards / Card Terminal
@@ -45,6 +52,7 @@ local Status = CallConfig.LeadStatus
 local ENDED_LINGER = 4 -- seconds the "call ended" screen stays before the phone is free again
 local SAY_COOLDOWN = 0.25
 local MAX_PENDING = 3 -- lines said while the caller is still thinking get sent together
+local STATIC = "[static]" -- what the caller hears in place of words Roblox's filter hid
 
 type Session = {
 	id: number,
@@ -54,6 +62,7 @@ type Session = {
 	trust: number,
 	outcome: number,
 	context: CallerPrompt.Context,
+	smarts: CallerPrompt.Smarts,
 	system: string,
 	messages: { ClaudeClient.Message },
 	turns: number,
@@ -61,6 +70,7 @@ type Session = {
 	pending: { string },
 	heard: string, -- everything you've said this call (for the fundraiser ID check)
 	note: string?, -- added to your next line for the caller (e.g. why their payment failed)
+	staticTurn: boolean, -- your last line had words the filter hid: it can't cost you trust
 	details: string?, -- the code / card details the caller read out, for when you ask them to repeat it
 	paid: boolean,
 	ended: boolean,
@@ -98,6 +108,7 @@ local function stateOf(session: Session)
 		VoiceId = session.lead.VoiceId,
 		Thinking = session.thinking,
 		Paid = session.paid,
+		PayAt = session.smarts.PayTrust,
 	}
 end
 
@@ -208,7 +219,7 @@ end
 local function tryPay(session: Session, pay: { Method: string, Amount: number }): string?
 	local persona = session.lead.Persona
 	local method = CallConfig.PaymentMethods[pay.Method]
-	if session.trust < CallConfig.PayTrust or not method or not table.find(persona.Methods, pay.Method) then
+	if session.trust < session.smarts.PayTrust or not method or not table.find(persona.Methods, pay.Method) then
 		return nil
 	end
 	local player, leadName = session.player, session.lead.DisplayName
@@ -234,6 +245,7 @@ end
 
 local function addTurn(session: Session, text: string)
 	session.turns += 1
+	session.staticTurn = string.find(text, STATIC, 1, true) ~= nil
 	local note = session.note
 	session.note = nil
 	table.insert(session.messages, {
@@ -251,44 +263,54 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 	end
 
 	-- Roblox's filter can hide a whole line (it does that for anything that looks like personal info).
-	-- Ask for the line again in other words once; if that's hidden too, it's a crackle on the line.
+	-- Ask for the line again in other words once; if that's hidden too (or the filter is down), the caller
+	-- says a stock line that always gets through, and that's what goes in the call history.
 	local shown = filterFor(player, spoken)
 	if session.ended then
 		return
 	end
+	local hidden = shown == nil
 	if shown and hiddenShare(spoken, shown) >= CallConfig.BlockedLineShare then
 		print(`[CallService] Roblox's text filter hid a caller line{if rephrased then " again" else ""}: "{spoken}"`)
 		if not rephrased then
 			requestReply(session, spoken)
 			return
 		end
-		shown = nil
+		hidden = true
 	end
 
-	-- The greeting doesn't move trust; after that the caller decides.
+	-- The greeting doesn't move trust; after that the caller decides, within their smarts level. A bad line is
+	-- never your fault: if your line had static or theirs got hidden, trust can't go down this turn.
+	local smarts = session.smarts
 	local delta = if session.turns == 0
 		then 0
-		else math.clamp(math.round(reply.TrustChange), -CallConfig.MaxTrustLoss, CallConfig.MaxTrustGain)
+		else math.clamp(math.round(reply.TrustChange), -smarts.MaxLoss, smarts.MaxGain)
+	if hidden or session.staticTurn then
+		delta = math.max(delta, 0)
+	end
 	local before = session.trust
 	session.trust = math.clamp(session.trust + delta, 0, 100)
 
 	-- Payment details are made up by the game, so they're added after the filtered line.
 	local wasPaid = session.paid
 	local details = if reply.Pay and not session.paid then tryPay(session, reply.Pay) else nil
+	local repeating = false
 	if details then
 		session.details = details
 	elseif reply.RepeatPayment and session.details then
 		details = session.details
+		repeating = true
 	end
 	local method = if session.paid and not wasPaid and reply.Pay then reply.Pay.Method else ""
+	if hidden then
+		local kind = if repeating then "again" elseif details then "pay" elseif reply.HangUp then "bye" else "talk"
+		spoken = CallerPrompt.safeLine(kind, random)
+		shown = spoken
+	end
 	table.insert(session.messages, {
 		role = "assistant",
 		content = if details then `{spoken} {details}` else spoken,
 	})
-	if not shown then
-		session.note = CallerPrompt.BAD_LINE
-		shown = if details then "(The line crackles.)" else "(The line crackles. You couldn't make out what they said.)"
-	end
 
 	session.thinking = false
 	Call.packets.Line.sendTo({
@@ -346,13 +368,50 @@ local function connect(session: Session)
 	requestReply(session)
 end
 
+-- How sharp callers are right now: the further the crew is into today's quota, the sharper.
+local function smartsNow(): (CallerPrompt.Smarts, number)
+	local shift = ShiftService.Get()
+	local difficulty = if shift then shift.Difficulty else 2
+	local progress = EconomyService.Progress() + (CallConfig.SmartsHeadStart[difficulty] or 0)
+	local level = 1
+	for index, smarts in CallConfig.Smarts do
+		if progress >= smarts.From then
+			level = index
+		end
+	end
+	return CallConfig.Smarts[level], level
+end
+
+local function sendFile(session: Session)
+	local persona = session.lead.Persona
+	if not session.player.Parent then
+		return
+	end
+	Call.packets.File.sendTo({
+		CallId = session.id,
+		About = `{persona.Age} · {persona.Town}`,
+		Hobbies = table.concat(persona.Hobbies, ", "),
+		Pet = persona.Pet,
+		Family = persona.Family,
+		Lately = persona.Lately,
+		Tech = persona.Tech,
+		SoftSpot = persona.SoftSpot,
+		RedFlag = persona.RedFlag,
+		Methods = table.clone(persona.Methods),
+		Wallet = persona.Budget,
+		Smarts = session.smarts.Name,
+		PayAt = session.smarts.PayTrust,
+	}, session.player)
+end
+
 local function startSession(player: Player, lead: LeadService.LeadRecord, incoming: boolean): Session
 	nextCallId += 1
-	local shift = ShiftService.Get()
+	local smarts, level = smartsNow()
 	local context: CallerPrompt.Context = {
 		incoming = incoming,
 		reason = if incoming then Personas.incomingReason(random) else nil,
-		difficulty = if shift then shift.Difficulty else 2,
+		smarts = smarts,
+		level = level,
 	}
 	local session: Session = {
 		id = nextCallId,
@@ -362,6 +421,7 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		trust = CallConfig.StartTrust,
 		outcome = Outcome.None,
 		context = context,
+		smarts = smarts,
 		system = CallerPrompt.system(lead.Persona, context),
 		messages = {},
 		turns = 0,
@@ -369,6 +429,7 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		pending = {},
 		heard = "",
 		note = nil,
+		staticTurn = false,
 		details = nil,
 		paid = false,
 		ended = false,
@@ -377,6 +438,7 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 	incomingToken[player] = (incomingToken[player] or 0) + 1
 	LeadService.SetStatus(player, lead, Status.OnCall)
 	pushState(session)
+	sendFile(session)
 
 	if incoming then
 		task.delay(CallConfig.IncomingRingTime, function()
@@ -476,6 +538,7 @@ local function onSay(text: string, player: Player)
 	lastSay[player] = now
 
 	local line = clean(text, CallConfig.MaxSayLength)
+	line = string.gsub(line, "%[static%]", "static") -- only real static counts as static
 	if line == "" then
 		return
 	end
@@ -488,15 +551,17 @@ local function onSay(text: string, player: Player)
 		return
 	end
 	Call.packets.YourLine.sendTo({ CallId = session.id, Text = filtered }, player)
-	session.heard = string.sub(session.heard .. " " .. filtered, -2000)
+	-- The caller hears words the filter hid as static.
+	local heard = if hiddenShare(line, filtered) > 0 then (string.gsub(filtered, "#+", STATIC)) else filtered
+	session.heard = string.sub(session.heard .. " " .. heard, -2000)
 
 	if session.thinking then
 		if #session.pending < MAX_PENDING then
-			table.insert(session.pending, filtered)
+			table.insert(session.pending, heard)
 		end
 		return
 	end
-	addTurn(session, filtered)
+	addTurn(session, heard)
 end
 
 local function onHangUp(_: nil, player: Player)

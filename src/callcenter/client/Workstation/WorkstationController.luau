@@ -2,8 +2,9 @@
 	WorkstationController (client, Call Center Place)
 	The computer at your desk. Nothing shows until you sit in a seat tagged "Computer"; then the ChaOS login
 	screen appears. Log in with your Roblox username and you get the desktop: Phone, Gift Cards, Card Terminal,
-	GiveHope and Wallet, a taskbar with your money / the team quota / the review timer, a Start menu, incoming
-	call pop-ups and the end-of-day performance review. Stand up (or Log off) and it goes away.
+	GiveHope, Wallet and Training, a taskbar with your money / the team quota / the review timer, a Start
+	menu, incoming call pop-ups, the caller file pop-up and the end-of-day performance review. Stand up (or
+	Log off) and it goes away.
 
 	WorkstationController.Start()
 ]]
@@ -27,11 +28,13 @@ local UiScale = require(Ui.UiScale)
 local WindowManager = require(Ui.WindowManager)
 
 local CallStore = require(script.Parent.CallStore)
+local CallerFileApp = require(script.Parent.CallerFileApp)
 local CallVoice = require(script.Parent.CallVoice)
 local CashApps = require(script.Parent.CashApps)
 local LeadAvatar = require(script.Parent.LeadAvatar)
 local Ledger = require(script.Parent.Ledger)
 local PhoneApp = require(script.Parent.PhoneApp)
+local TrainingApp = require(script.Parent.TrainingApp)
 local WalletApp = require(script.Parent.WalletApp)
 
 local Phase = CallConfig.Phase
@@ -51,6 +54,7 @@ local APPS = {
 	{ "Terminal", "TerminalWindow", "TerminalTask", "TerminalIcon", "Terminal" },
 	{ "Donations", "DonationsWindow", "DonationsTask", "DonationsIcon", "Donations" },
 	{ "Wallet", "WalletWindow", "WalletTask", "WalletIcon", "Wallet" },
+	{ "Training", "TrainingWindow", "TrainingTask", "TrainingIcon", "Training" },
 }
 
 local PAID_HINT = {
@@ -118,6 +122,7 @@ local function refresh()
 		if not everLoggedIn then
 			everLoggedIn = true
 			WindowManager.open("Phone")
+			Notify.show("Training", "New here? Open Training on the desktop to learn the basics.", Theme.Training)
 		end
 	elseif wasLoggedIn and not loggedIn then
 		setMenuOpen(false)
@@ -357,7 +362,7 @@ local function wireIncoming()
 		popup.Visible = false
 	end)
 
-	CallStore.Changed:Connect(function(state)
+	CallStore.Changed:Connect(function(state, previous)
 		local incoming = state ~= nil and state.Phase == Phase.Incoming
 		popup.Visible = incoming
 		if incoming and state.CallId ~= shownCall then
@@ -367,8 +372,15 @@ local function wireIncoming()
 			LeadAvatar.render(popup.Portrait.View, state.Lead)
 			Notify.show("Phone", `{state.Lead.DisplayName} is calling you.`, Theme.Green)
 		end
-		if state and (state.Phase == Phase.Ringing or state.Phase == Phase.Connected) then
+		-- Bring the Phone up when a call starts ringing or connects (not on every update), and keep the
+		-- caller file on top of it if it's open.
+		local phaseChanged = state ~= nil
+			and (previous == nil or previous.CallId ~= state.CallId or previous.Phase ~= state.Phase)
+		if phaseChanged and (state.Phase == Phase.Ringing or state.Phase == Phase.Connected) then
 			WindowManager.open("Phone")
+			if WindowManager.isOpen("CallerFile") then
+				WindowManager.focus("CallerFile")
+			end
 		end
 	end)
 end
@@ -431,12 +443,18 @@ function WorkstationController.Start()
 	for _, app in APPS do
 		WindowManager.register(app[1], windows[app[2]], apps[app[3]])
 	end
+	WindowManager.register("CallerFile", windows.CallerFileWindow)
 
 	PhoneApp.Start(windows.PhoneWindow)
 	CashApps.StartGiftCards(windows.GiftCardsWindow)
 	CashApps.StartTerminal(windows.TerminalWindow)
 	CashApps.StartDonations(windows.DonationsWindow)
 	WalletApp.Start(windows.WalletWindow)
+	TrainingApp.Start(windows.TrainingWindow)
+	CallerFileApp.Start(windows.CallerFileWindow)
+	local fileButton = windows.PhoneWindow.Body.CallView.CallerCard.FileButton
+	ButtonFx.attach(fileButton, 1.05, 0.95)
+	fileButton.MouseButton1Click:Connect(CallerFileApp.Show)
 
 	for _, app in APPS do
 		local icon = desktop.Icons:FindFirstChild(app[4])
