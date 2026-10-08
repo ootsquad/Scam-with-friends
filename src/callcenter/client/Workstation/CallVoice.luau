@@ -5,7 +5,10 @@
 	  Caller's voice   AudioTextToSpeech -> AudioDeviceOutput, created on this client only, so nobody else
 	                   hears your caller. Lines are queued and read one at a time.
 	  Your voice       AudioDeviceInput (your mic) -> AudioSpeechToText; each sentence you say becomes text
-	                   that's sent to the call like a typed line.
+	                   that's sent to the call like a typed line. MicFilter drops transcripts that don't
+	                   come from you actually talking (mouse clicks, desk noise, the caller's voice echoing
+	                   out of your speakers): Roblox has to have heard a voice for long enough, and noise
+	                   words like a lone "the" or "you" are ignored.
 
 	Both are Roblox betas with limits: text-to-speech only works in a saved/published place, max 300
 	characters per line and about one request per second per experience; speech-to-text needs Roblox voice
@@ -15,15 +18,20 @@
 	CallVoice.SetVoiceEnabled(on)    CallVoice.VoiceEnabled
 	CallVoice.SetMic(on) -> (ok, message?)   CallVoice.MicOn   CallVoice.Hearing (voice detected)
 	CallVoice.Changed()              fires when VoiceEnabled / MicOn / Hearing change
-	CallVoice.Heard(text)            fires with each transcribed sentence
+	CallVoice.Heard(text)            fires with each transcribed sentence that passed MicFilter
+	CallVoice.Ignored(text, reason)  fires with each transcript MicFilter dropped
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local VoiceChatService = game:GetService("VoiceChatService")
 
-local Signal = require(ReplicatedStorage:WaitForChild("Shared").Util.Signal)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local CallConfig = require(Shared.Config.CallConfig)
+local Signal = require(Shared.Util.Signal)
+local MicFilter = require(script.Parent.MicFilter)
 
 local MAX_CHUNK = 300
 local LOAD_GAP = 1.05 -- seconds between speech requests (Roblox rate limit)
@@ -36,6 +44,7 @@ local CallVoice = {
 	Hearing = false,
 	Changed = Signal.new(),
 	Heard = Signal.new(),
+	Ignored = Signal.new(),
 }
 
 -- ---------------------------------------------------------------------------
@@ -48,6 +57,35 @@ local speaking = false
 local speakToken = 0
 local lastLoad = -math.huge
 local ttsBroken = false
+
+-- What the caller said out loud lately, so their voice echoing back into your mic isn't sent as yours.
+local CALLER_MEMORY = 20 -- seconds
+local callerPlaying = false
+local callerStoppedAt = -math.huge
+local callerSaid: { { text: string, at: number } } = {}
+
+local function rememberCallerLine(text: string)
+	local now = os.clock()
+	table.insert(callerSaid, { text = text, at = now })
+	while #callerSaid > 0 and now - callerSaid[1].at > CALLER_MEMORY do
+		table.remove(callerSaid, 1)
+	end
+end
+
+local function recentCallerText(): string
+	local now = os.clock()
+	local parts = {}
+	for _, line in callerSaid do
+		if now - line.at <= CALLER_MEMORY then
+			table.insert(parts, line.text)
+		end
+	end
+	return table.concat(parts, " ")
+end
+
+local function callerAudible(): boolean
+	return callerPlaying or os.clock() - callerStoppedAt < CallConfig.Mic.EchoTail
+end
 
 local function ensureSpeaker(): boolean
 	if speaker then
@@ -123,6 +161,8 @@ local function playOne(text: string, voice: string, token: number)
 	local connection = speaker.Ended:Connect(function()
 		finished = true
 	end)
+	rememberCallerLine(text)
+	callerPlaying = true
 	pcall(function()
 		speaker:Play()
 	end)
@@ -131,6 +171,8 @@ local function playOne(text: string, voice: string, token: number)
 		task.wait(0.1)
 	end
 	connection:Disconnect()
+	callerPlaying = false
+	callerStoppedAt = os.clock()
 end
 
 local function pump()
@@ -160,6 +202,10 @@ function CallVoice.StopSpeaking()
 	speakToken += 1
 	queue = {}
 	speaking = false
+	if callerPlaying then
+		callerPlaying = false
+		callerStoppedAt = os.clock()
+	end
 	if speaker then
 		pcall(function()
 			speaker:Pause()
@@ -182,6 +228,10 @@ end
 local listener: any = nil
 local listenerConnections: { RBXScriptConnection } = {}
 local voiceAllowed: boolean? = nil
+local VOICE_FORGET = 12 -- seconds of quiet after which earlier stray noise no longer counts as voice
+local voiceSeconds = 0 -- voice Roblox detected since the last transcript
+local lastVoiceAt = -math.huge
+local voiceWorks = false -- voice detection has fired at least once on this device
 
 local function canUseVoice(): boolean
 	if voiceAllowed == nil then
@@ -223,15 +273,46 @@ local function ensureListener(): boolean
 
 		table.insert(listenerConnections, stt:GetPropertyChangedSignal("Text"):Connect(function()
 			local heard = stt.Text
-			if heard ~= "" then
-				stt.Text = ""
-				if CallVoice.MicOn then
-					CallVoice.Heard:Fire(heard)
+			if heard == "" then
+				return
+			end
+			stt.Text = ""
+			local seconds = if os.clock() - lastVoiceAt <= VOICE_FORGET then voiceSeconds else 0
+			voiceSeconds = 0
+			if not CallVoice.MicOn then
+				return
+			end
+			local ok, result = MicFilter.Check(heard, {
+				VoiceSeconds = seconds,
+				VoiceWorks = voiceWorks,
+				CallerAudible = callerAudible(),
+				CallerText = recentCallerText(),
+			})
+			if ok then
+				CallVoice.Heard:Fire(result)
+			else
+				if RunService:IsStudio() then
+					print(`[CallVoice] ignored "{heard}": {result}`)
 				end
+				CallVoice.Ignored:Fire(heard, result)
 			end
 		end))
-		table.insert(listenerConnections, stt:GetPropertyChangedSignal("VoiceDetected"):Connect(function()
-			setHearing(CallVoice.MicOn and stt.VoiceDetected)
+		-- VoiceDetected is polled: it's how long Roblox heard a voice that tells talking apart from noise.
+		table.insert(listenerConnections, RunService.Heartbeat:Connect(function(dt)
+			if not CallVoice.MicOn then
+				return
+			end
+			local detected = stt.VoiceDetected == true
+			if detected then
+				local now = os.clock()
+				if now - lastVoiceAt > VOICE_FORGET then
+					voiceSeconds = 0
+				end
+				voiceSeconds += dt
+				lastVoiceAt = now
+				voiceWorks = true
+			end
+			setHearing(detected)
 		end))
 		listener = stt
 	end)
@@ -252,9 +333,13 @@ function CallVoice.SetMic(on: boolean): (boolean, string?)
 		end
 	end
 	CallVoice.MicOn = on
+	voiceSeconds = 0
 	if listener then
 		pcall(function()
 			listener.Enabled = on
+			if on then
+				listener.Text = "" -- nothing left over from before the mic was on
+			end
 		end)
 	end
 	if not on then
