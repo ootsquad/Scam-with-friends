@@ -55,6 +55,24 @@ local Theme = {
 
 	-- taskbar tray
 	TrayIdle = hex("#A0A0A0"),
+	TrayReview = hex("#FF9F7A"),
+
+	-- call center phone (softer dark)
+	PhonePanel = hex("#1E2128"),
+	PhoneHead = hex("#282C35"),
+	PhoneLine = hex("#353A45"),
+	TrustLow = hex("#EF4444"),
+	TrustMid = hex("#F59E0B"),
+	TrustHigh = hex("#22C55E"),
+	LeadAvailableBg = hex("#1F3B2A"),
+	LeadOnCallBg = hex("#1E3354"),
+	LeadOnCallText = hex("#7FB2FF"),
+	LeadScammedBg = hex("#3A3320"),
+	LeadBlockedBg = hex("#3F2024"),
+	LeadBlockedText = hex("#FF8A8A"),
+	PaymentGiftCard = hex("#7C3AED"),
+	PaymentCard = hex("#0F766E"),
+	PaymentDonation = hex("#E11D48"),
 
 	-- Index matches SettingsConfig.Wallpapers: Dusk, Overcast, Night
 	Wallpapers = {

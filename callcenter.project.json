@@ -29,6 +29,14 @@
       }
     },
 
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "$ignoreUnknownInstances": true,
+      "LeadRig": {
+        "$path": "src/callcenter/assets/LeadRig.rbxm"
+      }
+    },
+
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "Client": {

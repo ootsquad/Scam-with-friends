@@ -55,10 +55,12 @@ function Notify.show(title: string, message: string, accent: Color3?)
 	toast.Name = "ActiveToast"
 	local titleLabel = toast:FindFirstChild("Title") :: TextLabel
 	local messageLabel = toast:FindFirstChild("Message") :: TextLabel
-	local accentBar = toast:FindFirstChild("Accent") :: Frame
+	local accentBar = toast:FindFirstChild("Accent") :: Frame? -- optional colored edge (the lobby has one)
 	titleLabel.Text = title
 	messageLabel.Text = message
-	accentBar.BackgroundColor3 = accent or Theme.Green
+	if accentBar then
+		accentBar.BackgroundColor3 = accent or Theme.Green
+	end
 	toast.Position = UDim2.fromOffset(0, homeY + SPACING)
 	toast.Visible = true
 	toast.Parent = container

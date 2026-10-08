@@ -11,4 +11,5 @@ return {
 	Lobby = require(script.Lobby),
 	Settings = require(script.Settings),
 	Shift = require(script.Shift),
+	Call = require(script.Call),
 }
