@@ -74,24 +74,63 @@ local CallConfig = {
 	MethodOrder = { "gift_card", "card", "donation" },
 	DeclinesBeforeFreeze = 2, -- declined charges before a card is frozen
 
-	-- Fake caller avatars: a copy of ServerStorage.LeadRig dressed with random catalog items.
-	-- These lists are always used; with SearchCatalog on, the server also pulls more from the Roblox catalog.
+	-- Fake caller avatars: a copy of ServerStorage.LeadRig dressed with random catalog items, a random skin tone
+	-- and a random body shape. When the server starts it searches the Roblox catalog (every keyword below) to
+	-- fill big item pools; the ID lists at the bottom are always in the pools too, even if the search fails.
+	-- No two callers on the phones at the same time wear the same outfit, and the least-used items are
+	-- picked first. Items that keep failing to load are dropped.
 	Avatars = {
 		SearchCatalog = true,
+		PageSize = 30, -- items per catalog page
+		FirstPages = 3, -- pages for the plain search (no keyword) of each item type
+		KeywordPages = 1, -- pages for each keyword search
+		Searches = {
+			Hair = { "", "curly", "braids", "ponytail", "bun", "messy", "spiky", "afro", "long", "short" },
+			Hats = { "", "cap", "beanie", "cowboy", "bucket hat", "headphones" },
+			FaceAccessories = { "", "glasses", "sunglasses", "beard" },
+			NeckAccessories = { "", "scarf", "necklace", "tie" },
+			ShoulderAccessories = { "" },
+			BackAccessories = { "", "backpack", "wings", "guitar" },
+			WaistAccessories = { "", "belt" },
+			FrontAccessories = { "" },
+			Shirts = { "", "hoodie", "jacket", "suit", "sweater", "flannel", "dress", "uniform", "vest", "jersey" },
+			Pants = { "", "jeans", "shorts", "skirt", "sweatpants", "cargo", "overalls" },
+			TShirts = { "" },
+			Faces = { "" },
+		} :: { [string]: { string } },
+		-- Chance a caller wears something in each slot. Hair, a face, a shirt and pants are always picked.
+		Chances = {
+			Hats = 0.35,
+			FaceAccessories = 0.25,
+			NeckAccessories = 0.12,
+			ShoulderAccessories = 0.08,
+			BackAccessories = 0.15,
+			WaistAccessories = 0.08,
+			FrontAccessories = 0.06,
+			TShirts = 0.3,
+		} :: { [string]: number },
+		-- Body shape: each HumanoidDescription scale is picked between these values.
+		Scales = {
+			HeightScale = { 0.9, 1.05 },
+			WidthScale = { 0.75, 1 },
+			DepthScale = { 0.85, 1 },
+			HeadScale = { 0.95, 1 },
+			BodyTypeScale = { 0, 0.3 },
+			ProportionScale = { 0, 1 },
+		} :: { [string]: { number } },
+		-- Always in the pools.
 		Hair = {
 			11721248, 11721349, 11721354, 12314098, 12270336, 16131017, 11913660, 24910539, 26778066, 12519986,
 			12819292, 12819326, 62234425, 13476917, 26658141,
-		},
-		Hats = { 2551510151, 2535600138 },
-		FaceAccessories = { 2535420239 },
+		} :: { number },
+		Hats = { 2551510151, 2535600138 } :: { number },
+		FaceAccessories = { 2535420239 } :: { number },
 		Faces = {
 			144075659, 20418658, 7699174, 26424808, 7074764, 7074729, 7074786, 7074864, 12145366, 22877700, 20722130,
 			226217449, 494291269, 4018627046,
-		},
+		} :: { number },
 		Shirts = {} :: { number },
 		Pants = {} :: { number },
-		HatChance = 0.35,
-		FaceAccessoryChance = 0.15,
 	},
 
 	LeadStatus = table.freeze({
