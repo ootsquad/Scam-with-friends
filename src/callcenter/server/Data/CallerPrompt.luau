@@ -6,6 +6,8 @@
 	CallerPrompt.system(persona, context) -> string
 	CallerPrompt.opening(context, trust) -> string
 	CallerPrompt.turn(text, trust, turnsLeft, note?) -> string
+	CallerPrompt.blocked(line) -> string       asks for a rephrase of a line Roblox's text filter blocked
+	CallerPrompt.BAD_LINE                      note for the next turn when a line couldn't get through at all
 	CallerPrompt.TOOL                          the "respond" tool Claude must answer with
 ]]
 
@@ -29,7 +31,19 @@ local HOW_HARD = {
 	"hard to fool: you've been warned about phone scams",
 }
 
+-- Roblox's text filter hides a whole line when it looks like personal info or contact off Roblox, so the
+-- caller is told to steer clear of those.
+local CHAT_SAFE = "Everything you say goes through Roblox's chat filter, which hides the whole line as ##### if it "
+	.. "looks like personal info. So: no digits or numbers written out (say \"a few hundred bucks\", not an amount); "
+	.. "no phone numbers, addresses, emails, websites, usernames, apps or social media; no last names, ages, "
+	.. "birthdays or where anyone lives; never ask for or offer a number to call back, and don't suggest meeting up; "
+	.. "don't name real companies, banks or brands (say \"my insurance company\", \"my bank\", \"your company\"). "
+	.. "Ask who they are with simple everyday words instead."
+
 local CallerPrompt = {}
+
+CallerPrompt.BAD_LINE = "(The line was bad and they didn't hear your last line. Say it again in simpler words if it "
+	.. "still matters.)"
 
 CallerPrompt.TOOL = {
 	name = "respond",
@@ -53,6 +67,11 @@ CallerPrompt.TOOL = {
 					amount = { type = "integer", description = "Dollars, no more than your limit." },
 				},
 				required = { "method", "amount" },
+			},
+			repeat_payment = {
+				type = "boolean",
+				description = "True if they asked you to repeat the gift card code or card details you already gave. "
+					.. "The game reads them out again right after your line.",
 			},
 			hang_up = {
 				type = "boolean",
@@ -89,6 +108,7 @@ function CallerPrompt.system(persona: any, context: Context): string
 		"HOW TO PLAY",
 		"- Speak like a real person on the phone: one or two short sentences, under 200 characters. Plain spoken "
 			.. "words only: no emojis, no actions in asterisks, no lists.",
+		"- " .. CHAT_SAFE,
 		"- Each message shows your current trust in the other person (0-100). After every line, set trust_change for "
 			.. "how what they just said affects it:",
 		`  - Up (+3 to +{CallConfig.MaxTrustGain}) when they're believable, patient, consistent, sound like who they `
@@ -101,7 +121,8 @@ function CallerPrompt.system(persona: any, context: Context): string
 			.. "limit, and say in one short sentence that you're doing it (\"Okay, I bought it. Here's the code.\"). "
 			.. "The game reads out the actual gift card code or card details right after your line, so never make up "
 			.. "numbers or codes yourself.",
-		"- If they ask you to repeat a code or card details, repeat exactly what was said earlier in the call.",
+		"- If they ask you to repeat a code or card details, say something short like \"Sure, here it is again.\" and "
+			.. "set repeat_payment to true. The game reads them out again, so don't say them yourself.",
 		"- After you've paid once, don't pay again.",
 		`- If your trust is {CallConfig.HangUpTrust} or lower, or they insult or threaten you, say a short goodbye and `
 			.. "set hang_up to true.",
@@ -117,6 +138,11 @@ function CallerPrompt.opening(context: Context, trust: number): string
 		return `[Trust: {trust}/100]\n(Someone at the number you called just picked up. You speak first.)`
 	end
 	return `[Trust: {trust}/100]\n(You answer the phone. You speak first.)`
+end
+
+function CallerPrompt.blocked(line: string): string
+	return `(Roblox's chat filter hid your last try, so they didn't hear it: "{line}". Say what you meant again in `
+		.. "different, simpler words. " .. CHAT_SAFE .. ")"
 end
 
 function CallerPrompt.turn(text: string, trust: number, turnsLeft: number, note: string?): string

@@ -31,6 +31,7 @@ export type Reply = {
 	Say: string,
 	TrustChange: number,
 	Pay: { Method: string, Amount: number }?,
+	RepeatPayment: boolean,
 	HangUp: boolean,
 }
 
@@ -140,6 +141,7 @@ local function parse(body: string): Reply?
 				Say = input.say,
 				TrustChange = tonumber(input.trust_change) or 0,
 				Pay = pay,
+				RepeatPayment = input.repeat_payment == true,
 				HangUp = input.hang_up == true,
 			}
 		end

@@ -471,7 +471,13 @@ function PhoneApp.Start(window: Frame)
 		showDelta(line.Delta)
 		local state = CallStore.State
 		if state then
-			CallVoice.Speak(line.Text, state.VoiceId)
+			-- Don't read out "(The line crackles.)" or words the filter hid.
+			local speech = string.gsub(line.Text, "%b()", " ")
+			speech = string.gsub(speech, "#+", " ")
+			speech = string.gsub(string.gsub(speech, "%s+", " "), "^%s*(.-)%s*$", "%1")
+			if string.find(speech, "%w") then
+				CallVoice.Speak(speech, state.VoiceId)
+			end
 		end
 	end)
 	CallStore.YourLine:Connect(function(line)
