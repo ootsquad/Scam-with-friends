@@ -123,8 +123,8 @@ function LoadingController.Start()
 	startTips()
 end
 
--- Runs each step in order, advancing the bar. Returns false (and shows an error) if a step throws.
-function LoadingController.RunSteps(steps: { Step }, doneText: string?): boolean
+-- Runs each step in order, advancing the bar. Returns false (and shows failText) if a step throws.
+function LoadingController.RunSteps(steps: { Step }, doneText: string?, failText: string?): boolean
 	local perStep = MIN_BOOT_TIME / #steps
 
 	for index, step in steps do
@@ -134,7 +134,7 @@ function LoadingController.RunSteps(steps: { Step }, doneText: string?): boolean
 		local ok, err = pcall(step.run)
 		if not ok then
 			warn(`[Loading] "{step.status}" failed: {err}`)
-			LoadingController.SetStatus("Couldn't reach the call center. Try rejoining.", true)
+			LoadingController.SetStatus(failText or "Something went wrong while starting up. Try rejoining.", true)
 			stopTips()
 			return false
 		end

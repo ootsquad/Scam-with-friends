@@ -10,6 +10,9 @@
 
 	ClaudeClient.Respond(system, messages) -> (Reply?, errorCode?, detail?)    yields
 		messages = { { role = "user" | "assistant", content = "..." }, ... }   (starts and ends with "user")
+		max_tokens is CallConfig.MaxTokens, clamped to the model's output limit (CallConfig.ModelLimits). If a
+		conversation ever outgrows the model's context window, the oldest turns after the opening are dropped.
+		With CallConfig.PromptCaching, the instructions and the conversation so far are cached between turns.
 		errorCode: "missing_key" | "http_disabled" | "bad_key" | "busy" | "bad_request" | "bad_response"
 		detail:    the API's own error message, when there is one
 	ClaudeClient.Describe(errorCode, detail?) -> string    player-facing explanation
@@ -47,7 +50,27 @@ local DESCRIPTIONS = {
 	bad_response = "The line crackled and the call dropped. Try again.",
 }
 
+-- Problems that won't fix themselves; anything else (busy, a bad reply) is worth trying again.
+local LINE_DOWN = { missing_key = true, http_disabled = true, bad_key = true }
+
 local ClaudeClient = {}
+
+-- The PhoneLine attribute the Phone app shows: "ok", or why calls can't work. Only setup problems mark the
+-- line down, and any answer from Claude marks it up again.
+local function reportLine(err: string?, detail: string?)
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	if err == nil then
+		if ReplicatedStorage:GetAttribute("PhoneLine") ~= "ok" then
+			ReplicatedStorage:SetAttribute("PhoneLine", "ok")
+		end
+	elseif LINE_DOWN[err] then
+		local text = DESCRIPTIONS[err]
+		if detail and RunService:IsStudio() then
+			text ..= ` ({detail})`
+		end
+		ReplicatedStorage:SetAttribute("PhoneLine", text)
+	end
+end
 
 -- ---------------------------------------------------------------------------
 -- Finding the key
@@ -212,15 +235,69 @@ local function post(body: { [string]: any }): (any, string?, string?)
 	return nil, lastCode, lastDetail
 end
 
+-- ---------------------------------------------------------------------------
+-- Limits and caching
+-- ---------------------------------------------------------------------------
+
+local function modelLimits(): { Context: number, Output: number }
+	return CallConfig.ModelLimits[CallConfig.Model] or CallConfig.ModelLimits.Default
+end
+
+function ClaudeClient.MaxTokens(): number
+	return math.clamp(math.floor(CallConfig.MaxTokens), 1, modelLimits().Output)
+end
+
+-- About four characters per token; only used to stay well inside the context window.
+local function estimate(text: string): number
+	return math.ceil(#text / 4)
+end
+
+local function fitContext(system: string, messages: { Message }): { Message }
+	local budget = modelLimits().Context - ClaudeClient.MaxTokens() - 4000 -- room for the tool definition
+	local total = estimate(system)
+	for _, message in messages do
+		total += estimate(message.content)
+	end
+	if total <= budget then
+		return messages
+	end
+	-- Drop the oldest assistant/user pair after the opening until it fits (keeps the turns alternating).
+	local kept = table.clone(messages)
+	while total > budget and #kept > 3 do
+		total -= estimate(kept[2].content) + estimate(kept[3].content)
+		table.remove(kept, 2)
+		table.remove(kept, 2)
+	end
+	return kept
+end
+
+-- Marks the instructions and the latest turn as cache points, so each turn only pays for what's new.
+local function withCaching(system: string, messages: { Message }): (any, { any })
+	if not CallConfig.PromptCaching then
+		return system, messages
+	end
+	local cached = table.clone(messages) :: { any }
+	local last = cached[#cached]
+	if last and last.role == "user" and type(last.content) == "string" then
+		cached[#cached] = {
+			role = "user",
+			content = { { type = "text", text = last.content, cache_control = { type = "ephemeral" } } },
+		}
+	end
+	return { { type = "text", text = system, cache_control = { type = "ephemeral" } } }, cached
+end
+
 function ClaudeClient.Respond(system: string, messages: { Message }): (Reply?, string?, string?)
+	local systemBlocks, conversation = withCaching(system, fitContext(system, messages))
 	local response, err, detail = post({
 		model = CallConfig.Model,
-		max_tokens = CallConfig.MaxTokens,
-		system = system,
-		messages = messages,
+		max_tokens = ClaudeClient.MaxTokens(),
+		system = systemBlocks,
+		messages = conversation,
 		tools = { CallerPrompt.TOOL },
 		tool_choice = { type = "tool", name = CallerPrompt.TOOL.name },
 	})
+	reportLine(err, detail)
 	if not response then
 		return nil, err, detail
 	end
@@ -247,14 +324,13 @@ end
 
 -- Logs whether the key is found and whether the API accepts it. Costs one tiny request.
 function ClaudeClient.Check()
-	local ReplicatedStorage = game:GetService("ReplicatedStorage")
 	local key, where = findKey()
 	if not key then
 		warn(
 			`[ClaudeClient] no API key: put a StringValue named "{CallConfig.ApiKeyValue}" in ServerStorage of this place. `
 				.. `StringValues in ServerStorage: {describeStringValues()}`
 		)
-		ReplicatedStorage:SetAttribute("PhoneLine", DESCRIPTIONS.missing_key)
+		reportLine("missing_key")
 		return
 	end
 	print(`[ClaudeClient] using the API key in {where} ({string.sub(key, 1, 10)}…, {#key} characters)`)
@@ -263,13 +339,11 @@ function ClaudeClient.Check()
 		max_tokens = 5,
 		messages = { { role = "user", content = "Say OK." } },
 	})
+	reportLine(err, detail)
 	if response then
 		print(`[ClaudeClient] {CallConfig.Model} is answering. Phone lines are open.`)
-		ReplicatedStorage:SetAttribute("PhoneLine", "ok")
 	else
-		local reason = `{DESCRIPTIONS[err or ""] or DESCRIPTIONS.bad_response} {detail or ""}`
-		warn(`[ClaudeClient] key check failed: {reason}`)
-		ReplicatedStorage:SetAttribute("PhoneLine", reason)
+		warn(`[ClaudeClient] key check failed: {DESCRIPTIONS[err or ""] or DESCRIPTIONS.bad_response} {detail or ""}`)
 	end
 end
 

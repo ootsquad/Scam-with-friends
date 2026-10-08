@@ -34,14 +34,18 @@ local TextService = game:GetService("TextService")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
 local Call = require(Shared:WaitForChild("Network")).Call
+local Namespace = require(Shared.Network.Namespace)
 
 local Data = script.Parent.Parent.Data
 local CallerPrompt = require(Data.CallerPrompt)
 local Personas = require(Data.Personas)
+local CareerService = require(script.Parent.CareerService)
+local ChoreService = require(script.Parent.ChoreService)
 local ClaudeClient = require(script.Parent.ClaudeClient)
 local DeskService = require(script.Parent.DeskService)
 local EconomyService = require(script.Parent.EconomyService)
 local LeadService = require(script.Parent.LeadService)
+local OfficeService = require(script.Parent.OfficeService)
 local PaymentService = require(script.Parent.PaymentService)
 local ShiftService = require(script.Parent.ShiftService)
 
@@ -60,6 +64,7 @@ type Session = {
 	lead: LeadService.LeadRecord,
 	phase: number,
 	trust: number,
+	gainScale: number, -- trust gains are multiplied by this (headset, broken equipment)
 	outcome: number,
 	context: CallerPrompt.Context,
 	smarts: CallerPrompt.Smarts,
@@ -109,6 +114,7 @@ local function stateOf(session: Session)
 		Thinking = session.thinking,
 		Paid = session.paid,
 		PayAt = session.smarts.PayTrust,
+		LinesLeft = math.max(0, CallConfig.MaxTurns - session.turns),
 	}
 end
 
@@ -182,6 +188,19 @@ end
 local scheduleIncoming: (Player) -> ()
 local requestReply: (Session, string?) -> ()
 
+-- The caller remembers how the call went, for the next time you talk (CallConfig.CallMemory calls).
+local function rememberCall(session: Session)
+	local recap = CallerPrompt.recap(session.messages, session.outcome)
+	if not recap then
+		return
+	end
+	local memory = session.lead.Memory
+	table.insert(memory, recap)
+	while #memory > CallConfig.CallMemory do
+		table.remove(memory, 1)
+	end
+end
+
 local function endCall(session: Session, outcome: number)
 	if session.ended then
 		return
@@ -191,6 +210,7 @@ local function endCall(session: Session, outcome: number)
 	session.thinking = false
 	session.outcome = if session.paid then Outcome.Paid else outcome
 	pushState(session)
+	rememberCall(session)
 
 	local player, lead = session.player, session.lead
 	if session.paid then
@@ -231,11 +251,15 @@ local function tryPay(session: Session, pay: { Method: string, Amount: number })
 			return nil
 		end
 		session.paid = true
+		CareerService.CompleteStep(player, "Paid")
+		CareerService.Count(player, "Scams")
 		PaymentService.Donate(player, leadName, amount)
 		return nil
 	end
 
 	session.paid = true
+	CareerService.CompleteStep(player, "Paid")
+	CareerService.Count(player, "Scams")
 	if pay.Method == "gift_card" then
 		return PaymentService.IssueGiftCard(player, leadName, amount)
 	end
@@ -287,6 +311,9 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 		else math.clamp(math.round(reply.TrustChange), -smarts.MaxLoss, smarts.MaxGain)
 	if hidden or session.staticTurn then
 		delta = math.max(delta, 0)
+	end
+	if delta > 0 and session.gainScale ~= 1 then
+		delta = math.max(1, math.round(delta * session.gainScale))
 	end
 	local before = session.trust
 	session.trust = math.clamp(session.trust + delta, 0, 100)
@@ -364,6 +391,7 @@ end
 
 local function connect(session: Session)
 	session.phase = Phase.Connected
+	CareerService.Count(session.player, "Calls")
 	table.insert(session.messages, { role = "user", content = CallerPrompt.opening(session.context, session.trust) })
 	requestReply(session)
 end
@@ -412,13 +440,24 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		reason = if incoming then Personas.incomingReason(random) else nil,
 		smarts = smarts,
 		level = level,
+		memory = table.clone(lead.Memory or {}),
 	}
+	-- Perks: the floor and a tidy office warm callers up, a messy desk cools them; a better headset (and
+	-- working equipment) makes every good line count for more.
+	local choreTrust, choreGain = ChoreService.CallModifiers(player)
+	local startTrust = math.clamp(
+		CallConfig.StartTrust + OfficeService.Perks().StartTrust + choreTrust,
+		CallConfig.HangUpTrust + 10,
+		smarts.PayTrust - 1 -- perks warm callers up, but nobody pays without being talked into it
+	)
+	local gainScale = (1 + CareerService.Tier(player, "Headset").Value) * choreGain
 	local session: Session = {
 		id = nextCallId,
 		player = player,
 		lead = lead,
 		phase = if incoming then Phase.Incoming else Phase.Ringing,
-		trust = CallConfig.StartTrust,
+		trust = startTrust,
+		gainScale = gainScale,
 		outcome = Outcome.None,
 		context = context,
 		smarts = smarts,
@@ -494,22 +533,23 @@ local function onStartCall(leadId: number, player: Player)
 	end
 	local current = sessions[player]
 	if current and not current.ended then
-		return result(false, "You're already on a call.")
+		return result(false, "Finish your current call first.")
 	end
 	local lead = LeadService.Find(player, leadId)
 	if not lead then
 		return result(false, "That lead isn't in your list anymore.")
 	end
 	if lead.Status == Status.Scammed then
-		return result(false, `You already got {lead.DisplayName}.`)
+		return result(false, `You already got {lead.DisplayName}. A new lead shows up soon.`)
 	elseif lead.Status == Status.Blocked then
-		return result(false, `{lead.DisplayName} isn't picking up right now.`)
+		return result(false, `{lead.DisplayName} won't pick up right now.`)
 	elseif lead.Status ~= Status.Available then
-		return result(false, `{lead.DisplayName} is busy.`)
+		return result(false, `{lead.DisplayName} is on another call.`)
 	end
 	if not ClaudeClient.HasKey() then
 		return result(false, ClaudeClient.Describe("missing_key"))
 	end
+	CareerService.CompleteStep(player, "Call")
 	startSession(player, lead, false)
 	return result(true, `Calling {lead.DisplayName}...`)
 end
@@ -520,6 +560,7 @@ local function onAnswer(accept: boolean, player: Player)
 		return
 	end
 	if accept then
+		CareerService.CompleteStep(player, "Call")
 		connect(session)
 	else
 		endCall(session, Outcome.Declined)
@@ -531,11 +572,21 @@ local function onSay(text: string, player: Player)
 	if not session or session.ended or session.phase ~= Phase.Connected or type(text) ~= "string" then
 		return
 	end
+	-- Lines that come in quick succession (two spoken sentences, chat and phone at once) are spaced out
+	-- rather than dropped; only a flood is turned away.
 	local now = os.clock()
-	if lastSay[player] and now - lastSay[player] < SAY_COOLDOWN then
+	local slot = math.max(now, (lastSay[player] or -math.huge) + SAY_COOLDOWN)
+	if slot - now > 1 then
+		notice(player, "Slow down a little. The caller can't keep up.")
 		return
 	end
-	lastSay[player] = now
+	lastSay[player] = slot
+	if slot > now then
+		task.wait(slot - now)
+		if session.ended or sessions[player] ~= session then
+			return
+		end
+	end
 
 	local line = clean(text, CallConfig.MaxSayLength)
 	line = string.gsub(line, "%[static%]", "static") -- only real static counts as static
@@ -573,7 +624,7 @@ end
 
 function CallService.Start()
 	task.spawn(ClaudeClient.Check)
-	Call.queries.StartCall.listen(onStartCall)
+	Namespace.listen(Call.queries.StartCall, onStartCall, Namespace.busy)
 	Call.packets.Answer.listen(onAnswer)
 	Call.packets.Say.listen(onSay)
 	Call.packets.HangUp.listen(onHangUp)

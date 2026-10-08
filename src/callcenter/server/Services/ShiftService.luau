@@ -36,6 +36,7 @@ local Shift = require(Shared.Network).Shift
 local MEMORY_READS = 6 -- the lobby writes right after the teleport starts, so the first read can miss
 local MEMORY_READ_GAP = 2
 local LEAVE_COOLDOWN = 3
+local TELEPORT_ATTEMPTS = 3 -- tries to reach the lobby before kicking with the message instead
 
 export type ShiftInfo = {
 	LobbyCode: string,
@@ -52,6 +53,7 @@ local trusted = false -- came from MemoryStore (not from a client's TeleportData
 local stray = false -- not a crew server
 local fallbackOpen = false -- MemoryStore gave up; take the first valid TeleportData
 local lastLeave: { [Player]: number } = {}
+local leaving: { [Player]: { attempts: number, kickMessage: string } } = {} -- teleports to the lobby in flight
 
 -- ---------------------------------------------------------------------------
 -- Helpers
@@ -159,7 +161,9 @@ local function readMemoryStore(): any
 	return nil
 end
 
--- Sends a player back to the lobby place (a normal public server).
+-- Sends a player back to the lobby place: into a lobby server of their own (parties work across servers), or a
+-- normal public one with LobbyConfig.SoloLobbies off. A failed teleport is retried a few times; after that
+-- the player is kicked with `kickMessage` so nobody is stuck in a call center with nothing to do.
 local function sendToLobby(player: Player, kickMessage: string): boolean
 	if RunService:IsStudio() then
 		notice(player, "Teleports only work in the live game. Stop the test to leave.")
@@ -170,14 +174,57 @@ local function sendToLobby(player: Player, kickMessage: string): boolean
 		player:Kick(kickMessage)
 		return true
 	end
+	local entry = leaving[player]
+	if not entry then
+		entry = { attempts = 0, kickMessage = kickMessage }
+		leaving[player] = entry
+	end
+	entry.attempts += 1
 	local ok, err = pcall(function()
-		TeleportService:TeleportAsync(target, { player })
+		if LobbyConfig.SoloLobbies then
+			local options = Instance.new("TeleportOptions")
+			options.ShouldReserveServer = true
+			options:SetTeleportData({ Solo = true })
+			TeleportService:TeleportAsync(target, { player }, options)
+		else
+			TeleportService:TeleportAsync(target, { player })
+		end
 	end)
 	if not ok then
 		warn(`[ShiftService] couldn't send {player.Name} to the lobby: {err}`)
-		notice(player, "Couldn't reach the lobby. Try again in a moment.")
+		if entry.attempts >= TELEPORT_ATTEMPTS then
+			leaving[player] = nil
+			player:Kick(kickMessage)
+			return true
+		end
+		notice(player, "Couldn't reach the lobby. Trying again…")
+		task.delay(entry.attempts * 2, function()
+			if player.Parent and leaving[player] == entry then
+				sendToLobby(player, kickMessage)
+			end
+		end)
 	end
 	return ok
+end
+
+-- Most teleport failures arrive later, as an event.
+local function onTeleportInitFailed(player: Player, _result: Enum.TeleportResult, message: string)
+	local entry = leaving[player]
+	if not entry then
+		return
+	end
+	warn(`[ShiftService] teleport to the lobby failed for {player.Name}: {message}`)
+	if entry.attempts >= TELEPORT_ATTEMPTS then
+		leaving[player] = nil
+		player:Kick(entry.kickMessage)
+		return
+	end
+	notice(player, "Couldn't reach the lobby. Trying again…")
+	task.delay(entry.attempts * 2, function()
+		if player.Parent and leaving[player] == entry then
+			sendToLobby(player, entry.kickMessage)
+		end
+	end)
 end
 
 local function resolveShift()
@@ -240,6 +287,7 @@ end
 
 local function onPlayerRemoving(player: Player)
 	lastLeave[player] = nil
+	leaving[player] = nil
 	task.defer(updateOnline)
 end
 
@@ -267,6 +315,7 @@ end
 function ShiftService.Start()
 	ReplicatedStorage:SetAttribute("ShiftReady", false)
 	Shift.packets.LeaveShift.listen(onLeaveShift)
+	TeleportService.TeleportInitFailed:Connect(onTeleportInitFailed)
 
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)

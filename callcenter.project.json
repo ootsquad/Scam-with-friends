@@ -3,7 +3,6 @@
   "servePort": 34873,
   "tree": {
     "$className": "DataModel",
-
     "ReplicatedFirst": {
       "$className": "ReplicatedFirst",
       "Arrival": {
@@ -13,7 +12,6 @@
         "$path": "src/ReplicatedFirst/LoadingScreen.model.json"
       }
     },
-
     "ReplicatedStorage": {
       "Packages": {
         "$path": "Packages"
@@ -22,13 +20,17 @@
         "$path": "src/shared"
       }
     },
-
     "ServerScriptService": {
       "Server": {
         "$path": "src/callcenter/server"
+      },
+      "Common": {
+        "$className": "Folder",
+        "SettingsService": {
+          "$path": "src/server/Services/SettingsService.luau"
+        }
       }
     },
-
     "ServerStorage": {
       "$className": "ServerStorage",
       "$ignoreUnknownInstances": true,
@@ -36,7 +38,6 @@
         "$path": "src/callcenter/assets/LeadRig.rbxm"
       }
     },
-
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "Client": {
@@ -49,17 +50,21 @@
             "LoadingController": {
               "$path": "src/client/Controllers/LoadingController.luau"
             }
+          },
+          "Stores": {
+            "$className": "Folder",
+            "SettingsStore": {
+              "$path": "src/client/Stores/SettingsStore.luau"
+            }
           }
         }
       }
     },
-
     "StarterGui": {
       "$className": "StarterGui",
       "$path": "src/callcenter/StarterGui",
       "$ignoreUnknownInstances": true
     },
-
     "SoundService": {
       "$properties": {
         "RespectFilteringEnabled": true

@@ -24,8 +24,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local Format = require(Shared.Util.Format)
 local Call = require(Shared:WaitForChild("Network")).Call
+local Namespace = require(Shared.Network.Namespace)
+local CareerService = require(script.Parent.CareerService)
 local EconomyService = require(script.Parent.EconomyService)
+local OfficeService = require(script.Parent.OfficeService)
 
 local CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 local ATTEMPT_COOLDOWN = 0.4
@@ -65,7 +69,7 @@ local random = Random.new()
 local giftCards: { [Player]: { [string]: GiftCard } } = {}
 local cards: { [Player]: { [string]: Card } } = {}
 local fundraisers: { [Player]: Fundraiser } = {}
-local lastAttempt: { [Player]: number } = {}
+local lastAttempt: { [Player]: { [string]: number } } = {}
 
 local function result(ok: boolean, message: string)
 	return { Ok = ok, Message = message }
@@ -75,9 +79,7 @@ local function pick<T>(list: { T }): T
 	return list[random:NextInteger(1, #list)]
 end
 
-local function lettersAndDigits(text: string): string
-	return string.upper((string.gsub(text, "[^%w]", "")))
-end
+local lettersAndDigits = Format.code
 
 local function onlyDigits(text: string): string
 	return (string.gsub(text, "%D", ""))
@@ -87,36 +89,42 @@ local function onlyLetters(text: string): string
 	return string.upper((string.gsub(text, "[^%a]", "")))
 end
 
-local function money(amount: number): string
-	local text = tostring(math.floor(amount))
-	while true do
-		local replaced, count = string.gsub(text, "^(%d+)(%d%d%d)", "%1,%2")
-		text = replaced
-		if count == 0 then
-			break
-		end
-	end
-	return "$" .. text
-end
+local money = Format.money
 
-local function throttled(player: Player): boolean
+-- Per app ("redeem" / "charge"), so cashing in a gift card and then a credit card quickly is fine.
+local function throttled(player: Player, app: string): boolean
 	local now = os.clock()
-	if lastAttempt[player] and now - lastAttempt[player] < ATTEMPT_COOLDOWN then
+	local times = lastAttempt[player]
+	if not times then
+		times = {}
+		lastAttempt[player] = times
+	end
+	if times[app] and now - times[app] < ATTEMPT_COOLDOWN then
 		return true
 	end
-	lastAttempt[player] = now
+	times[app] = now
 	return false
 end
 
-local function pay(player: Player, method: string, detail: string, amount: number, leadName: string)
-	EconomyService.Award(player, amount)
+-- Pays out what a caller handed over, plus the floor's and the player's router bonus. Returns the bonus.
+local function pay(player: Player, method: string, detail: string, amount: number, leadName: string): number
+	local share = OfficeService.Perks().PayoutBonus + CareerService.Tier(player, "Router").Value
+	local bonus = math.max(0, math.round(amount * share))
+	EconomyService.Award(player, amount + bonus)
+	CareerService.CompleteStep(player, "CashIn")
 	Call.packets.Payout.sendTo({
 		Method = method,
 		Label = CallConfig.PaymentMethods[method].Label,
 		Detail = detail,
-		Amount = amount,
+		Amount = amount + bonus,
+		Bonus = bonus,
 		LeadName = leadName,
 	}, player)
+	return bonus
+end
+
+local function withBonus(text: string, bonus: number): string
+	return if bonus > 0 then `{text} (+{money(bonus)} bonus)` else text
 end
 
 -- ---------------------------------------------------------------------------
@@ -149,7 +157,9 @@ function PaymentService.IssueGiftCard(player: Player, leadName: string, amount: 
 end
 
 local function onRedeem(code: string, player: Player)
-	if type(code) ~= "string" or throttled(player) then
+	if type(code) ~= "string" then
+		return result(false, "Type the code the caller read out.")
+	elseif throttled(player, "redeem") then
 		return result(false, "Slow down a little.")
 	end
 	local key = lettersAndDigits(code)
@@ -164,8 +174,8 @@ local function onRedeem(code: string, player: Player)
 		return result(false, "That card was already redeemed.")
 	end
 	card.Redeemed = true
-	pay(player, "gift_card", `{card.Brand} gift card ····{string.sub(key, -4)}`, card.Amount, card.LeadName)
-	return result(true, `Redeemed a {money(card.Amount)} {card.Brand} card.`)
+	local bonus = pay(player, "gift_card", `{card.Brand} gift card ····{string.sub(key, -4)}`, card.Amount, card.LeadName)
+	return result(true, withBonus(`Redeemed a {money(card.Amount)} {card.Brand} card.`, bonus))
 end
 
 -- ---------------------------------------------------------------------------
@@ -198,7 +208,9 @@ function PaymentService.IssueCard(player: Player, leadName: string, limit: numbe
 end
 
 local function onCharge(request: any, player: Player)
-	if type(request) ~= "table" or throttled(player) then
+	if type(request) ~= "table" then
+		return result(false, "Enter the card details the caller read out.")
+	elseif throttled(player, "charge") then
 		return result(false, "Slow down a little.")
 	end
 	local digits = onlyDigits(tostring(request.Number or ""))
@@ -231,8 +243,8 @@ local function onCharge(request: any, player: Player)
 		return result(false, "Declined: insufficient funds. Try a smaller amount before the bank gets suspicious.")
 	end
 	card.Used = true
-	pay(player, "card", `{card.Brand} ending in {string.sub(digits, -4)}`, amount, card.LeadName)
-	return result(true, `Charged {money(amount)} to the {card.Brand} card.`)
+	local bonus = pay(player, "card", `{card.Brand} ending in {string.sub(digits, -4)}`, amount, card.LeadName)
+	return result(true, withBonus(`Charged {money(amount)} to the {card.Brand} card.`, bonus))
 end
 
 -- ---------------------------------------------------------------------------
@@ -265,8 +277,8 @@ function PaymentService.Donate(player: Player, leadName: string, amount: number)
 end
 
 function PaymentService.Start()
-	Call.queries.RedeemGiftCard.listen(onRedeem)
-	Call.queries.ChargeCard.listen(onCharge)
+	Namespace.listen(Call.queries.RedeemGiftCard, onRedeem, Namespace.busy)
+	Namespace.listen(Call.queries.ChargeCard, onCharge, Namespace.busy)
 	Players.PlayerAdded:Connect(fundraiserOf)
 	for _, player in Players:GetPlayers() do
 		fundraiserOf(player)

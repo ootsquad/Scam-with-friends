@@ -14,6 +14,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TeleportService = game:GetService("TeleportService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Format = require(Shared.Util.Format)
 local LobbyConfig = require(Shared.Config.LobbyConfig)
 local SettingsConfig = require(Shared.Config.SettingsConfig)
 
@@ -27,6 +28,7 @@ local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
 local Theme = require(Ui.Theme)
 local UiScale = require(Ui.UiScale)
+local Wallpaper = require(Ui.Wallpaper)
 local WindowManager = require(Ui.WindowManager)
 local Apps = Client.Apps
 local JoinApp = require(Apps.JoinApp)
@@ -36,9 +38,6 @@ local LoadingController = require(script.Parent.LoadingController)
 
 local Phase = LobbyConfig.Phase
 local player = Players.LocalPlayer
-
-local WEEKDAYS = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }
-local MONTHS = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" }
 
 local DesktopController = {}
 
@@ -67,7 +66,7 @@ local function setControlsEnabled(enabled: boolean)
 	end
 end
 
--- Play: open your lobby, or create one if you're not in one.
+-- Play: open your party, or create one if you're not in one.
 local function launchPlay()
 	if LobbyStore.InLobby() then
 		WindowManager.open("Lobby")
@@ -84,49 +83,19 @@ local function launchPlay()
 			WindowManager.open("Lobby")
 		end
 	else
-		Notify.show("Couldn't open a lobby", result.Message, Theme.Red)
+		Notify.show("Couldn't open a party", result.Message, Theme.Red)
 	end
 end
 
 local function updateClock()
-	local now = os.date("*t")
-	local timeText
-	if clock24 then
-		timeText = string.format("%02d:%02d", now.hour, now.min)
-	else
-		local hour = now.hour % 12
-		timeText = string.format("%d:%02d %s", if hour == 0 then 12 else hour, now.min, if now.hour < 12 then "AM" else "PM")
-	end
+	local time, _, date = Format.clock(clock24)
 	local clock = root.Taskbar.Tray.Clock
-	clock.Time.Text = timeText
-	clock.Date.Text = string.format("%s, %s %d, %d", WEEKDAYS[now.wday], MONTHS[now.month], now.day, now.year)
-end
-
-local function applyWallpaper(index: number)
-	local theme = Theme.Wallpapers[index] or Theme.Wallpapers[1]
-	local wallpaper = root.Wallpaper
-	wallpaper.Sky.Gradient.Color = theme.Sky
-	wallpaper.Water.Gradient.Color = theme.Water
-	wallpaper.Sun.BackgroundColor3 = theme.Sun
-	wallpaper.Sun.BackgroundTransparency = theme.SunTransparency
-	wallpaper.Halo.BackgroundColor3 = theme.Sun
-	wallpaper.Halo.BackgroundTransparency = theme.HaloTransparency
-	for _, peak in wallpaper.RidgeBack:GetChildren() do
-		peak.BackgroundColor3 = theme.Back
-	end
-	for _, peak in wallpaper.RidgeFront:GetChildren() do
-		peak.BackgroundColor3 = theme.Front
-	end
-	for _, child in wallpaper:GetChildren() do
-		if string.sub(child.Name, 1, 5) == "Shine" then
-			child.BackgroundColor3 = theme.Shine
-			child.BackgroundTransparency = theme.ShineTransparency
-		end
-	end
+	clock.Time.Text = time
+	clock.Date.Text = date
 end
 
 local function applySettings(settings: any)
-	applyWallpaper(settings.Wallpaper)
+	Wallpaper.apply(root.Wallpaper, settings.Wallpaper)
 
 	local size = SettingsConfig.UiSizes[settings.UiSize] or SettingsConfig.UiSizes[2]
 	UiScale.SetMultiplier(size.Scale)
@@ -227,14 +196,14 @@ local function updateTray(state: any)
 				readyCount += 1
 			end
 		end
-		info.Line1.Text = `LOBBY {state.Code}`
+		info.Line1.Text = `PARTY {state.Code}`
 		info.Line1.TextColor3 = Theme.GreenText
 		info.Line2.Text = `CREW {#state.Seats}/{LobbyConfig.MaxDesks} · {readyCount} READY`
 		info.Line2.TextColor3 = Theme.Yellow
 	else
 		info.Line1.Text = `@{string.upper(player.Name)}`
 		info.Line1.TextColor3 = Theme.White
-		info.Line2.Text = "NOT IN A LOBBY"
+		info.Line2.Text = "NOT IN A PARTY"
 		info.Line2.TextColor3 = Theme.TrayIdle
 	end
 end
@@ -298,8 +267,8 @@ function DesktopController.Start()
 
 	LobbyStore.Changed:Connect(onLobbyChanged)
 	onLobbyChanged(LobbyStore.State)
-	LobbyStore.Notice:Connect(function(message: string)
-		Notify.show("Lobby", message)
+	LobbyStore.ListenForNotices(function(message: string)
+		Notify.show("Party", message)
 	end)
 
 	task.spawn(setControlsEnabled, false)

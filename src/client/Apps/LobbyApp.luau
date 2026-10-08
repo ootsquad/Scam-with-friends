@@ -1,8 +1,9 @@
 --[[
 	LobbyApp (client)
-	The "Crew Lobby" window that Play opens. Four desk cards in the style of the Phone app's caller
-	panel: name bar, the player's avatar head on a grid, @username, badges and a status strip.
-	The sidebar has the lobby code, difficulty, crew readiness and the ready/start buttons.
+	The Party window that Play opens. Four desk cards in the style of the Phone app's caller panel: name
+	bar, the player's avatar head, @username, LEADER / YOU badges, ready status, and for the leader a KICK
+	button on everyone else. The sidebar has the party code, invites, difficulty, crew readiness and the
+	ready/start buttons. Party members can be on different servers; they all show up here.
 
 	Everything is drawn from LobbyStore.State; clicks become requests to the server.
 
@@ -37,6 +38,12 @@ local LobbyApp = {}
 
 local ui: any
 local hoveredDesk: number? = nil
+local countdownToken = 0
+local countdownDeadline = 0 -- os.clock() when the start countdown reaches zero
+
+local function countdownLeft(): number
+	return math.max(math.ceil(countdownDeadline - os.clock()), 0)
+end
 
 -- ---------------------------------------------------------------------------
 -- Rendering
@@ -92,6 +99,10 @@ local function renderDesk(desk: number, state: any)
 
 	card.HostBadge.Visible = isHost
 	card.YouBadge.Visible = isMe
+	local kick = card:FindFirstChild("KickButton")
+	if kick then
+		kick.Visible = seat ~= nil and not isMe and state.HostUserId == player.UserId and state.Phase == Phase.Lobby
+	end
 	if isHost and isMe then
 		card.HostBadge.Position = UDim2.fromOffset(38, 256)
 		card.YouBadge.Position = UDim2.fromOffset(94, 256)
@@ -148,7 +159,7 @@ local function renderSide(state: any)
 
 	local canStart = host and allReady and lobbyOpen
 	if state.Phase == Phase.Starting then
-		styleButton(side.StartButton, "CLOCKING IN…", Theme.DarkHead, Theme.DarkMuted)
+		styleButton(side.StartButton, `STARTING IN {countdownLeft()}`, Theme.DarkHead, Theme.DarkMuted)
 	elseif state.Phase == Phase.Teleporting then
 		styleButton(side.StartButton, "TELEPORTING…", Theme.DarkHead, Theme.DarkMuted)
 	elseif canStart then
@@ -156,7 +167,7 @@ local function renderSide(state: any)
 	elseif host then
 		styleButton(side.StartButton, "WAITING FOR CREW", Theme.DarkHead, Theme.DarkMuted)
 	else
-		styleButton(side.StartButton, "HOST STARTS SHIFT", Theme.DarkHead, Theme.DarkMuted)
+		styleButton(side.StartButton, "LEADER STARTS SHIFT", Theme.DarkHead, Theme.DarkMuted)
 	end
 	side.StartButton.Stroke.Transparency = if canStart then 1 else 0
 
@@ -169,10 +180,10 @@ local function render(state: any, previous: any)
 		ui.noLobby.Visible = true
 		ui.floor.Visible = false
 		ui.side.Visible = false
-		ui.title.Text = "Crew Lobby"
+		ui.title.Text = "Party"
+		countdownToken += 1
 		if previous then
-			WindowManager.close("Lobby")
-			Notify.show("Lobby", `You left lobby {previous.Code}.`, Theme.DarkMuted)
+			WindowManager.close("Lobby") -- the server's notice says why (left, removed, closed...)
 		end
 		return
 	end
@@ -180,14 +191,35 @@ local function render(state: any, previous: any)
 	ui.noLobby.Visible = false
 	ui.floor.Visible = true
 	ui.side.Visible = true
-	ui.title.Text = `Crew Lobby — {state.Code}`
+	ui.title.Text = `Party — {state.Code}`
+
+	-- Count the start down on screen. The server only says how many whole seconds were left when it sent
+	-- the party, so the clock starts when the countdown does and later updates don't reset it.
+	local wasStarting = previous ~= nil and previous.Code == state.Code and previous.Phase == Phase.Starting
+	if state.Phase ~= Phase.Starting then
+		countdownToken += 1
+	elseif not wasStarting then
+		countdownToken += 1
+		countdownDeadline = os.clock() + state.Countdown
+		local token = countdownToken
+		task.spawn(function()
+			while token == countdownToken do
+				local left = countdownLeft()
+				ui.side.StartButton.Text = `STARTING IN {left}`
+				if left == 0 then
+					break
+				end
+				task.wait(0.25)
+			end
+		end)
+	end
 
 	for desk = 1, LobbyConfig.MaxDesks do
 		renderDesk(desk, state)
 	end
 	renderSide(state)
 
-	-- Just joined or created a lobby: bring the window up.
+	-- Just joined or created a party: bring the window up.
 	if not previous or previous.Code ~= state.Code then
 		WindowManager.open("Lobby")
 	end
@@ -197,12 +229,26 @@ end
 -- Input
 -- ---------------------------------------------------------------------------
 
+-- Friends who accept the invite join the game in their own lobby and land straight in this party (the code
+-- travels as LaunchData).
 local function promptInvite()
+	local state = LobbyStore.State
 	local ok, canInvite = pcall(SocialService.CanSendGameInviteAsync, SocialService, player)
 	if ok and canInvite then
-		pcall(SocialService.PromptGameInvite, SocialService, player)
+		local sent = pcall(function()
+			local options = Instance.new("ExperienceInviteOptions")
+			options.PromptMessage = "Join my Call Center Chaos party!"
+			if state then
+				options.LaunchData = state.Code
+			end
+			SocialService:PromptGameInvite(player, options)
+		end)
+		if not sent then
+			pcall(SocialService.PromptGameInvite, SocialService, player)
+		end
 	else
-		Notify.show("Invites", "Invites work in the published game. Share your lobby code for now.", Theme.Accent)
+		local code = if state then ` Share your party code {state.Code} for now.` else ""
+		Notify.show("Invites", `Invites work in the published game.{code}`, Theme.Accent)
 	end
 end
 
@@ -230,9 +276,19 @@ local function wireDesks()
 			if seat == nil then
 				LobbyStore.PickDesk(desk)
 			elseif seat.UserId ~= player.UserId then
-				Notify.show("Lobby", `That's {seat.DisplayName}'s desk. Pick a free one.`, Theme.Yellow)
+				Notify.show("Party", `That's {seat.DisplayName}'s desk. Pick a free one.`, Theme.Yellow)
 			end
 		end)
+		local kick = card:FindFirstChild("KickButton")
+		if kick then
+			ButtonFx.attach(kick, 1.05, 0.95)
+			kick.MouseButton1Click:Connect(function()
+				local seat = LobbyStore.SeatAt(desk)
+				if seat and seat.UserId ~= player.UserId and LobbyStore.IsHost() then
+					LobbyStore.Kick(seat.UserId)
+				end
+			end)
+		end
 	end
 end
 
@@ -247,7 +303,7 @@ local function wireSide()
 		if button then
 			button.MouseButton1Click:Connect(function()
 				if not LobbyStore.IsHost() then
-					Notify.show("Lobby", "Only the host can change the difficulty.", Theme.Yellow)
+					Notify.show("Party", "Only the party leader can change the difficulty.", Theme.Yellow)
 					return
 				end
 				LobbyStore.SetDifficulty(index)
@@ -266,7 +322,7 @@ local function wireSide()
 	ButtonFx.attach(side.StartButton, 1.02, 0.97)
 	side.StartButton.MouseButton1Click:Connect(function()
 		if not LobbyStore.IsHost() then
-			Notify.show("Lobby", "Only the host can start the shift.", Theme.Yellow)
+			Notify.show("Party", "Only the party leader can start the shift.", Theme.Yellow)
 			return
 		end
 		-- The server checks that everyone is ready and replies with a notice if not.

@@ -78,6 +78,21 @@ local Theme = {
 	Training = hex("#EA580C"),
 	LessonIdle = hex("#F6F7F9"),
 
+	-- Store, Career and Settings apps (call center)
+	NativePanel = hex("#F6F7F9"),
+	NativeLine = hex("#E5E7EB"),
+	StoreOwned = hex("#E8F5EC"),
+	LadderCurrent = hex("#E8F0FD"),
+	LadderLocked = hex("#B8BEC6"),
+	SliderTrack = hex("#E5E7EB"),
+
+	-- In-world HUD (call center)
+	HudPanel = hex("#111318"),
+	HudText = hex("#F3F4F6"),
+	HudMuted = hex("#A3AAB5"),
+	ChecklistDone = hex("#22C55E"),
+	ChecklistTodo = hex("#4B5563"),
+
 	-- Index matches SettingsConfig.Wallpapers: Dusk, Overcast, Night
 	Wallpapers = {
 		{

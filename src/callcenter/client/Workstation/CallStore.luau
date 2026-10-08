@@ -20,6 +20,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local Namespace = require(Shared:WaitForChild("Network"):WaitForChild("Namespace"))
 local Signal = require(Shared.Util.Signal)
 
 local Phase = CallConfig.Phase
@@ -57,7 +58,7 @@ function CallStore.IsConnected(): boolean
 end
 
 local function invoke(query: any, request: any)
-	local result = query.invoke(request)
+	local result = Namespace.invoke(query, request)
 	if type(result) ~= "table" then
 		return { Ok = false, Message = "The server didn't answer. Try again." }
 	end
@@ -149,7 +150,7 @@ function CallStore.Start()
 	end)
 
 	-- Asking for leads also tells the server this client can receive call packets.
-	local leads = Call.queries.GetLeads.invoke(nil)
+	local leads = Namespace.invoke(Call.queries.GetLeads, nil)
 	if type(leads) == "table" then
 		CallStore.Leads = leads
 		CallStore.LeadsChanged:Fire(leads)

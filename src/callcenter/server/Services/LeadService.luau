@@ -21,8 +21,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
 local Call = require(Shared:WaitForChild("Network")).Call
+local Namespace = require(Shared.Network.Namespace)
 local Personas = require(script.Parent.Parent.Data.Personas)
 local AvatarService = require(script.Parent.AvatarService)
+local CareerService = require(script.Parent.CareerService)
 
 local Status = CallConfig.LeadStatus
 
@@ -36,6 +38,7 @@ export type LeadRecord = {
 	Persona: Personas.Persona,
 	Look: Personas.Look,
 	Slot: number,
+	Memory: { string }, -- recaps of earlier calls with this lead, oldest first (CallService)
 }
 
 local LeadService = {}
@@ -59,6 +62,7 @@ local function newLead(slot: number): LeadRecord
 		Persona = generated.Persona,
 		Look = generated.Look,
 		Slot = slot,
+		Memory = {},
 	}
 end
 
@@ -140,14 +144,19 @@ local function replaceLater(player: Player, lead: LeadRecord, delaySeconds: numb
 	end)
 end
 
+-- A better computer brings new leads (and lets blocked ones cool off) sooner.
+local function refreshTime(player: Player, seconds: number): number
+	return seconds * (1 - CareerService.Tier(player, "Computer").Value)
+end
+
 function LeadService.MarkScammed(player: Player, lead: LeadRecord)
 	LeadService.SetStatus(player, lead, Status.Scammed)
-	replaceLater(player, lead, CallConfig.ReplaceLeadAfter)
+	replaceLater(player, lead, refreshTime(player, CallConfig.ReplaceLeadAfter))
 end
 
 function LeadService.Block(player: Player, lead: LeadRecord)
 	LeadService.SetStatus(player, lead, Status.Blocked)
-	task.delay(CallConfig.BlockedFor, function()
+	task.delay(refreshTime(player, CallConfig.BlockedFor), function()
 		if lead.Status == Status.Blocked then
 			LeadService.SetStatus(player, lead, Status.Available)
 		end
@@ -169,9 +178,13 @@ function LeadService.ReadyPlayers(): { Player }
 end
 
 function LeadService.Start()
-	Call.queries.GetLeads.listen(function(_: nil, player: Player)
+	Namespace.listen(Call.queries.GetLeads, function(_: nil, player: Player)
 		ready[player] = true
 		return snapshot(player)
+	end, function(_: nil, player: Player)
+		ready[player] = true -- the list follows in a Leads packet once it's ready
+		task.delay(2, push, player)
+		return {}
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		for _, lead in leadsOf[player] or {} do

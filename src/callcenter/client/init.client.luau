@@ -4,10 +4,12 @@
 	The boot screen is already up (ReplicatedFirst/Arrival picked it up from the teleport).
 		1. Clocking in               build the ByteNet-Max namespaces
 		2. Finding your desk         wait for ShiftService to publish this crew's shift
-		3. Booting the workstations  leads, phone and apps (hidden until you sit at a Computer)
+		3. Loading your career       settings (sound, display) and your saved career
+		4. Booting the workstations  leads, phone and apps (hidden until you sit at a Computer), sounds,
+		                             and the HUD you see while walking around the office
 
-	Ui/ and Controllers/LoadingController are shared with the lobby place (see callcenter.project.json).
-	Code that only exists here lives in Workstation/.
+	Ui/, Controllers/LoadingController and Stores/SettingsStore are shared with the lobby place (see
+	callcenter.project.json). Code that only exists here lives in Workstation/.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,7 +17,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LoadingController = require(script:WaitForChild("Controllers"):WaitForChild("LoadingController"))
 local Workstation = script:WaitForChild("Workstation")
 
-local SHIFT_TIMEOUT = 30
+-- The server may take a while: it reads the shift from MemoryStore with retries before falling back.
+local SHIFT_TIMEOUT = 75
 
 local function waitForShift()
 	local started = os.clock()
@@ -41,13 +44,22 @@ local booted = LoadingController.RunSteps({
 		run = waitForShift,
 	},
 	{
+		status = "Loading your career…",
+		run = function()
+			require(script:WaitForChild("Stores"):WaitForChild("SettingsStore")).Start()
+			require(Workstation.CareerStore).Start()
+		end,
+	},
+	{
 		status = "Booting the workstations…",
 		run = function()
 			require(Workstation.CallStore).Start()
+			require(Workstation.Sfx).Start()
 			require(Workstation.WorkstationController).Start()
+			require(Workstation.HudController).Start()
 		end,
 	},
-}, "Grab an empty desk and sit down.")
+}, "Grab an empty desk and sit down.", "Couldn't reach the call center. Try rejoining.")
 
 if booted then
 	task.wait(1)

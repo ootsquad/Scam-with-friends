@@ -10,7 +10,20 @@ local CallConfig = {
 	ApiKeyValue = "claude-haiku-5-5 API",
 	Endpoint = "https://api.anthropic.com/v1/messages",
 	ApiVersion = "2023-06-01",
-	MaxTokens = 300,
+	-- Most tokens one caller reply may use (the request's max_tokens). Clamped to what the model supports
+	-- (ModelLimits); replies are short, so this is a ceiling, not a cost.
+	MaxTokens = 128000,
+	-- What each model supports (tokens). Unknown models get Default.
+	ModelLimits = {
+		Default = { Context = 200000, Output = 64000 },
+		["claude-haiku-5-5"] = { Context = 1000000, Output = 128000 },
+		["claude-sonnet-5-5"] = { Context = 1000000, Output = 128000 },
+		["claude-opus-5-5"] = { Context = 1000000, Output = 128000 },
+	} :: { [string]: { Context: number, Output: number } },
+	PromptCaching = true, -- caches the caller's instructions between turns (cheaper, faster replies)
+	CallMemory = 3, -- earlier calls with the same caller they remember (recap of each goes in their instructions)
+
+	UseRealAvatars = true, -- players look like their own Roblox avatars in the call center
 
 	-- Trust (0-100). Every call starts at StartTrust; callers hang up at HangUpTrust or lower.
 	StartTrust = 50,
@@ -81,6 +94,10 @@ local CallConfig = {
 	-- picked first. Items that keep failing to load are dropped.
 	Avatars = {
 		SearchCatalog = true,
+		-- Bodies come from catalog body bundles (the heads, torsos and limbs real players wear). The rest
+		-- get the classic Roblox body with random proportions.
+		BodyChance = 0.85,
+		BodySearches = { "", "man", "woman", "boy", "girl", "classic" } :: { string },
 		PageSize = 30, -- items per catalog page
 		FirstPages = 3, -- pages for the plain search (no keyword) of each item type
 		KeywordPages = 1, -- pages for each keyword search

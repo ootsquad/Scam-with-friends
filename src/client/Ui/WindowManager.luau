@@ -8,6 +8,8 @@
 		launch(): called instead of a plain open when the window is closed (e.g. Play creates a lobby)
 	WindowManager.open(name) / close(name) / minimize(name) / toggle(name) / focus(name)
 	WindowManager.isOpen(name) -> boolean
+	WindowManager.raise(frame)        puts a dialog (not a registered window) above every window
+	WindowManager.styleClose(button)  the red X close button look, for dialogs
 	WindowManager.Changed:Connect(function(name, state) end)   state: "open" | "minimized" | "closed"
 ]]
 
@@ -46,7 +48,8 @@ local root: GuiObject
 local container: GuiObject
 local topZ = 10
 local focused: string? = nil
-local drag: { entry: Entry, startMouse: Vector2, startPosition: UDim2 }? = nil
+-- The window being dragged. `touch` is the finger doing it (nil when it's the mouse).
+local drag: { entry: Entry, startMouse: Vector2, startPosition: UDim2, touch: InputObject? }? = nil
 
 local function isPointer(input: InputObject): boolean
 	return input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
@@ -97,6 +100,9 @@ local function setState(entry: Entry, state: WindowState)
 	entry.frame.Visible = state == "open"
 	if state ~= "open" and focused == entry.name then
 		focused = nil
+	end
+	if state ~= "open" and drag and drag.entry == entry then
+		drag = nil
 	end
 	refreshTaskbar()
 	WindowManager.Changed:Fire(entry.name, state)
@@ -199,6 +205,31 @@ function WindowManager.isOpen(name: string): boolean
 	return entry ~= nil and entry.state == "open"
 end
 
+function WindowManager.raise(frame: GuiObject)
+	topZ += 1
+	frame.ZIndex = topZ
+end
+
+-- Close: red X at rest, white X on a red square when hovered (like Windows).
+function WindowManager.styleClose(close: GuiButton)
+	close.BackgroundColor3 = Theme.RedHover
+	ButtonFx.highlight(close, 0)
+	local function paint(hovered: boolean)
+		for _, bar in close:GetChildren() do
+			if bar:IsA("Frame") then
+				bar.BackgroundColor3 = if hovered then Theme.White else Theme.Red
+			end
+		end
+	end
+	paint(false)
+	close.MouseEnter:Connect(function()
+		paint(true)
+	end)
+	close.MouseLeave:Connect(function()
+		paint(false)
+	end)
+end
+
 function WindowManager.register(name: string, frame: Frame, taskButton: GuiButton?, launch: (() -> ())?)
 	local zoom = frame:FindFirstChild("Zoom") :: UIScale?
 	if not zoom then
@@ -239,6 +270,7 @@ function WindowManager.register(name: string, frame: Frame, taskButton: GuiButto
 				entry = entry,
 				startMouse = Vector2.new(input.Position.X, input.Position.Y),
 				startPosition = frame.Position,
+				touch = if input.UserInputType == Enum.UserInputType.Touch then input else nil,
 			}
 		end
 	end)
@@ -250,22 +282,7 @@ function WindowManager.register(name: string, frame: Frame, taskButton: GuiButto
 		button.BackgroundColor3 = Theme.TitleHover
 		ButtonFx.highlight(button, 0)
 	end
-	-- Close: red X at rest, white X on a red square when hovered (like Windows).
-	close.BackgroundColor3 = Theme.RedHover
-	ButtonFx.highlight(close, 0)
-	local function paintClose(hovered: boolean)
-		for _, bar in close:GetChildren() do
-			if bar:IsA("Frame") then
-				bar.BackgroundColor3 = if hovered then Theme.White else Theme.Red
-			end
-		end
-	end
-	close.MouseEnter:Connect(function()
-		paintClose(true)
-	end)
-	close.MouseLeave:Connect(function()
-		paintClose(false)
-	end)
+	WindowManager.styleClose(close)
 	minimize.MouseButton1Click:Connect(function()
 		WindowManager.minimize(name)
 	end)
@@ -295,7 +312,12 @@ function WindowManager.init(desktopRoot: GuiObject, windowsFrame: GuiObject)
 		if not current then
 			return
 		end
-		if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then
+		-- Follow the finger that started the drag, or the mouse.
+		if current.touch then
+			if input ~= current.touch then
+				return
+			end
+		elseif input.UserInputType ~= Enum.UserInputType.MouseMovement then
 			return
 		end
 		local delta = (Vector2.new(input.Position.X, input.Position.Y) - current.startMouse) / UiScale.ScaleOf(root)
@@ -305,9 +327,14 @@ function WindowManager.init(desktopRoot: GuiObject, windowsFrame: GuiObject)
 	end)
 
 	UserInputService.InputEnded:Connect(function(input)
-		if drag and isPointer(input) then
+		local current = drag
+		if current and (input.UserInputType == Enum.UserInputType.MouseButton1 or input == current.touch) then
 			drag = nil
 		end
+	end)
+	-- Alt-tabbing away mid-drag would otherwise leave the window stuck to the mouse.
+	UserInputService.WindowFocusReleased:Connect(function()
+		drag = nil
 	end)
 end
 

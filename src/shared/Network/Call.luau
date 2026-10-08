@@ -53,6 +53,7 @@ export type CallState = {
 	Thinking: boolean, -- the caller is working out what to say
 	Paid: boolean,
 	PayAt: number, -- trust this caller needs before they'll pay
+	LinesLeft: number, -- your lines left before the caller has to go
 }
 
 export type CallerFile = {
@@ -83,7 +84,8 @@ export type Payout = {
 	Method: string,
 	Label: string,
 	Detail: string,
-	Amount: number,
+	Amount: number, -- what you got, bonus included
+	Bonus: number, -- floor and router bonus included in Amount
 	LeadName: string,
 }
 
@@ -120,6 +122,7 @@ return Namespace.define("Call", function()
 		Thinking = ByteNet.bool,
 		Paid = ByteNet.bool,
 		PayAt = ByteNet.uint8,
+		LinesLeft = ByteNet.uint8,
 	})
 
 	local CallerFile = ByteNet.struct({
@@ -156,6 +159,7 @@ return Namespace.define("Call", function()
 		Label = ByteNet.string,
 		Detail = ByteNet.string,
 		Amount = ByteNet.uint32,
+		Bonus = ByteNet.uint32,
 		LeadName = ByteNet.string,
 	})
 

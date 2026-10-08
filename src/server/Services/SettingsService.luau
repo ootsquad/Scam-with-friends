@@ -11,6 +11,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Namespace = require(Shared.Network.Namespace)
 local SettingsNet = require(Shared.Network.Settings)
 local SettingsConfig = require(Shared.Config.SettingsConfig)
 
@@ -47,7 +48,16 @@ local function sanitize(raw: any): SettingsData
 		end
 		return default
 	end
+	local function volume(value: any, default: number): number
+		if type(value) == "number" and value == value then
+			return math.clamp(math.round(value), 0, 100)
+		end
+		return default
+	end
 	return {
+		MasterVolume = volume(data.MasterVolume, defaults.MasterVolume),
+		VoiceVolume = volume(data.VoiceVolume, defaults.VoiceVolume),
+		EffectsVolume = volume(data.EffectsVolume, defaults.EffectsVolume),
 		Wallpaper = index(data.Wallpaper, #SettingsConfig.Wallpapers, defaults.Wallpaper),
 		UiSize = index(data.UiSize, #SettingsConfig.UiSizes, defaults.UiSize),
 		Clock24 = if type(data.Clock24) == "boolean" then data.Clock24 else defaults.Clock24,
@@ -75,6 +85,9 @@ local function load(player: Player): SettingsData
 		end
 	end
 
+	if not player.Parent then
+		return data -- left while we were loading; don't keep anything for them
+	end
 	cache[player] = data
 	persistent[player] = saved
 	return data
@@ -130,7 +143,9 @@ function SettingsService.Get(player: Player): SettingsData
 end
 
 function SettingsService.Start()
-	SettingsNet.queries.Load.listen(onLoad)
+	Namespace.listen(SettingsNet.queries.Load, onLoad, function()
+		return { Settings = sanitize(nil), Persistent = false }
+	end)
 	SettingsNet.packets.Save.listen(onSave)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)
 

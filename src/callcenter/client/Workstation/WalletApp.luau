@@ -11,14 +11,15 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Client = script.Parent.Parent
 local Theme = require(Client:WaitForChild("Ui").Theme)
+local Format = require(ReplicatedStorage:WaitForChild("Shared").Util.Format)
 local CallStore = require(script.Parent.CallStore)
+local Ledger = require(script.Parent.Ledger)
 
 local METHOD_LOOK = {
 	gift_card = { "GIFT CARD", "PaymentGiftCard" },
 	card = { "CARD", "PaymentCard" },
 	donation = { "DONATION", "PaymentDonation" },
 }
-local ROWS = 5
 
 local player = Players.LocalPlayer
 
@@ -26,25 +27,15 @@ local WalletApp = {}
 
 local body: any
 
-local function money(amount: number): string
-	local text = tostring(math.floor(amount))
-	while true do
-		local replaced, count = string.gsub(text, "^(%d+)(%d%d%d)", "%1,%2")
-		text = replaced
-		if count == 0 then
-			break
-		end
-	end
-	return "$" .. text
-end
+local money = Format.money
 
+-- "6:12" until the review, or nil when the day clock isn't running (before the first login, during a review).
 local function timeLeft(): string?
 	local endsAt = ReplicatedStorage:GetAttribute("ShiftDayEndsAt")
 	if type(endsAt) ~= "number" or endsAt <= 0 then
 		return nil
 	end
-	local seconds = math.max(0, math.floor(endsAt - workspace:GetServerTimeNow()))
-	return string.format("%d:%02d", seconds // 60, seconds % 60)
+	return Format.duration(endsAt - workspace:GetServerTimeNow())
 end
 
 local function renderStats()
@@ -61,27 +52,20 @@ local function renderStats()
 	body.DayCard.Label.Text = `DAY {day}`
 	local left = timeLeft()
 	body.DayCard.Value.Text = left or "--:--"
-	body.DayCard.Sub.Text = if left then "until review" else "starts at first login"
+	body.DayCard.Sub.Text = if left
+		then "until review"
+		elseif ReplicatedStorage:GetAttribute("ShiftReviewing") then "review in progress"
+		else "starts at first login"
 end
 
 local function renderPayouts()
-	local payouts = CallStore.Payouts
-	body.Empty.Visible = #payouts == 0
-	for i = 1, ROWS do
-		local row = body:FindFirstChild(`Payout{i}`)
-		local payout = payouts[i]
-		if row then
-			row.Visible = payout ~= nil
-			if payout then
-				local look = METHOD_LOOK[payout.Method] or { string.upper(payout.Label), "Accent" }
-				row.Method.Text = look[1]
-				row.Method.BackgroundColor3 = Theme[look[2]]
-				row.Detail.Text = payout.Detail
-				row.From.Text = `from {payout.LeadName}`
-				row.Amount.Text = `+{money(payout.Amount)}`
-			end
-		end
-	end
+	Ledger.fill(body, "Payout", CallStore.Payouts, function(payout)
+		local look = METHOD_LOOK[payout.Method]
+		return if look then look[1] else string.upper(payout.Label)
+	end, function(payout)
+		local look = METHOD_LOOK[payout.Method]
+		return Theme[if look then look[2] else "Accent"]
+	end)
 end
 
 function WalletApp.Start(window: Frame)
@@ -103,7 +87,6 @@ function WalletApp.Start(window: Frame)
 	renderPayouts()
 end
 
-WalletApp.money = money
 WalletApp.timeLeft = timeLeft
 
 return WalletApp

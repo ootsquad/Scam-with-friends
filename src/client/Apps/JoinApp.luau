@@ -1,7 +1,7 @@
 --[[
 	JoinApp (client)
-	The "Join with Code" window: type a friend's 6-character lobby code and join their crew.
-	Works for lobbies on this server, and in the live game for lobbies on other servers (teleport).
+	The "Join with Code" window: type a friend's 6-character party code and join their party. Parties work
+	across servers, so you show up in the party straight away without leaving your own lobby.
 
 	JoinApp.Start(window)
 ]]
@@ -35,7 +35,7 @@ end
 local function resetStatus()
 	local state = LobbyStore.State
 	if state then
-		setStatus(`You're in lobby {state.Code}. Joining another one leaves it.`)
+		setStatus(`You're in party {state.Code}. Joining another one leaves it.`)
 	else
 		setStatus("")
 	end
@@ -47,20 +47,20 @@ local function submit()
 	end
 	local code = clean(ui.box.Text)
 	if #code ~= LobbyConfig.CodeLength then
-		setStatus(`Codes are {LobbyConfig.CodeLength} letters or numbers.`, Theme.Red)
+		setStatus(`Party codes are {LobbyConfig.CodeLength} letters or numbers.`, Theme.Red)
 		return
 	end
 	if LobbyStore.State and LobbyStore.State.Code == code then
-		setStatus("You're already in that lobby.", Theme.NativeMuted)
+		setStatus("You're already in that party.", Theme.NativeMuted)
 		return
 	end
 
 	busy = true
 	ui.button.Text = "Joining…"
-	setStatus("Dialing that lobby…")
+	setStatus("Finding that party…")
 	local result = LobbyStore.Join(code)
 	busy = false
-	ui.button.Text = "Join lobby"
+	ui.button.Text = "Join party"
 
 	if result.Ok then
 		ui.box.Text = ""
@@ -100,7 +100,7 @@ function JoinApp.Start(window: Frame)
 		end
 	end)
 
-	-- Landed in a different lobby (joined here, or created one): this window's job is done.
+	-- Landed in a different party (joined here, or created one): this window's job is done.
 	LobbyStore.Changed:Connect(function(state, previous)
 		if state and (not previous or previous.Code ~= state.Code) then
 			WindowManager.close("Join")
