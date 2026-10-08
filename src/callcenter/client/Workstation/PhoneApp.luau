@@ -359,6 +359,18 @@ function PhoneApp.Start(window: Frame)
 	}
 	ui.card.Status.Text = ""
 
+	-- If the server can't reach Claude (no key, key rejected, HTTP off), say so where calls start.
+	local defaultHint = ui.idle.Hint.Text
+	local function renderPhoneLine()
+		local status = ReplicatedStorage:GetAttribute("PhoneLine")
+		local down = type(status) == "string" and status ~= "ok"
+		ui.idle.Heading.Text = if down then "Phone line down" else "Nobody on the line"
+		ui.idle.Hint.Text = if down then status else defaultHint
+		ui.idle.Hint.TextColor3 = if down then Theme.LeadBlockedText else Theme.DarkMuted
+	end
+	ReplicatedStorage:GetAttributeChangedSignal("PhoneLine"):Connect(renderPhoneLine)
+	renderPhoneLine()
+
 	for slot = 1, CallConfig.LeadsPerPlayer do
 		local row = ui.leads:FindFirstChild(`Lead{slot}`)
 		if row then

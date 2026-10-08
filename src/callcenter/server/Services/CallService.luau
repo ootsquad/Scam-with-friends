@@ -19,6 +19,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -128,14 +129,24 @@ local function clean(text: string, max: number): string
 	return string.sub(text, 1, cut) .. "..."
 end
 
--- Roblox's text filter, for text shown to (and only to) `player`. nil if filtering failed.
-local function filterFor(player: Player, text: string): string?
+-- Roblox's text filter, for text shown to (and only to) `player`. If the filter is unavailable, a player's
+-- own words are still shown back to them, and in Studio (where test players can't always be filtered)
+-- everything is shown as-is. Otherwise nil.
+local warnedFilter = false
+local function filterFor(player: Player, text: string, ownWords: boolean?): string?
 	local ok, filtered = pcall(function()
 		local filterResult = TextService:FilterStringAsync(text, player.UserId, Enum.TextFilterContext.PrivateChat)
 		return filterResult:GetChatForUserAsync(player.UserId)
 	end)
 	if ok and type(filtered) == "string" then
 		return filtered
+	end
+	if not warnedFilter then
+		warnedFilter = true
+		warn(`[CallService] Roblox's text filter failed ({filtered}); using fallbacks`)
+	end
+	if ownWords or RunService:IsStudio() then
+		return text
 	end
 	return nil
 end
@@ -271,13 +282,13 @@ requestReply = function(session: Session)
 	session.thinking = true
 	pushState(session)
 	task.spawn(function()
-		local reply, err = ClaudeClient.Respond(session.system, session.messages)
+		local reply, err, detail = ClaudeClient.Respond(session.system, session.messages)
 		if session.ended then
 			return
 		end
 		session.thinking = false
 		if not reply then
-			notice(session.player, ClaudeClient.Describe(err))
+			notice(session.player, ClaudeClient.Describe(err, detail))
 			endCall(session, Outcome.LineDown)
 			return
 		end
@@ -423,7 +434,7 @@ local function onSay(text: string, player: Player)
 	if line == "" then
 		return
 	end
-	local filtered = filterFor(player, line)
+	local filtered = filterFor(player, line, true)
 	if not filtered then
 		notice(player, "Couldn't send that. Try saying it again.")
 		return
@@ -451,6 +462,7 @@ local function onHangUp(_: nil, player: Player)
 end
 
 function CallService.Start()
+	task.spawn(ClaudeClient.Check)
 	Call.queries.StartCall.listen(onStartCall)
 	Call.packets.Answer.listen(onAnswer)
 	Call.packets.Say.listen(onSay)
