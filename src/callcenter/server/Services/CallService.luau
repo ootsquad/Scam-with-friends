@@ -136,7 +136,7 @@ local warnedFilter = false
 local function filterFor(player: Player, text: string, ownWords: boolean?): string?
 	local ok, filtered = pcall(function()
 		local filterResult = TextService:FilterStringAsync(text, player.UserId, Enum.TextFilterContext.PrivateChat)
-		return filterResult:GetChatForUserAsync(player.UserId)
+		return filterResult:GetNonChatStringForUserAsync(player.UserId)
 	end)
 	if ok and type(filtered) == "string" then
 		return filtered

@@ -7401,13 +7401,12 @@
 																						],
 																						[
 																							0,
-																							0
+																							34
 																						]
 																					]
 																				},
 																				"BackgroundTransparency": 1,
-																				"Visible": false,
-																				"AutomaticSize": "Y"
+																				"Visible": false
 																			},
 																			"Children": [
 																				{
@@ -7431,11 +7430,11 @@
 																							"UDim2": [
 																								[
 																									0,
-																									0
+																									290
 																								],
 																								[
 																									0,
-																									0
+																									34
 																								]
 																							]
 																						},
@@ -7448,7 +7447,6 @@
 																							0,
 																							0
 																						],
-																						"AutomaticSize": "XY",
 																						"Text": "",
 																						"FontFace": {
 																							"family": "rbxasset://fonts/families/Roboto.json",
@@ -7462,6 +7460,7 @@
 																							1.0
 																						],
 																						"TextXAlignment": "Left",
+																						"TextYAlignment": "Top",
 																						"TextWrapped": true
 																					},
 																					"Children": [
@@ -7505,16 +7504,6 @@
 																										8
 																									]
 																								}
-																							}
-																						},
-																						{
-																							"Name": "MaxWidth",
-																							"ClassName": "UISizeConstraint",
-																							"Properties": {
-																								"MaxSize": [
-																									290,
-																									10000
-																								]
 																							}
 																						}
 																					]
@@ -7546,13 +7535,12 @@
 																						],
 																						[
 																							0,
-																							0
+																							34
 																						]
 																					]
 																				},
 																				"BackgroundTransparency": 1,
-																				"Visible": false,
-																				"AutomaticSize": "Y"
+																				"Visible": false
 																			},
 																			"Children": [
 																				{
@@ -7576,11 +7564,11 @@
 																							"UDim2": [
 																								[
 																									0,
-																									0
+																									290
 																								],
 																								[
 																									0,
-																									0
+																									34
 																								]
 																							]
 																						},
@@ -7593,7 +7581,6 @@
 																							1,
 																							0
 																						],
-																						"AutomaticSize": "XY",
 																						"Text": "",
 																						"FontFace": {
 																							"family": "rbxasset://fonts/families/Roboto.json",
@@ -7607,6 +7594,7 @@
 																							1.0
 																						],
 																						"TextXAlignment": "Left",
+																						"TextYAlignment": "Top",
 																						"TextWrapped": true
 																					},
 																					"Children": [
@@ -7650,16 +7638,6 @@
 																										8
 																									]
 																								}
-																							}
-																						},
-																						{
-																							"Name": "MaxWidth",
-																							"ClassName": "UISizeConstraint",
-																							"Properties": {
-																								"MaxSize": [
-																									290,
-																									10000
-																								]
 																							}
 																						}
 																					]

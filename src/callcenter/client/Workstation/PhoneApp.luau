@@ -8,6 +8,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextService = game:GetService("TextService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
@@ -51,6 +52,11 @@ local OUTCOME_TEXT = {
 	[Outcome.LineDown] = { "LINE DROPPED", "TrustLow" },
 	[Outcome.None] = { "CALL ENDED", "DarkMuted" },
 }
+
+-- Chat bubbles are sized from the measured text (Roblox's AutomaticSize collapses wrapped text to nothing).
+local BUBBLE_MAX_WIDTH = 290
+local BUBBLE_PAD_X = 24 -- matches the bubble's UIPadding (12 left + 12 right)
+local BUBBLE_PAD_Y = 16 -- 8 top + 8 bottom
 
 local PhoneApp = {}
 
@@ -107,14 +113,42 @@ local function clearTranscript()
 	order = 0
 end
 
+-- Width and height the text needs inside a bubble, wrapping at the bubble's max width.
+local function measure(label: TextLabel, text: string): (number, number)
+	local inner = BUBBLE_MAX_WIDTH - BUBBLE_PAD_X
+	local ok, bounds = pcall(function()
+		local params = Instance.new("GetTextBoundsParams")
+		params.Text = text
+		params.Font = label.FontFace
+		params.Size = label.TextSize
+		params.Width = inner
+		return TextService:GetTextBoundsAsync(params)
+	end)
+	if ok and typeof(bounds) == "Vector2" and bounds.X > 0 and bounds.Y > 0 then
+		return math.min(math.ceil(bounds.X) + 2, inner), math.ceil(bounds.Y)
+	end
+	-- Rough estimate if measuring isn't available.
+	local charWidth = label.TextSize * 0.52
+	local lines = math.max(1, math.ceil(#text * charWidth / inner))
+	return math.min(inner, math.ceil(#text * charWidth) + 2), math.ceil(lines * label.TextSize * 1.25)
+end
+
 local function addBubble(text: string, mine: boolean)
 	order += 1
 	local row = (if mine then ui.templates.YouTemplate else ui.templates.ThemTemplate):Clone()
+	local label = row.Bubble :: TextLabel
 	row.Name = if mine then "You" else "Them"
-	row.Bubble.Text = text
+	label.Text = text
+	label.TextWrapped = true
+	label.AutomaticSize = Enum.AutomaticSize.None
+	row.AutomaticSize = Enum.AutomaticSize.None
 	row.LayoutOrder = order
 	row.Visible = true
 	row.Parent = ui.transcript
+
+	local width, height = measure(label, text)
+	label.Size = UDim2.fromOffset(width + BUBBLE_PAD_X, height + BUBBLE_PAD_Y)
+	row.Size = UDim2.new(1, 0, 0, height + BUBBLE_PAD_Y)
 	scrollToBottom()
 end
 
