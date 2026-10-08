@@ -28419,7 +28419,7 @@
 										],
 										[
 											0,
-											514
+											562
 										]
 									]
 								},
@@ -28666,7 +28666,7 @@
 												],
 												[
 													0,
-													388
+													436
 												]
 											]
 										},
@@ -30872,7 +30872,7 @@
 											]
 										},
 										{
-											"Name": "LeaveShift",
+											"Name": "StandUp",
 											"ClassName": "TextButton",
 											"Properties": {
 												"BorderSizePixel": 0,
@@ -30885,6 +30885,321 @@
 														[
 															0,
 															358
+														]
+													]
+												},
+												"Size": {
+													"UDim2": [
+														[
+															0,
+															304
+														],
+														[
+															0,
+															44
+														]
+													]
+												},
+												"BackgroundColor3": [
+													1.0,
+													1.0,
+													1.0
+												],
+												"BackgroundTransparency": 1,
+												"AnchorPoint": [
+													0.5,
+													0.5
+												],
+												"AutoButtonColor": false,
+												"Text": "",
+												"FontFace": {
+													"family": "rbxasset://fonts/families/RobotoCondensed.json",
+													"weight": "Bold",
+													"style": "Normal"
+												},
+												"TextSize": 14,
+												"TextColor3": [
+													1.0,
+													1.0,
+													1.0
+												]
+											},
+											"Children": [
+												{
+													"Name": "Corner",
+													"ClassName": "UICorner",
+													"Properties": {
+														"CornerRadius": {
+															"UDim": [
+																0,
+																8
+															]
+														}
+													}
+												},
+												{
+													"Name": "Tile",
+													"ClassName": "Frame",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	10
+																],
+																[
+																	0,
+																	8
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	28
+																],
+																[
+																	0,
+																	28
+																]
+															]
+														},
+														"BackgroundColor3": [
+															0.0549,
+															0.6471,
+															0.9137
+														]
+													},
+													"Children": [
+														{
+															"Name": "Corner",
+															"ClassName": "UICorner",
+															"Properties": {
+																"CornerRadius": {
+																	"UDim": [
+																		0,
+																		7
+																	]
+																}
+															}
+														},
+														{
+															"Name": "Shaft",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			13
+																		],
+																		[
+																			0,
+																			8
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			2
+																		],
+																		[
+																			0,
+																			13
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "HeadL",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			8
+																		],
+																		[
+																			0,
+																			10
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																],
+																"Rotation": -45
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "HeadR",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			13
+																		],
+																		[
+																			0,
+																			10
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																],
+																"Rotation": 45
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														}
+													]
+												},
+												{
+													"Name": "Label",
+													"ClassName": "TextLabel",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	50
+																],
+																[
+																	0,
+																	0
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	240
+																],
+																[
+																	0,
+																	44
+																]
+															]
+														},
+														"BackgroundTransparency": 1,
+														"Text": "Stand up",
+														"FontFace": {
+															"family": "rbxasset://fonts/families/Roboto.json",
+															"weight": "Medium",
+															"style": "Normal"
+														},
+														"TextSize": 15,
+														"TextColor3": [
+															1.0,
+															1.0,
+															1.0
+														],
+														"TextXAlignment": "Left"
+													}
+												}
+											]
+										},
+										{
+											"Name": "LeaveShift",
+											"ClassName": "TextButton",
+											"Properties": {
+												"BorderSizePixel": 0,
+												"Position": {
+													"UDim2": [
+														[
+															0,
+															160
+														],
+														[
+															0,
+															406
 														]
 													]
 												},
@@ -31123,7 +31438,7 @@
 												],
 												[
 													0,
-													482
+													530
 												]
 											]
 										},
@@ -35448,6 +35763,87 @@
 							]
 						},
 						{
+							"Name": "StandButton",
+							"ClassName": "TextButton",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0.5,
+											0
+										],
+										[
+											1,
+											-73
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											140
+										],
+										[
+											0,
+											38
+										]
+									]
+								},
+								"BackgroundColor3": [
+									0.102,
+									0.1137,
+									0.1373
+								],
+								"BackgroundTransparency": 0.1,
+								"AnchorPoint": [
+									0.5,
+									0.5
+								],
+								"AutoButtonColor": false,
+								"Text": "Stand up",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/Roboto.json",
+									"weight": "Medium",
+									"style": "Normal"
+								},
+								"TextSize": 14,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								]
+							},
+							"Children": [
+								{
+									"Name": "Corner",
+									"ClassName": "UICorner",
+									"Properties": {
+										"CornerRadius": {
+											"UDim": [
+												0.5,
+												0
+											]
+										}
+									}
+								},
+								{
+									"Name": "Stroke",
+									"ClassName": "UIStroke",
+									"Properties": {
+										"Color": [
+											0.1804,
+											0.2,
+											0.2392
+										],
+										"Thickness": 1,
+										"ApplyStrokeMode": "Border"
+									}
+								}
+							]
+						},
+						{
 							"Name": "Hint",
 							"ClassName": "TextLabel",
 							"Properties": {
@@ -35477,7 +35873,7 @@
 									]
 								},
 								"BackgroundTransparency": 1,
-								"Text": "Press Space to stand up",
+								"Text": "or press Space",
 								"FontFace": {
 									"family": "rbxasset://fonts/families/Roboto.json",
 									"weight": "Regular",

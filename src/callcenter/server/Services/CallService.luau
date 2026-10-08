@@ -182,6 +182,19 @@ end
 local scheduleIncoming: (Player) -> ()
 local requestReply: (Session, string?) -> ()
 
+-- The caller remembers how the call went, for the next time you talk (CallConfig.CallMemory calls).
+local function rememberCall(session: Session)
+	local recap = CallerPrompt.recap(session.messages, session.outcome)
+	if not recap then
+		return
+	end
+	local memory = session.lead.Memory
+	table.insert(memory, recap)
+	while #memory > CallConfig.CallMemory do
+		table.remove(memory, 1)
+	end
+end
+
 local function endCall(session: Session, outcome: number)
 	if session.ended then
 		return
@@ -191,6 +204,7 @@ local function endCall(session: Session, outcome: number)
 	session.thinking = false
 	session.outcome = if session.paid then Outcome.Paid else outcome
 	pushState(session)
+	rememberCall(session)
 
 	local player, lead = session.player, session.lead
 	if session.paid then
@@ -412,6 +426,7 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		reason = if incoming then Personas.incomingReason(random) else nil,
 		smarts = smarts,
 		level = level,
+		memory = table.clone(lead.Memory or {}),
 	}
 	local session: Session = {
 		id = nextCallId,

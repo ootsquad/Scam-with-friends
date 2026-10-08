@@ -6,6 +6,10 @@
 	menu, incoming call pop-ups, the caller file pop-up and the end-of-day performance review. Stand up (or
 	Log off) and it goes away.
 
+	While you're seated the mouse works like a computer's: DeskInput stops the camera from zooming or turning
+	(and locking the mouse) and keeps the cursor free. Stand up is on the login screen and in the Start menu,
+	since touch screens have no Space key.
+
 	WorkstationController.Start()
 ]]
 
@@ -28,6 +32,7 @@ local UiScale = require(Ui.UiScale)
 local WindowManager = require(Ui.WindowManager)
 
 local CallStore = require(script.Parent.CallStore)
+local DeskInput = require(script.Parent.DeskInput)
 local CallerFileApp = require(script.Parent.CallerFileApp)
 local CallVoice = require(script.Parent.CallVoice)
 local CashApps = require(script.Parent.CashApps)
@@ -113,6 +118,11 @@ local function refresh()
 	gui.Enabled = seated
 	login.Visible = seated and not loggedIn
 	desktop.Visible = loggedIn
+	if seated then
+		DeskInput.Enter(gui)
+	else
+		DeskInput.Exit()
+	end
 
 	if seated and not loggedIn then
 		local card = login.Card
@@ -131,6 +141,15 @@ local function refresh()
 		end
 		login.Card.UsernameBox.Text = ""
 		Ledger.setStatus(login.Card.Status, "")
+	end
+end
+
+local function standUp()
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.Sit = false
+		humanoid.Jump = true
 	end
 end
 
@@ -187,6 +206,11 @@ local function wireLogin()
 	end
 	ButtonFx.attach(card.LoginButton, 1.02, 0.97)
 	card.LoginButton.MouseButton1Click:Connect(submit)
+	local standButton = login:FindFirstChild("StandButton")
+	if standButton then
+		ButtonFx.attach(standButton, 1.03, 0.96)
+		standButton.MouseButton1Click:Connect(standUp)
+	end
 	card.UsernameBox.FocusLost:Connect(function(enterPressed)
 		if enterPressed then
 			submit()
@@ -228,6 +252,7 @@ local function wireStartMenu()
 
 	local actions: { [string]: () -> () } = {
 		LogOff = CallStore.Logoff,
+		StandUp = standUp,
 		LeaveShift = function()
 			desktop.Windows.LeaveWindow.Visible = true
 		end,
@@ -435,6 +460,7 @@ function WorkstationController.Start()
 	desktop = root:WaitForChild("Desktop") :: Frame
 	login = root:WaitForChild("LoginScreen") :: Frame
 	UiScale.virtual(gui, root)
+	root.Active = true -- clicks on the desktop never fall through to the 3D world behind it
 
 	local windows = desktop.Windows
 	local apps = desktop.Taskbar.Apps

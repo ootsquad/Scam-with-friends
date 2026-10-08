@@ -8,6 +8,7 @@
 	CallerPrompt.opening(context, trust) -> string
 	CallerPrompt.turn(text, trust, turnsLeft, note?) -> string
 	CallerPrompt.blocked(line) -> string       asks for a rephrase of a line Roblox's text filter hid
+	CallerPrompt.recap(messages, outcome) -> string?   what the caller remembers of a finished call
 	CallerPrompt.safeLine(kind, random) -> string
 		kind "talk" | "pay" | "again" | "bye": a stock line that always gets through the filter
 	CallerPrompt.TOOL                          the "respond" tool Claude must answer with
@@ -22,6 +23,7 @@ export type Context = {
 	reason: string?, -- why they called (incoming only)
 	smarts: Smarts, -- CallConfig.Smarts level for this call
 	level: number, -- its index in CallConfig.Smarts
+	memory: { string }?, -- recaps of earlier calls with this call center, oldest first
 }
 
 local METHOD_WORDS = {
@@ -74,6 +76,16 @@ local SAFE_LINES = {
 }
 
 local CallerPrompt = {}
+
+local function memorySection(memory: { string }?): string
+	if not memory or #memory == 0 then
+		return ""
+	end
+	return "EARLIER CALLS WITH THIS CALL CENTER (you remember them; bring them up naturally when it fits and "
+		.. "stay consistent with them):\n"
+		.. table.concat(memory, "\n")
+		.. "\n"
+end
 
 CallerPrompt.TOOL = {
 	name = "respond",
@@ -140,10 +152,14 @@ function CallerPrompt.system(persona: any, context: Context): string
 		`How sharp you are: {SMARTS_WORDS[context.level] or SMARTS_WORDS[1]}`,
 		`How the call started: {howStarted}`,
 		"",
+		memorySection(context.memory),
 		"HOW TO PLAY",
 		"- Speak like a real person on the phone: one or two short sentences, under 200 characters. Plain spoken "
 			.. "words only: no emojis, no actions in asterisks, no lists. Chat about your hobbies, pet and family "
 			.. "when it fits.",
+		"- Remember everything said earlier in the call and stay consistent: who they said they are, what they "
+			.. "told you, what you've said about yourself and what you agreed to. Answer what they actually said, "
+			.. "don't repeat yourself word for word, and keep the same personality the whole call.",
 		"- " .. CHAT_SAFE,
 		"- Their lines can contain [static] where the bad phone line cut out. That's never their fault: don't lower "
 			.. "trust for it, just ask them to say that part again if you need it.",
@@ -181,6 +197,46 @@ end
 function CallerPrompt.blocked(line: string): string
 	return `(Roblox's chat filter hid your last try, so they didn't hear it: "{line}". Say what you meant again in `
 		.. "different, simpler words. " .. CHAT_SAFE .. ")"
+end
+
+-- How each CallConfig.Outcome reads from the caller's side.
+local OUTCOME_WORDS = {
+	[1] = "you paid them",
+	[2] = "you hung up on them",
+	[3] = "you didn't pick up",
+	[4] = "you called them and they didn't pick up",
+	[5] = "you called them and they declined",
+	[6] = "they hung up on you",
+	[7] = "the line went dead",
+}
+
+-- A short recap of a finished call for the caller to remember next time: how it ended and the last few
+-- lines. nil if nothing was said.
+function CallerPrompt.recap(messages: { { role: string, content: string } }, outcome: number): string?
+	local lines = {}
+	for _, message in messages do
+		if message.role == "assistant" then
+			table.insert(lines, `You: {message.content}`)
+		else
+			local said = string.match(message.content, 'They say: "(.*)"')
+			if said then
+				table.insert(lines, `Them: {said}`)
+			end
+		end
+	end
+	if #lines <= 1 then
+		return nil
+	end
+	local recent = {}
+	for i = math.max(1, #lines - 7), #lines do
+		table.insert(recent, lines[i])
+	end
+	local text = `- A call where {OUTCOME_WORDS[outcome] or "the call ended"}. It ended like this: `
+		.. table.concat(recent, " / ")
+	if #text > 900 then
+		text = string.sub(text, 1, 897) .. "..."
+	end
+	return text
 end
 
 function CallerPrompt.safeLine(kind: string, random: Random): string

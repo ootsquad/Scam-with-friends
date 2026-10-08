@@ -46,7 +46,8 @@ local root: GuiObject
 local container: GuiObject
 local topZ = 10
 local focused: string? = nil
-local drag: { entry: Entry, startMouse: Vector2, startPosition: UDim2 }? = nil
+-- The window being dragged. `touch` is the finger doing it (nil when it's the mouse).
+local drag: { entry: Entry, startMouse: Vector2, startPosition: UDim2, touch: InputObject? }? = nil
 
 local function isPointer(input: InputObject): boolean
 	return input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
@@ -97,6 +98,9 @@ local function setState(entry: Entry, state: WindowState)
 	entry.frame.Visible = state == "open"
 	if state ~= "open" and focused == entry.name then
 		focused = nil
+	end
+	if state ~= "open" and drag and drag.entry == entry then
+		drag = nil
 	end
 	refreshTaskbar()
 	WindowManager.Changed:Fire(entry.name, state)
@@ -239,6 +243,7 @@ function WindowManager.register(name: string, frame: Frame, taskButton: GuiButto
 				entry = entry,
 				startMouse = Vector2.new(input.Position.X, input.Position.Y),
 				startPosition = frame.Position,
+				touch = if input.UserInputType == Enum.UserInputType.Touch then input else nil,
 			}
 		end
 	end)
@@ -295,7 +300,12 @@ function WindowManager.init(desktopRoot: GuiObject, windowsFrame: GuiObject)
 		if not current then
 			return
 		end
-		if input.UserInputType ~= Enum.UserInputType.MouseMovement and input.UserInputType ~= Enum.UserInputType.Touch then
+		-- Follow the finger that started the drag, or the mouse.
+		if current.touch then
+			if input ~= current.touch then
+				return
+			end
+		elseif input.UserInputType ~= Enum.UserInputType.MouseMovement then
 			return
 		end
 		local delta = (Vector2.new(input.Position.X, input.Position.Y) - current.startMouse) / UiScale.ScaleOf(root)
@@ -305,9 +315,14 @@ function WindowManager.init(desktopRoot: GuiObject, windowsFrame: GuiObject)
 	end)
 
 	UserInputService.InputEnded:Connect(function(input)
-		if drag and isPointer(input) then
+		local current = drag
+		if current and (input.UserInputType == Enum.UserInputType.MouseButton1 or input == current.touch) then
 			drag = nil
 		end
+	end)
+	-- Alt-tabbing away mid-drag would otherwise leave the window stuck to the mouse.
+	UserInputService.WindowFocusReleased:Connect(function()
+		drag = nil
 	end)
 end
 

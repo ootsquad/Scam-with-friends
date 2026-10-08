@@ -50,6 +50,13 @@ local function setLoggedIn(player: Player, value: boolean)
 	fire(if value then loginCallbacks else logoutCallbacks, player)
 end
 
+-- Shift lock would grab the mouse while you're using the desktop, so it's off while you sit at a desk.
+local function setShiftLock(player: Player, allowed: boolean)
+	pcall(function()
+		player.DevEnableMouseLock = allowed and game:GetService("StarterPlayer").EnableMouseLockOption
+	end)
+end
+
 local function onOccupantChanged(seat: Seat)
 	local previous = occupantOf[seat]
 	local humanoid = seat.Occupant
@@ -61,12 +68,14 @@ local function onOccupantChanged(seat: Seat)
 			seatOf[previous] = nil
 			previous:SetAttribute("Desk", "")
 			setLoggedIn(previous, false)
+			setShiftLock(previous, true)
 		end
 	end
 	if player and previous ~= player then
 		occupantOf[seat] = player
 		seatOf[player] = seat
 		player:SetAttribute("Desk", seat:GetAttribute("DeskName") or seat.Name)
+		setShiftLock(player, false)
 	end
 end
 

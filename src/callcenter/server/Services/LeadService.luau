@@ -36,6 +36,7 @@ export type LeadRecord = {
 	Persona: Personas.Persona,
 	Look: Personas.Look,
 	Slot: number,
+	Memory: { string }, -- recaps of earlier calls with this lead, oldest first (CallService)
 }
 
 local LeadService = {}
@@ -59,6 +60,7 @@ local function newLead(slot: number): LeadRecord
 		Persona = generated.Persona,
 		Look = generated.Look,
 		Slot = slot,
+		Memory = {},
 	}
 end
 

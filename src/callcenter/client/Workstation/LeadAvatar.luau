@@ -1,21 +1,28 @@
 --[[
 	LeadAvatar (client)
-	Shows a lead's avatar in a ViewportFrame, framed on the head and shoulders like a profile picture.
+	Shows a lead's avatar in a ViewportFrame, framed on the head and shoulders like a profile picture, with
+	Roblox's default idle animation playing so the caller looks alive.
 
 	The server dresses a rig for every lead (AvatarService) and puts it in ReplicatedStorage.LeadAvatars/<id>.
-	Until it shows up a simple blocky stand-in is drawn from the lead's colors, and the rig is swapped in as
-	soon as it arrives, however long that takes (dressing a whole office of callers can take a while).
+	Until it shows up, the plain R15 rig (ReplicatedStorage.LeadAvatarBase) is shown in the lead's skin tone,
+	and the dressed rig is swapped in as soon as it arrives, however long that takes.
 
-	LeadAvatar.render(viewport, lead)     lead = { Id, Look = { Skin, Shirt, Pants, Hat, HatColor } }
+	The picture is a WorldModel named "Avatar" holding the rig (named "Rig"); its "Loaded" attribute is true
+	once it's the dressed avatar.
+
+	LeadAvatar.render(viewport, lead)     lead = { Id, Look = { Skin, ... } }
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local FACE = "rbxasset://textures/face.png"
+local IDLE_ANIMATION = "rbxassetid://507766666" -- Roblox's default R15 idle
+local ANIMATE = true
+local HEAD_HEIGHT = 1.2 -- a classic head; bigger heads (Rthro) get the camera pulled back
 
 local LeadAvatar = {}
 
 local watchers: { [ViewportFrame]: RBXScriptConnection } = {}
+local random = Random.new()
 
 local function stopWatching(viewport: ViewportFrame)
 	local connection = watchers[viewport]
@@ -42,75 +49,74 @@ local function useCamera(viewport: ViewportFrame, from: Vector3, at: Vector3, fo
 	viewport.CurrentCamera = camera
 end
 
--- ---------------------------------------------------------------------------
--- Blocky stand-in
--- ---------------------------------------------------------------------------
-
-local function part(model: Model, name: string, size: Vector3, position: Vector3, color: Color3): Part
-	local p = Instance.new("Part")
-	p.Name = name
-	p.Size = size
-	p.CFrame = CFrame.new(position)
-	p.Color = color
-	p.Anchored = true
-	p.CanCollide = false
-	p.Material = Enum.Material.SmoothPlastic
-	p.TopSurface = Enum.SurfaceType.Smooth
-	p.BottomSurface = Enum.SurfaceType.Smooth
-	p.Parent = model
-	return p
-end
-
-local function addHat(model: Model, style: number, color: Color3)
-	if style == 1 then -- cap
-		part(model, "Crown", Vector3.new(1.26, 0.32, 1.26), Vector3.new(0, 5.36, 0), color)
-		part(model, "Brim", Vector3.new(1.26, 0.08, 0.55), Vector3.new(0, 5.24, -0.86), color)
-	elseif style == 2 then -- beanie
-		part(model, "Beanie", Vector3.new(1.3, 0.55, 1.3), Vector3.new(0, 5.27, 0), color)
-	elseif style == 3 then -- top hat
-		part(model, "Brim", Vector3.new(1.7, 0.08, 1.7), Vector3.new(0, 5.24, 0), color)
-		part(model, "Crown", Vector3.new(1.0, 0.9, 1.0), Vector3.new(0, 5.73, 0), color)
-	elseif style == 4 then -- hair
-		part(model, "HairTop", Vector3.new(1.3, 0.28, 1.3), Vector3.new(0, 5.3, 0.02), color)
-		part(model, "HairBack", Vector3.new(1.3, 0.9, 0.22), Vector3.new(0, 4.85, 0.6), color)
+local function tint(model: Model, skin: Color3)
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and not part:FindFirstAncestorOfClass("Accessory") then
+			part.Color = skin
+		end
 	end
 end
 
-local function drawStandIn(viewport: ViewportFrame, look: any)
-	local model = Instance.new("Model")
-	model.Name = "Avatar"
-	local head = part(model, "Head", Vector3.new(1.2, 1.2, 1.2), Vector3.new(0, 4.6, 0), look.Skin)
-	local face = Instance.new("Decal")
-	face.Name = "Face"
-	face.Texture = FACE
-	face.Face = Enum.NormalId.Front
-	face.Parent = head
-	part(model, "Torso", Vector3.new(2, 2, 1), Vector3.new(0, 3, 0), look.Shirt)
-	part(model, "LeftArm", Vector3.new(1, 2, 1), Vector3.new(-1.5, 3, 0), look.Skin)
-	part(model, "RightArm", Vector3.new(1, 2, 1), Vector3.new(1.5, 3, 0), look.Skin)
-	addHat(model, look.Hat, look.HatColor)
-	model.Parent = viewport
-	useCamera(viewport, Vector3.new(0, 4.45, -5.4), Vector3.new(0, 4.1, 0), 34)
+-- Plays the idle animation. Parts are unanchored (except the root) so the joints can move; a WorldModel
+-- in a ViewportFrame doesn't simulate physics, so nothing falls.
+local function animate(model: Model)
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not humanoid or not root then
+		return
+	end
+	pcall(function()
+		for _, part in model:GetDescendants() do
+			if part:IsA("BasePart") then
+				part.Anchored = part == root
+			end
+		end
+		local animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator")
+		animator.Parent = humanoid
+		local animation = Instance.new("Animation")
+		animation.AnimationId = IDLE_ANIMATION
+		local track = (animator :: Animator):LoadAnimation(animation)
+		track.Looped = true
+		track:Play(0)
+		track.TimePosition = random:NextNumber(0, 2) -- callers side by side don't breathe in sync
+	end)
 end
 
--- ---------------------------------------------------------------------------
--- Dressed rig
--- ---------------------------------------------------------------------------
-
-local function drawRig(viewport: ViewportFrame, source: Model): boolean
+-- Puts a copy of `source` in the viewport. False if it has no head to frame.
+local function show(viewport: ViewportFrame, source: Model, skin: Color3?, loaded: boolean): boolean
 	local model = source:Clone()
-	model.Name = "Avatar"
+	model.Name = "Rig"
 	local head = model:FindFirstChild("Head") :: BasePart?
 	if not head then
 		model:Destroy()
 		return false
 	end
+	if skin then
+		pcall(tint, model, skin)
+	end
+	local world = Instance.new("WorldModel")
+	world.Name = "Avatar"
+	world:SetAttribute("Loaded", loaded)
+	model.Parent = world
+	world.Parent = viewport
+
 	local root = (model:FindFirstChild("HumanoidRootPart") or head) :: BasePart
 	local forward = root.CFrame.LookVector
 	local target = head.Position - Vector3.new(0, 0.15, 0)
-	model.Parent = viewport
-	useCamera(viewport, target + forward * 4.4 + Vector3.new(0, 0.3, 0), target, 36)
+	local headHeight = (head.Size :: any).Y
+	local distance = 4.4 * math.max((if type(headHeight) == "number" then headHeight else HEAD_HEIGHT) / HEAD_HEIGHT, 1)
+	useCamera(viewport, target + forward * distance + Vector3.new(0, 0.3, 0), target, 36)
+	if ANIMATE then
+		animate(model)
+	end
 	return true
+end
+
+local function showPlaceholder(viewport: ViewportFrame, lead: any)
+	local base = ReplicatedStorage:FindFirstChild("LeadAvatarBase")
+	if base and base:IsA("Model") then
+		show(viewport, base, lead.Look and lead.Look.Skin, false)
+	end
 end
 
 function LeadAvatar.render(viewport: ViewportFrame, lead: any)
@@ -124,23 +130,21 @@ function LeadAvatar.render(viewport: ViewportFrame, lead: any)
 
 	local folder = ReplicatedStorage:FindFirstChild("LeadAvatars")
 	local source = folder and folder:FindFirstChild(tostring(lead.Id))
-	if source and drawRig(viewport, source :: Model) then
+	if source and show(viewport, source :: Model, nil, true) then
 		return
 	end
-	if lead.Look then
-		drawStandIn(viewport, lead.Look)
-	end
+	showPlaceholder(viewport, lead)
 
 	-- Swap in the dressed rig when the server finishes it (until this picture shows someone else).
 	local wanted = tostring(lead.Id)
-	local function arrived(source: Instance)
-		if source.Name ~= wanted or viewport:GetAttribute("LeadId") ~= lead.Id then
+	local function arrived(dressed: Instance)
+		if dressed.Name ~= wanted or viewport:GetAttribute("LeadId") ~= lead.Id then
 			return
 		end
 		stopWatching(viewport)
 		clear(viewport)
-		if not drawRig(viewport, source :: Model) and lead.Look then
-			drawStandIn(viewport, lead.Look)
+		if not show(viewport, dressed :: Model, nil, true) then
+			showPlaceholder(viewport, lead)
 		end
 	end
 	task.spawn(function()
