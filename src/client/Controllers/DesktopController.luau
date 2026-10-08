@@ -67,7 +67,7 @@ local function setControlsEnabled(enabled: boolean)
 	end
 end
 
--- Play: open your lobby, or create one if you're not in one.
+-- Play: open your party, or create one if you're not in one.
 local function launchPlay()
 	if LobbyStore.InLobby() then
 		WindowManager.open("Lobby")
@@ -84,7 +84,7 @@ local function launchPlay()
 			WindowManager.open("Lobby")
 		end
 	else
-		Notify.show("Couldn't open a lobby", result.Message, Theme.Red)
+		Notify.show("Couldn't open a party", result.Message, Theme.Red)
 	end
 end
 
@@ -227,14 +227,14 @@ local function updateTray(state: any)
 				readyCount += 1
 			end
 		end
-		info.Line1.Text = `LOBBY {state.Code}`
+		info.Line1.Text = `PARTY {state.Code}`
 		info.Line1.TextColor3 = Theme.GreenText
 		info.Line2.Text = `CREW {#state.Seats}/{LobbyConfig.MaxDesks} · {readyCount} READY`
 		info.Line2.TextColor3 = Theme.Yellow
 	else
 		info.Line1.Text = `@{string.upper(player.Name)}`
 		info.Line1.TextColor3 = Theme.White
-		info.Line2.Text = "NOT IN A LOBBY"
+		info.Line2.Text = "NOT IN A PARTY"
 		info.Line2.TextColor3 = Theme.TrayIdle
 	end
 end
@@ -298,8 +298,8 @@ function DesktopController.Start()
 
 	LobbyStore.Changed:Connect(onLobbyChanged)
 	onLobbyChanged(LobbyStore.State)
-	LobbyStore.Notice:Connect(function(message: string)
-		Notify.show("Lobby", message)
+	LobbyStore.ListenForNotices(function(message: string)
+		Notify.show("Party", message)
 	end)
 
 	task.spawn(setControlsEnabled, false)

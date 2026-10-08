@@ -1,6 +1,7 @@
 --[[
 	Network.Lobby
-	Everything crew lobbies send over the wire, defined once for both sides.
+	Everything parties send over the wire, defined once for both sides. A party spans several servers (see
+	PartyCore); each player's own lobby server sends them their party.
 
 	Client -> server packets:   Lobby.packets.PickDesk.send(3)
 	Server -> client packets:   Lobby.packets.Update.sendTo(state, player)   (nil = you're not in a lobby)
@@ -67,6 +68,7 @@ return Namespace.define("Lobby", function()
 			SetReady = ByteNet.definePacket({ value = ByteNet.bool }),
 			SetDifficulty = ByteNet.definePacket({ value = ByteNet.uint8 }),
 			StartShift = ByteNet.definePacket({ value = ByteNet.nothing }),
+			KickMember = ByteNet.definePacket({ value = ByteNet.float64 }), -- leader removes this user
 
 			-- server -> client
 			Update = ByteNet.definePacket({ value = ByteNet.optional(LobbyState) }),

@@ -1,13 +1,14 @@
 --[[
 	LobbyStore (client)
-	The client's copy of "which lobby am I in, and what does it look like". The server is the source of
-	truth: actions here only send requests; the state changes when the server pushes an Update.
+	The client's copy of "which party am I in, and what does it look like". A party spans several servers;
+	this player's lobby server keeps it in sync and pushes every change here (Update). Actions only send
+	requests; the state changes when the server pushes.
 
 	LobbyStore.State                      -- LobbyState? (nil = not in a lobby)
 	LobbyStore.Changed:Connect(function(state, previous) end)
-	LobbyStore.Notice:Connect(function(message) end)
+	LobbyStore.ListenForNotices(function(message) end)   -- also gets notices sent before the desktop was up
 	LobbyStore.Create() / Join(code) -> Result     (yield)
-	LobbyStore.Leave() / PickDesk(n) / SetReady(bool) / SetDifficulty(i) / StartShift()
+	LobbyStore.Leave() / PickDesk(n) / SetReady(bool) / SetDifficulty(i) / Kick(userId) / StartShift()
 ]]
 
 local Players = game:GetService("Players")
@@ -30,6 +31,9 @@ local LobbyStore = {
 }
 
 local receivedPush = false
+-- Notices that arrived before anything listened (e.g. "Joined party ..." for an invite, sent while the desktop
+-- was still loading). nil once handed over.
+local pendingNotices: { string }? = {}
 
 local function apply(state: LobbyState?)
 	local current = LobbyStore.State
@@ -47,13 +51,27 @@ function LobbyStore.Start()
 		apply(state)
 	end)
 	Lobby.packets.Notice.listen(function(message: string)
-		LobbyStore.Notice:Fire(message)
+		if pendingNotices then
+			table.insert(pendingNotices, message)
+		else
+			LobbyStore.Notice:Fire(message)
+		end
 	end)
 
 	local initial = Lobby.queries.GetLobby.invoke(nil)
 	if not receivedPush then
 		apply(initial)
 	end
+end
+
+function LobbyStore.ListenForNotices(handler: (string) -> ())
+	local connection = LobbyStore.Notice:Connect(handler)
+	local pending = pendingNotices
+	pendingNotices = nil
+	for _, message in pending or {} do
+		task.spawn(handler, message)
+	end
+	return connection
 end
 
 -- ---------------------------------------------------------------------------
@@ -127,6 +145,10 @@ end
 
 function LobbyStore.SetDifficulty(index: number)
 	Lobby.packets.SetDifficulty.send(index)
+end
+
+function LobbyStore.Kick(userId: number)
+	Lobby.packets.KickMember.send(userId)
 end
 
 function LobbyStore.StartShift()

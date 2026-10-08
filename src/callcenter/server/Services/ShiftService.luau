@@ -159,7 +159,8 @@ local function readMemoryStore(): any
 	return nil
 end
 
--- Sends a player back to the lobby place (a normal public server).
+-- Sends a player back to the lobby place: into a lobby server of their own (parties work across servers), or a
+-- normal public one with LobbyConfig.SoloLobbies off.
 local function sendToLobby(player: Player, kickMessage: string): boolean
 	if RunService:IsStudio() then
 		notice(player, "Teleports only work in the live game. Stop the test to leave.")
@@ -171,7 +172,14 @@ local function sendToLobby(player: Player, kickMessage: string): boolean
 		return true
 	end
 	local ok, err = pcall(function()
-		TeleportService:TeleportAsync(target, { player })
+		if LobbyConfig.SoloLobbies then
+			local options = Instance.new("TeleportOptions")
+			options.ShouldReserveServer = true
+			options:SetTeleportData({ Solo = true })
+			TeleportService:TeleportAsync(target, { player }, options)
+		else
+			TeleportService:TeleportAsync(target, { player })
+		end
 	end)
 	if not ok then
 		warn(`[ShiftService] couldn't send {player.Name} to the lobby: {err}`)

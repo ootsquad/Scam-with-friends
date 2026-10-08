@@ -6,9 +6,10 @@ everyone gets fired.
 
 ## 1. Form a crew
 
-1. In the lobby, press **Play** to open a crew lobby, or **Join with Code** to join a friend's.
-2. The host picks a difficulty, everyone readies up, and the host starts the shift.
-3. The whole crew is sent to its own private call center server.
+1. Everyone starts in their own lobby. Press **Play** to make a party, then share its code or send an invite.
+   Friends press **Join with Code** (or accept the invite) and show up in your party right away.
+2. The party leader picks a difficulty and can remove members. Everyone readies up, then the leader starts.
+3. After a short countdown, the whole party is sent to the same private call center server.
 
 | Difficulty | Day 1 quota | Quota growth each day |
 | --- | --- | --- |

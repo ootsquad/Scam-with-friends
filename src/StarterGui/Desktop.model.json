@@ -2783,7 +2783,7 @@
 													]
 												},
 												"BackgroundTransparency": 1,
-												"Text": "Crew Lobby — 7KX2QD",
+												"Text": "Party — 7KX2QD",
 												"FontFace": {
 													"family": "rbxasset://fonts/families/Roboto.json",
 													"weight": "Medium",
@@ -3359,7 +3359,7 @@
 															0.5
 														],
 														"AutoButtonColor": false,
-														"Text": "LEAVE LOBBY",
+														"Text": "LEAVE PARTY",
 														"FontFace": {
 															"family": "rbxasset://fonts/families/RobotoCondensed.json",
 															"weight": "Bold",
@@ -4419,7 +4419,7 @@
 																			0.8353,
 																			0.2902
 																		],
-																		"Text": "HOST",
+																		"Text": "LEADER",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
 																			"weight": "Bold",
@@ -4480,6 +4480,75 @@
 																			1.0
 																		]
 																	}
+																},
+																{
+																	"Name": "KickButton",
+																	"ClassName": "TextButton",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					146
+																				],
+																				[
+																					0,
+																					52
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					50
+																				],
+																				[
+																					0,
+																					24
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.8392,
+																			0.1922,
+																			0.2314
+																		],
+																		"AnchorPoint": [
+																			0.5,
+																			0.5
+																		],
+																		"ZIndex": 3,
+																		"Visible": false,
+																		"AutoButtonColor": false,
+																		"Text": "KICK",
+																		"FontFace": {
+																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																			"weight": "Bold",
+																			"style": "Normal"
+																		},
+																		"TextSize": 12,
+																		"TextColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		]
+																	},
+																	"Children": [
+																		{
+																			"Name": "Corner",
+																			"ClassName": "UICorner",
+																			"Properties": {
+																				"CornerRadius": {
+																					"UDim": [
+																						0,
+																						3
+																					]
+																				}
+																			}
+																		}
+																	]
 																},
 																{
 																	"Name": "StatusLine",
@@ -5567,7 +5636,7 @@
 																			0.2902
 																		],
 																		"Visible": false,
-																		"Text": "HOST",
+																		"Text": "LEADER",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
 																			"weight": "Bold",
@@ -5629,6 +5698,74 @@
 																			1.0
 																		]
 																	}
+																},
+																{
+																	"Name": "KickButton",
+																	"ClassName": "TextButton",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					146
+																				],
+																				[
+																					0,
+																					52
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					50
+																				],
+																				[
+																					0,
+																					24
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.8392,
+																			0.1922,
+																			0.2314
+																		],
+																		"AnchorPoint": [
+																			0.5,
+																			0.5
+																		],
+																		"ZIndex": 3,
+																		"AutoButtonColor": false,
+																		"Text": "KICK",
+																		"FontFace": {
+																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																			"weight": "Bold",
+																			"style": "Normal"
+																		},
+																		"TextSize": 12,
+																		"TextColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		]
+																	},
+																	"Children": [
+																		{
+																			"Name": "Corner",
+																			"ClassName": "UICorner",
+																			"Properties": {
+																				"CornerRadius": {
+																					"UDim": [
+																						0,
+																						3
+																					]
+																				}
+																			}
+																		}
+																	]
 																},
 																{
 																	"Name": "StatusLine",
@@ -6716,7 +6853,7 @@
 																			0.2902
 																		],
 																		"Visible": false,
-																		"Text": "HOST",
+																		"Text": "LEADER",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
 																			"weight": "Bold",
@@ -6778,6 +6915,74 @@
 																			1.0
 																		]
 																	}
+																},
+																{
+																	"Name": "KickButton",
+																	"ClassName": "TextButton",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					146
+																				],
+																				[
+																					0,
+																					52
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					50
+																				],
+																				[
+																					0,
+																					24
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.8392,
+																			0.1922,
+																			0.2314
+																		],
+																		"AnchorPoint": [
+																			0.5,
+																			0.5
+																		],
+																		"ZIndex": 3,
+																		"AutoButtonColor": false,
+																		"Text": "KICK",
+																		"FontFace": {
+																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																			"weight": "Bold",
+																			"style": "Normal"
+																		},
+																		"TextSize": 12,
+																		"TextColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		]
+																	},
+																	"Children": [
+																		{
+																			"Name": "Corner",
+																			"ClassName": "UICorner",
+																			"Properties": {
+																				"CornerRadius": {
+																					"UDim": [
+																						0,
+																						3
+																					]
+																				}
+																			}
+																		}
+																	]
 																},
 																{
 																	"Name": "StatusLine",
@@ -7865,7 +8070,7 @@
 																			0.2902
 																		],
 																		"Visible": false,
-																		"Text": "HOST",
+																		"Text": "LEADER",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
 																			"weight": "Bold",
@@ -7927,6 +8132,75 @@
 																			1.0
 																		]
 																	}
+																},
+																{
+																	"Name": "KickButton",
+																	"ClassName": "TextButton",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					146
+																				],
+																				[
+																					0,
+																					52
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					50
+																				],
+																				[
+																					0,
+																					24
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.8392,
+																			0.1922,
+																			0.2314
+																		],
+																		"AnchorPoint": [
+																			0.5,
+																			0.5
+																		],
+																		"ZIndex": 3,
+																		"Visible": false,
+																		"AutoButtonColor": false,
+																		"Text": "KICK",
+																		"FontFace": {
+																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																			"weight": "Bold",
+																			"style": "Normal"
+																		},
+																		"TextSize": 12,
+																		"TextColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		]
+																	},
+																	"Children": [
+																		{
+																			"Name": "Corner",
+																			"ClassName": "UICorner",
+																			"Properties": {
+																				"CornerRadius": {
+																					"UDim": [
+																						0,
+																						3
+																					]
+																				}
+																			}
+																		}
+																	]
 																},
 																{
 																	"Name": "StatusLine",
@@ -8165,7 +8439,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
-																		"Text": "LOBBY CODE",
+																		"Text": "PARTY CODE",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
 																			"weight": "Bold",
@@ -9590,7 +9864,7 @@
 															]
 														},
 														"BackgroundTransparency": 1,
-														"Text": "You're not in a lobby",
+														"Text": "You're not in a party",
 														"FontFace": {
 															"family": "rbxasset://fonts/families/Roboto.json",
 															"weight": "Bold",
@@ -9687,7 +9961,7 @@
 															0.5
 														],
 														"AutoButtonColor": false,
-														"Text": "CREATE LOBBY",
+														"Text": "CREATE PARTY",
 														"FontFace": {
 															"family": "rbxasset://fonts/families/RobotoCondensed.json",
 															"weight": "Bold",
@@ -11122,7 +11396,7 @@
 													]
 												},
 												"BackgroundTransparency": 1,
-												"Text": "Hop into a friend's crew lobby.",
+												"Text": "Hop into a friend's party.",
 												"FontFace": {
 													"family": "rbxasset://fonts/families/Roboto.json",
 													"weight": "Regular",
@@ -11203,7 +11477,7 @@
 													]
 												},
 												"BackgroundTransparency": 1,
-												"Text": "LOBBY CODE",
+												"Text": "PARTY CODE",
 												"FontFace": {
 													"family": "rbxasset://fonts/families/RobotoCondensed.json",
 													"weight": "Bold",
@@ -11327,7 +11601,7 @@
 													0.5
 												],
 												"AutoButtonColor": false,
-												"Text": "Join lobby",
+												"Text": "Join party",
 												"FontFace": {
 													"family": "rbxasset://fonts/families/Roboto.json",
 													"weight": "Bold",
@@ -11513,7 +11787,7 @@
 															]
 														},
 														"BackgroundTransparency": 1,
-														"Text": "1. Ask your host for their 6-character code.\n\n2. Type it in and press Join.\n\n3. You'll sit at the next free desk.",
+														"Text": "1. Ask your party leader for their 6-character code.\n\n2. Type it in and press Join.\n\n3. You're in. You stay in your own lobby until the shift starts.",
 														"FontFace": {
 															"family": "rbxasset://fonts/families/Roboto.json",
 															"weight": "Regular",
@@ -16919,7 +17193,7 @@
 													]
 												},
 												"BackgroundTransparency": 1,
-												"Text": "Leave lobby",
+												"Text": "Leave party",
 												"FontFace": {
 													"family": "rbxasset://fonts/families/Roboto.json",
 													"weight": "Medium",
@@ -17138,7 +17412,7 @@
 											]
 										},
 										"BackgroundTransparency": 1,
-										"Text": "Lobby",
+										"Text": "Party",
 										"FontFace": {
 											"family": "rbxasset://fonts/families/Roboto.json",
 											"weight": "Bold",
@@ -17184,7 +17458,7 @@
 											]
 										},
 										"BackgroundTransparency": 1,
-										"Text": "Moth joined the lobby.",
+										"Text": "Moth joined the party.",
 										"FontFace": {
 											"family": "rbxasset://fonts/families/Roboto.json",
 											"weight": "Regular",
@@ -18925,7 +19199,7 @@
 													]
 												},
 												"BackgroundTransparency": 1,
-												"Text": "LOBBY 7KX2QD",
+												"Text": "PARTY 7KX2QD",
 												"FontFace": {
 													"family": "rbxasset://fonts/families/RobotoCondensed.json",
 													"weight": "Bold",

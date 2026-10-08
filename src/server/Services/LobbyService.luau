@@ -1,160 +1,59 @@
 --[[
-	LobbyService (server)
-	Crew lobbies. Any player can create one (Play) and share its code; others join with the code.
-	Each lobby has up to 4 desks, a host, a difficulty and ready states, and the host starts the shift.
+	LobbyService (server, lobby place)
+	Parties for this lobby server's players. The party logic itself is PartyCore (shared across servers through
+	MemoryStore and MessagingService); this connects it to Roblox:
 
-	Clients only *request* changes; every request is validated here. After any change the whole
-	lobby state is pushed to that lobby's members (Network.Lobby.packets.Update).
+	  - the client's requests (Network.Lobby): create, join with a code, leave, pick a desk, ready, difficulty,
+	    remove a member, start the shift
+	  - pushing each player their party (Lobby.packets.Update) and messages (Lobby.packets.Notice)
+	  - arrivals: someone who accepted a party invite (LaunchData) or was moved to a solo lobby joins the party
+	    automatically once their client is ready
+	  - solo lobbies: with LobbyConfig.SoloLobbies, a player who lands in a lobby server that already has
+	    someone in it is moved to a lobby server of their own (setting the place's Max Players to 1 does the
+	    same thing without the extra hop)
+	  - launching: ShiftLauncher teleports this server's members into the party's call center server
 
-	When the host starts the shift and the countdown ends, ShiftLauncher teleports the crew into their
-	own private server of the Call Center Place. If that fails (e.g. in Studio) the lobby reopens.
-
-	Public API:
-		LobbyService.Start()
-		LobbyService.GetLobbyCode(player) -> string?
+	LobbyService.Start()
+	LobbyService.GetLobbyCode(player) -> string?
 ]]
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Lobby = require(Shared.Network.Lobby)
 local LobbyConfig = require(Shared.Config.LobbyConfig)
-local LobbyDirectory = require(script.Parent.LobbyDirectory)
+local PartyBackend = require(script.Parent.PartyBackend)
+local PartyCore = require(script.Parent.PartyCore)
 local ShiftLauncher = require(script.Parent.ShiftLauncher)
 
-type LobbyState = Lobby.LobbyState
-type Seat = Lobby.Seat
 type Result = Lobby.Result
 
-type LobbyData = {
-	code: string,
-	phase: number,
-	host: Player?,
-	difficulty: number,
-	countdown: number,
-	revision: number,
-	seats: { [number]: Player }, -- desk index -> player
-	ready: { [Player]: boolean },
-}
-
-local Phase = LobbyConfig.Phase
+local SOLO_MOVE_TIMEOUT = 30 -- seconds before a move to a solo lobby that never happened counts as failed
 
 local LobbyService = {}
 
-local lobbies: { [string]: LobbyData } = {}
-local lobbyOf: { [Player]: LobbyData } = {}
+local core: any
 local subscribers: { [Player]: boolean } = {} -- clients that finished booting and can receive packets
-local arrivalCodes: { [Player]: string } = {} -- teleported in to join this code
+local arrivalCodes: { [Player]: string } = {} -- arrived to join this party
+local movingSolo: { [Player]: boolean } = {} -- on their way to a lobby server of their own
 local lastRequest: { [Player]: number } = {}
 
 -- ---------------------------------------------------------------------------
 -- Helpers
 -- ---------------------------------------------------------------------------
 
-local function ok(message: string): Result
-	return { Ok = true, Message = message }
-end
-
-local function fail(message: string): Result
-	return { Ok = false, Message = message }
-end
-
-local function makeCode(): string
-	local alphabet = LobbyConfig.CodeAlphabet
-	local rng = Random.new()
-	while true do
-		local chars = table.create(LobbyConfig.CodeLength)
-		for i = 1, LobbyConfig.CodeLength do
-			local n = rng:NextInteger(1, #alphabet)
-			chars[i] = string.sub(alphabet, n, n)
-		end
-		local code = table.concat(chars)
-		if not lobbies[code] then
-			return code
-		end
-	end
-end
-
-local function members(lobby: LobbyData): { Player }
-	local list = {}
-	for desk = 1, LobbyConfig.MaxDesks do
-		local player = lobby.seats[desk]
-		if player then
-			table.insert(list, player)
-		end
-	end
-	return list
-end
-
-local function deskOf(lobby: LobbyData, player: Player): number?
-	for desk, occupant in lobby.seats do
-		if occupant == player then
-			return desk
-		end
-	end
-	return nil
-end
-
-local function firstFreeDesk(lobby: LobbyData): number?
-	for desk = 1, LobbyConfig.MaxDesks do
-		if lobby.seats[desk] == nil then
-			return desk
-		end
-	end
-	return nil
-end
-
-local function snapshot(lobby: LobbyData): LobbyState
-	local seats: { Seat } = {}
-	for desk = 1, LobbyConfig.MaxDesks do
-		local player = lobby.seats[desk]
-		if player then
-			table.insert(seats, {
-				Desk = desk,
-				UserId = player.UserId,
-				DisplayName = player.DisplayName,
-				Username = player.Name,
-				Ready = lobby.ready[player] == true,
-			})
-		end
-	end
-	return {
-		Revision = lobby.revision,
-		Code = lobby.code,
-		Phase = lobby.phase,
-		HostUserId = if lobby.host then lobby.host.UserId else 0,
-		Difficulty = lobby.difficulty,
-		Countdown = lobby.countdown,
-		Seats = seats,
-	}
-end
-
--- Pushes the lobby's new state to its members. Call after every change.
-local function publish(lobby: LobbyData)
-	lobby.revision += 1
-	local targets = {}
-	for _, player in members(lobby) do
-		if subscribers[player] then
-			table.insert(targets, player)
-		end
-	end
-	if #targets > 0 then
-		Lobby.packets.Update.sendToList(snapshot(lobby), targets)
-	end
-end
-
 local function notify(player: Player, message: string)
-	if subscribers[player] then
+	if subscribers[player] and player.Parent then
 		Lobby.packets.Notice.sendTo(message, player)
 	end
 end
 
-local function notifyOthers(lobby: LobbyData, except: Player, message: string)
-	for _, player in members(lobby) do
-		if player ~= except then
-			notify(player, message)
-		end
+local function push(player: Player, party: any)
+	if subscribers[player] and player.Parent then
+		Lobby.packets.Update.sendTo(if party then core:Snapshot(party) else nil, player)
 	end
 end
 
@@ -168,298 +67,192 @@ local function throttle(player: Player): boolean
 	return true
 end
 
--- The caller's lobby, if they may change it right now.
-local function editableLobby(player: Player): LobbyData?
-	if not subscribers[player] or not throttle(player) then
-		return nil
-	end
-	local lobby = lobbyOf[player]
-	if not lobby then
-		return nil
-	end
-	if lobby.phase ~= Phase.Lobby then
-		notify(player, "Your shift already started.")
-		return nil
-	end
-	return lobby
+local function slowDown(): Result
+	return { Ok = false, Message = "Slow down a little." }
 end
 
-local function removeFromLobby(player: Player)
-	local lobby = lobbyOf[player]
-	if not lobby then
-		return
-	end
-	lobbyOf[player] = nil
-	local desk = deskOf(lobby, player)
-	if desk then
-		lobby.seats[desk] = nil
-	end
-	lobby.ready[player] = nil
+local function unixNow(): number
+	return DateTime.now().UnixTimestampMillis / 1000
+end
 
-	if #members(lobby) == 0 then
-		lobbies[lobby.code] = nil
-		LobbyDirectory.Unregister(lobby.code)
-	else
-		notifyOthers(lobby, player, `{player.DisplayName} left the lobby.`)
-		if lobby.host == player then
-			lobby.host = members(lobby)[1]
-			if lobby.host then
-				notify(lobby.host, "You're the host now.")
-			end
+-- The party code a player arrived with: from a party invite (LaunchData) or a solo-lobby move (TeleportData).
+local function arrivalCode(player: Player): string?
+	local ok, joinData = pcall(function()
+		return player:GetJoinData()
+	end)
+	if not ok or type(joinData) ~= "table" then
+		return nil
+	end
+	local teleportData = joinData.TeleportData
+	if type(teleportData) == "table" and type(teleportData.LobbyCode) == "string" then
+		return string.upper(teleportData.LobbyCode)
+	end
+	local launchData = joinData.LaunchData
+	if type(launchData) == "string" and #launchData > 0 then
+		local code = string.upper((string.gsub(launchData, "[^%w]", "")))
+		if #code == LobbyConfig.CodeLength then
+			return code
 		end
-		publish(lobby)
 	end
-
-	if subscribers[player] then
-		Lobby.packets.Update.sendTo(nil, player)
-	end
+	return nil
 end
 
-local function addToLobby(player: Player, lobby: LobbyData): Result
-	if lobbyOf[player] == lobby then
-		return ok("You're already in this lobby.")
-	end
-	if lobby.phase ~= Phase.Lobby then
-		return fail("That crew already started their shift.")
-	end
-	local desk = firstFreeDesk(lobby)
-	if not desk then
-		return fail(`Lobby {lobby.code} is full ({LobbyConfig.MaxDesks}/{LobbyConfig.MaxDesks}).`)
-	end
+-- ---------------------------------------------------------------------------
+-- Solo lobbies
+-- ---------------------------------------------------------------------------
 
-	removeFromLobby(player)
-	lobby.seats[desk] = player
-	lobbyOf[player] = lobby
-	if lobby.host == nil then
-		lobby.host = player
+local function isReservedServer(): boolean
+	return game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0
+end
+
+-- Moves a player who isn't alone in this public lobby server to a lobby server of their own. Returns true if
+-- they're on their way.
+local function moveToSoloLobby(player: Player): boolean
+	if not LobbyConfig.SoloLobbies or RunService:IsStudio() or isReservedServer() then
+		return false
 	end
-	notifyOthers(lobby, player, `{player.DisplayName} joined the lobby.`)
-	publish(lobby)
-	return ok(`Joined lobby {lobby.code}.`)
+	if #Players:GetPlayers() <= 1 then
+		return false
+	end
+	local options = Instance.new("TeleportOptions")
+	options.ShouldReserveServer = true
+	options:SetTeleportData({ Solo = true, LobbyCode = arrivalCode(player) })
+	local ok, err = pcall(function()
+		TeleportService:TeleportAsync(game.PlaceId, { player }, options)
+	end)
+	if not ok then
+		warn(`[LobbyService] couldn't move {player.Name} to a solo lobby (they'll stay here): {err}`)
+	end
+	return ok
+end
+
+-- ---------------------------------------------------------------------------
+-- Launching
+-- ---------------------------------------------------------------------------
+
+local function launch(players: { Player }, party: any)
+	local crew = {}
+	for _, member in party.Members do
+		table.insert(crew, member.UserId)
+	end
+	ShiftLauncher.Send(players, party.Launch.AccessCode, {
+		LobbyCode = party.Code,
+		Difficulty = party.Difficulty,
+		HostUserId = party.Leader,
+		Crew = crew,
+		ReturnPlaceId = game.PlaceId,
+	})
+end
+
+local function storeShift(privateServerId: string, info: any)
+	info.ReturnPlaceId = game.PlaceId
+	ShiftLauncher.StoreShift(privateServerId, info)
 end
 
 -- ---------------------------------------------------------------------------
 -- Request handlers
 -- ---------------------------------------------------------------------------
 
-local function onGetLobby(_: nil, player: Player): LobbyState?
+local function joinOnArrival(player: Player, code: string)
+	task.spawn(function()
+		local result = core:Join(player, code)
+		notify(player, if result.Ok then result.Message else `Couldn't join party {code}: {result.Message}`)
+	end)
+end
+
+local function onGetLobby(_: nil, player: Player)
 	subscribers[player] = true
 
-	-- Teleported in from another server to join a friend: seat them now that their client is ready.
+	-- Arrived from an invite or a solo-lobby move: join that party now that the client is ready.
 	local arrival = arrivalCodes[player]
 	if arrival then
 		arrivalCodes[player] = nil
-		local lobby = lobbies[arrival]
-		if lobby then
-			local result = addToLobby(player, lobby)
-			if not result.Ok then
-				notify(player, result.Message)
-			end
-		else
-			notify(player, `Lobby {arrival} closed before you arrived.`)
-		end
+		joinOnArrival(player, arrival)
 	end
 
-	local lobby = lobbyOf[player]
-	return if lobby then snapshot(lobby) else nil
+	local party = core:PartyOf(player)
+	return if party then core:Snapshot(party) else nil
+end
+
+local function movingResult(): Result
+	return { Ok = false, Message = "Moving you to a lobby of your own. One moment…" }
 end
 
 local function onCreateLobby(_: nil, player: Player): Result
 	subscribers[player] = true
 	if not throttle(player) then
-		return fail("Slow down a little.")
+		return slowDown()
+	elseif movingSolo[player] then
+		return movingResult()
 	end
-
-	local current = lobbyOf[player]
-	if current then
-		return ok(`You're already in lobby {current.code}.`)
-	end
-
-	local lobby: LobbyData = {
-		code = makeCode(),
-		phase = Phase.Lobby,
-		host = player,
-		difficulty = LobbyConfig.DefaultDifficulty,
-		countdown = 0,
-		revision = 0,
-		seats = { [1] = player },
-		ready = {},
-	}
-	lobbies[lobby.code] = lobby
-	lobbyOf[player] = lobby
-	LobbyDirectory.Register(lobby.code)
-	publish(lobby)
-	return ok(`Lobby {lobby.code} is open. Share the code with your crew.`)
+	return core:Create(player)
 end
 
 local function onJoinLobby(rawCode: string, player: Player): Result
 	subscribers[player] = true
 	if not throttle(player) then
-		return fail("Slow down a little.")
+		return slowDown()
+	elseif movingSolo[player] then
+		return movingResult()
 	end
-
-	local code = string.upper(string.gsub(rawCode, "[^%w]", ""))
-	if #code ~= LobbyConfig.CodeLength then
-		return fail(`Codes are {LobbyConfig.CodeLength} letters or numbers.`)
-	end
-
-	local current = lobbyOf[player]
-	if current and current.code == code then
-		return ok("You're already in that lobby.")
-	end
-	if current and current.phase ~= Phase.Lobby then
-		return fail("Finish your shift first.")
-	end
-
-	local lobby = lobbies[code]
-	if lobby then
-		return addToLobby(player, lobby)
-	end
-
-	local jobId = LobbyDirectory.Find(code)
-	if jobId then
-		local teleported = LobbyDirectory.TeleportTo(player, jobId, code)
-		if teleported then
-			return ok("That lobby is on another server. Teleporting you there…")
-		end
-		return fail("Couldn't teleport you to that lobby. Try again in a moment.")
-	end
-
-	return fail(`No lobby found with code {code}.`)
+	return core:Join(player, rawCode)
 end
 
-local function onLeaveLobby(_: nil, player: Player)
-	if not subscribers[player] or not throttle(player) then
-		return
-	end
-	local lobby = lobbyOf[player]
-	if lobby and lobby.phase ~= Phase.Lobby then
-		notify(player, "The shift is starting. Too late to leave!")
-		return
-	end
-	removeFromLobby(player)
-end
-
-local function onPickDesk(desk: number, player: Player)
-	local lobby = editableLobby(player)
-	if not lobby or desk < 1 or desk > LobbyConfig.MaxDesks then
-		return
-	end
-	local current = deskOf(lobby, player)
-	if current == desk then
-		return
-	end
-	if lobby.seats[desk] ~= nil then
-		notify(player, "That desk is taken.")
-		return
-	end
-	if current then
-		lobby.seats[current] = nil
-	end
-	lobby.seats[desk] = player
-	publish(lobby)
-end
-
-local function onSetReady(value: boolean, player: Player)
-	local lobby = editableLobby(player)
-	if not lobby or (lobby.ready[player] == true) == value then
-		return
-	end
-	lobby.ready[player] = value
-	publish(lobby)
-end
-
-local function onSetDifficulty(index: number, player: Player)
-	local lobby = editableLobby(player)
-	if not lobby then
-		return
-	end
-	if lobby.host ~= player then
-		notify(player, "Only the host can change that.")
-		return
-	end
-	if LobbyConfig.Difficulties[index] == nil or lobby.difficulty == index then
-		return
-	end
-	lobby.difficulty = index
-	publish(lobby)
-end
-
-local function onStartShift(_: nil, player: Player)
-	local lobby = editableLobby(player)
-	if not lobby then
-		return
-	end
-	if lobby.host ~= player then
-		notify(player, "Only the host can start the shift.")
-		return
-	end
-
-	local crew = members(lobby)
-	local readyCount = 0
-	for _, member in crew do
-		if lobby.ready[member] then
-			readyCount += 1
+local function guarded(handler: (Player, any) -> ()): (any, Player) -> ()
+	return function(value: any, player: Player)
+		if subscribers[player] and throttle(player) then
+			handler(player, value)
 		end
 	end
-	if readyCount < #crew then
-		notify(player, `Not everyone is ready yet ({readyCount}/{#crew}).`)
-		return
-	end
-
-	lobby.phase = Phase.Starting
-	lobby.countdown = LobbyConfig.StartCountdown
-	LobbyDirectory.Unregister(lobby.code)
-	publish(lobby)
-
-	task.delay(LobbyConfig.StartCountdown, function()
-		if lobbies[lobby.code] ~= lobby then
-			return -- everyone left during the countdown
-		end
-		lobby.phase = Phase.Teleporting
-		lobby.countdown = 0
-		publish(lobby)
-
-		local crewNow = members(lobby)
-		local userIds = {}
-		for _, member in crewNow do
-			table.insert(userIds, member.UserId)
-		end
-		local launched, message = ShiftLauncher.Launch({
-			LobbyCode = lobby.code,
-			Difficulty = lobby.difficulty,
-			HostUserId = if lobby.host then lobby.host.UserId else 0,
-			Crew = userIds,
-			ReturnPlaceId = game.PlaceId,
-		}, crewNow)
-
-		if not launched and lobbies[lobby.code] == lobby then
-			-- Reopen the lobby so the crew can try again.
-			lobby.phase = Phase.Lobby
-			LobbyDirectory.Register(lobby.code)
-			publish(lobby)
-			for _, member in members(lobby) do
-				notify(member, message)
-			end
-		end
-	end)
 end
 
 -- ---------------------------------------------------------------------------
 -- Players
 -- ---------------------------------------------------------------------------
 
+local onTeleportInitFailed: (Player, Enum.TeleportResult, string, number) -> ()
+
 local function onPlayerAdded(player: Player)
-	local code = LobbyDirectory.ArrivalCode(player)
+	core:PlayerAdded(player)
+	if moveToSoloLobby(player) then
+		movingSolo[player] = true -- the party code (if any) travels with them
+		-- Nothing happened (no arrival, no failure): let them play here after all.
+		task.delay(SOLO_MOVE_TIMEOUT, function()
+			if movingSolo[player] and player.Parent then
+				onTeleportInitFailed(player, Enum.TeleportResult.Failure, "timed out", game.PlaceId)
+			end
+		end)
+		return
+	end
+	local code = arrivalCode(player)
 	if code then
+		arrivalCodes[player] = code
+	end
+end
+
+-- The move to a lobby of their own failed: they play the lobby here instead.
+function onTeleportInitFailed(player: Player, _result: Enum.TeleportResult, message: string, placeId: number)
+	if placeId ~= game.PlaceId or not movingSolo[player] then
+		return
+	end
+	movingSolo[player] = nil
+	warn(`[LobbyService] couldn't move {player.Name} to a solo lobby (they'll stay here): {message}`)
+	local code = arrivalCode(player)
+	if not code then
+		return
+	end
+	if subscribers[player] then
+		joinOnArrival(player, code)
+	else
 		arrivalCodes[player] = code
 	end
 end
 
 local function onPlayerRemoving(player: Player)
 	subscribers[player] = nil -- nothing more to send them
-	removeFromLobby(player)
+	core:PlayerRemoving(player)
 	arrivalCodes[player] = nil
+	movingSolo[player] = nil
 	lastRequest[player] = nil
 end
 
@@ -468,31 +261,75 @@ end
 -- ---------------------------------------------------------------------------
 
 function LobbyService.GetLobbyCode(player: Player): string?
-	local lobby = lobbyOf[player]
-	return lobby and lobby.code
+	return core and core:CodeOf(player)
 end
 
 function LobbyService.Start()
+	core = PartyCore.new({
+		store = PartyBackend.store(LobbyConfig.PartyStore),
+		bus = PartyBackend.bus(),
+		jobId = if game.JobId ~= "" then game.JobId else `studio-{math.random(1, 1e9)}`,
+		now = unixNow,
+		config = LobbyConfig,
+		push = push,
+		notice = notify,
+		launch = launch,
+		reserve = ShiftLauncher.Reserve,
+		storeShift = storeShift,
+		random = Random.new(),
+	})
+
 	Lobby.queries.GetLobby.listen(onGetLobby)
 	Lobby.queries.CreateLobby.listen(onCreateLobby)
 	Lobby.queries.JoinLobby.listen(onJoinLobby)
-	Lobby.packets.LeaveLobby.listen(onLeaveLobby)
-	Lobby.packets.PickDesk.listen(onPickDesk)
-	Lobby.packets.SetReady.listen(onSetReady)
-	Lobby.packets.SetDifficulty.listen(onSetDifficulty)
-	Lobby.packets.StartShift.listen(onStartShift)
+	Lobby.packets.LeaveLobby.listen(guarded(function(player)
+		core:Leave(player)
+	end))
+	Lobby.packets.PickDesk.listen(guarded(function(player, desk)
+		core:PickDesk(player, desk)
+	end))
+	Lobby.packets.SetReady.listen(guarded(function(player, ready)
+		core:SetReady(player, ready)
+	end))
+	Lobby.packets.SetDifficulty.listen(guarded(function(player, index)
+		core:SetDifficulty(player, index)
+	end))
+	Lobby.packets.KickMember.listen(guarded(function(player, userId)
+		core:Kick(player, userId)
+	end))
+	Lobby.packets.StartShift.listen(guarded(function(player)
+		core:Start(player)
+	end))
 
-	-- A crew member whose teleport kept failing goes back to the desktop.
+	-- A member whose teleport kept failing goes back to the desktop, out of the party.
 	ShiftLauncher.OnPlayerFailed(function(player, message)
-		removeFromLobby(player)
-		notify(player, message)
+		core:LaunchFailed(player, message)
 	end)
 
+	TeleportService.TeleportInitFailed:Connect(onTeleportInitFailed)
 	Players.PlayerAdded:Connect(onPlayerAdded)
 	Players.PlayerRemoving:Connect(onPlayerRemoving)
 	for _, player in Players:GetPlayers() do
-		onPlayerAdded(player)
+		task.spawn(onPlayerAdded, player)
 	end
+
+	-- Heartbeats, polling and countdowns.
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			local ok, err = pcall(core.Tick, core)
+			if not ok then
+				warn(`[LobbyService] party tick failed: {err}`)
+			end
+		end
+	end)
+
+	-- Server shutting down: take our players out of their parties so the others aren't left waiting.
+	game:BindToClose(function()
+		for _, player in Players:GetPlayers() do
+			pcall(core.PlayerRemoving, core, player)
+		end
+	end)
 end
 
 return LobbyService
