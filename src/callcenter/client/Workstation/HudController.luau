@@ -7,6 +7,8 @@
 	  hint        what to do next ("Sit down at a free computer", "Take the trash to a bin", ...)
 	  checklist   the first-shift checklist (Checklist)
 	  flash       "+$10 · Trash taken out" after a chore
+	  review      the performance review with your tips, if it comes while you're away from a desk
+	  store       the equipment store, opened by the vendor's Shop prompt (StoreApp)
 	  elevator    full-screen card when the crew moves floors (shown over everything, desk or not)
 
 	HudController.Start()
@@ -21,6 +23,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
 local OfficeConfig = require(Shared.Config.OfficeConfig)
 local Format = require(Shared.Util.Format)
+local Network = require(Shared:WaitForChild("Network"))
 
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
@@ -30,6 +33,7 @@ local CallStore = require(script.Parent.CallStore)
 local CareerStore = require(script.Parent.CareerStore)
 local Checklist = require(script.Parent.Checklist)
 local Sfx = require(script.Parent.Sfx)
+local StoreApp = require(script.Parent.StoreApp)
 
 local CHORE_TEXT = {
 	Trash = "Trash taken out",
@@ -46,6 +50,7 @@ local gui: ScreenGui
 local root: Frame
 local flashToken = 0
 local elevatorToken = 0
+local reviewToken = 0
 
 local function openLeads(): number
 	local count = 0
@@ -87,6 +92,7 @@ local function update()
 	root.Hint.Visible = not hidden
 	root.Checklist:SetAttribute("Allowed", not hidden)
 	if hidden then
+		root.Review.Visible = false -- the computer shows the review
 		return
 	end
 
@@ -173,13 +179,52 @@ local function showElevator(info: any)
 	end)
 end
 
+-- The review card, for players who aren't at a desk when the day ends.
+local function showReview(review: any)
+	reviewToken += 1
+	local token = reviewToken
+	local card = root.Review
+	card.Result.Text = if review.Passed then "QUOTA MET" else "YOU'RE FIRED"
+	local stroke = card:FindFirstChildOfClass("UIStroke")
+	if stroke then
+		stroke.Color = if review.Passed then Theme.Green else Theme.Red
+	end
+	card.Summary.Text = `Day {review.Day} · Team {Format.money(review.Team)} of {Format.money(review.Quota)}`
+		.. (if review.Passed then " · Moving up a floor!" else "")
+	local tips = card.Tips
+	local list = review.Tips or {}
+	tips.Visible = #list > 0
+	tips.Title.Text = if review.Passed then "TIPS" else "TIPS FOR NEXT TIME"
+	for index = 1, 3 do
+		local label = tips:FindFirstChild(`Tip{index}`)
+		if label then
+			label.Text = list[index] or ""
+			label.Visible = list[index] ~= nil
+		end
+	end
+	card.Visible = not atDesk()
+	local seconds = if review.Passed then CallConfig.ReviewTime else CallConfig.FiredReturnDelay
+	task.delay(seconds + 2, function()
+		if reviewToken == token then
+			card.Visible = false
+		end
+	end)
+end
+
 function HudController.Start()
 	gui = player:WaitForChild("PlayerGui"):WaitForChild("ShiftHud") :: ScreenGui
 	root = gui:WaitForChild("Root") :: Frame
 	UiScale.virtual(gui, root)
 	root.Elevator.Visible = false
 	root.Flash.Visible = false
+	root.Review.Visible = false
 	gui.Enabled = true
+	StoreApp.Start(root.Store)
+	root.Review.CloseButton.MouseButton1Click:Connect(function()
+		reviewToken += 1
+		root.Review.Visible = false
+	end)
+	Network.Shift.packets.Review.listen(showReview)
 
 	-- Phones and tablets: the thumbstick lives in the lower left, so the checklist moves up out of its way.
 	if UserInputService.TouchEnabled and not UserInputService.MouseEnabled then

@@ -2,10 +2,11 @@
 	WorkstationController (client, Call Center Place)
 	The computer at your desk. Nothing shows until you sit in a seat tagged "Computer"; then the ChaOS login
 	screen appears (after your first login of the shift, sitting down logs you straight in). Logged in, you
-	get the desktop: Phone, Gift Cards, Card Terminal, GiveHope, Wallet, Training, Store, Career and Settings,
+	get the desktop: Phone, Gift Cards, Card Terminal, GiveHope, Wallet, Training, Career and Settings,
 	a taskbar with your take / the team against the quota / the floor / your career cash / open leads / the
 	review timer, a Start menu, incoming call pop-ups, the caller file pop-up, the first-shift checklist and
-	the end-of-day performance review. Stand up (or Log off) and it goes away.
+	the end-of-day performance review (with tips). Stand up (or Log off) and it goes away. The equipment store
+	isn't on the computer: it's a vendor in the office (StoreApp).
 
 	While you're seated the mouse works like a computer's: DeskInput stops the camera from zooming or turning
 	(and locking the mouse) and keeps the cursor free. Stand up is on the login screen and in the Start menu,
@@ -51,7 +52,6 @@ local Ledger = require(script.Parent.Ledger)
 local PhoneApp = require(script.Parent.PhoneApp)
 local SettingsApp = require(script.Parent.SettingsApp)
 local Sfx = require(script.Parent.Sfx)
-local StoreApp = require(script.Parent.StoreApp)
 local TrainingApp = require(script.Parent.TrainingApp)
 local WalletApp = require(script.Parent.WalletApp)
 
@@ -66,7 +66,6 @@ local APPS = {
 	{ "Donations", "DonationsWindow", "DonationsTask", "DonationsIcon", "Donations" },
 	{ "Wallet", "WalletWindow", "WalletTask", "WalletIcon", "Wallet" },
 	{ "Training", "TrainingWindow", "TrainingTask", "TrainingIcon", "Training" },
-	{ "Store", "StoreWindow", false, "StoreIcon", "Store" },
 	{ "Career", "CareerWindow", false, "CareerIcon", "Career" },
 	{ "Settings", "SettingsWindow", false, "SettingsIcon", "Settings" },
 }
@@ -357,12 +356,25 @@ local function wireReview()
 		local nextFloor = math.min(review.Day + 1, #OfficeConfig.Floors)
 		banner.Comment.Text = if review.Passed
 			then (if nextFloor > review.Day
-				then `Promoted! The crew moves up to floor {nextFloor}.`
+				then `Promoted! The crew moves up to floor {nextFloor}, {OfficeConfig.FloorInfo(nextFloor).Name}.`
 				else "The penthouse suits you. Don't get comfortable.")
 			else "The boss has seen enough. Clear your desks."
 		body.Row1.Value.Text = Format.money(review.Team)
 		body.Row2.Value.Text = Format.money(review.Quota)
 		body.Row3.Value.Text = if review.TopName ~= "" then `{review.TopName} · {Format.money(review.TopAmount)}` else "Nobody"
+		local tips = body:FindFirstChild("Tips")
+		if tips then
+			local list = review.Tips or {}
+			tips.Visible = #list > 0
+			tips.Title.Text = if review.Passed then "TIPS" else "TIPS FOR NEXT TIME"
+			for index = 1, 3 do
+				local label = tips:FindFirstChild(`Tip{index}`)
+				if label then
+					label.Text = list[index] or ""
+					label.Visible = list[index] ~= nil
+				end
+			end
+		end
 		body.OkButton.Text = if review.Passed then "Back to work" else "Okay"
 		showDialog(window)
 		Sfx.Play(if review.Passed then "Payout" else "Error")
@@ -521,7 +533,6 @@ function WorkstationController.Start()
 	CashApps.StartDonations(windows.DonationsWindow)
 	WalletApp.Start(windows.WalletWindow)
 	TrainingApp.Start(windows.TrainingWindow)
-	StoreApp.Start(windows.StoreWindow)
 	CareerApp.Start(windows.CareerWindow)
 	SettingsApp.Start(windows.SettingsWindow)
 	CallerFileApp.Start(windows.CallerFileWindow)

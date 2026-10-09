@@ -10,6 +10,7 @@ export type Settings = {
 	UiSize: number, -- index into UiSizes
 	Clock24: boolean,
 	ReduceMotion: boolean,
+	MicReview: boolean, -- call center: what the mic heard goes in the text box to check before it's sent
 	MasterVolume: number, -- 0-100
 	VoiceVolume: number, -- 0-100, callers' voices
 	EffectsVolume: number, -- 0-100, rings, pings and other sound effects
@@ -27,6 +28,7 @@ local SettingsConfig = {
 		UiSize = 2,
 		Clock24 = false,
 		ReduceMotion = false,
+		MicReview = true,
 		MasterVolume = 80,
 		VoiceVolume = 100,
 		EffectsVolume = 70,

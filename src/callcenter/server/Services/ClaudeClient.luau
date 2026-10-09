@@ -36,6 +36,7 @@ export type Reply = {
 	Pay: { Method: string, Amount: number }?,
 	RepeatPayment: boolean,
 	HangUp: boolean,
+	FreeTurn: boolean, -- their last line was garbled or only asked to repeat something: it doesn't count
 }
 
 local RETRY_DELAY = 1.5
@@ -166,6 +167,7 @@ local function parse(body: string): Reply?
 				Pay = pay,
 				RepeatPayment = input.repeat_payment == true,
 				HangUp = input.hang_up == true,
+				FreeTurn = input.free_turn == true,
 			}
 		end
 	end

@@ -17,12 +17,12 @@ The crew starts every shift on floor 1 and moves up one floor after each passed 
 
 | Floor | Name |
 | --- | --- |
-| 1 | Basement Boiler Room |
-| 2 | Cubicle Farm |
-| 3 | Sales Floor |
-| 4 | Middle Management |
-| 5 | Corner Offices |
-| 6 | Executive Penthouse |
+| 1 | Rock Bottom |
+| 2 | Getting Started |
+| 3 | Established |
+| 4 | Corporate |
+| 5 | Executive |
+| 6 | Penthouse |
 
 For each floor:
 
@@ -45,10 +45,24 @@ For each floor:
   perks still go up.
 - With no floors built at all, the whole place is one office.
 
-**Signs:** tag a Part (or a model with SurfaceGuis) `FloorSign`. Its TextLabels show `FLOOR 3 · SALES FLOOR`.
+**Signs:** tag a Part (or a model with SurfaceGuis) `FloorSign`. Its TextLabels show `FLOOR 3 · ESTABLISHED`.
 
 - A sign inside a floor shows that floor.
 - A sign anywhere else, like a lobby or an elevator, shows the crew's current floor.
+
+## The equipment store
+
+The store is a room in the office with a vendor players walk up to. It isn't an app on the computer.
+
+1. Build the store room wherever you like: on a floor, or outside the floors (a lobby or a ground-floor shop).
+2. Tag the vendor `StoreVendor`. The vendor can be an NPC **Model** (with a Humanoid) or any **Part**, like the
+   counter.
+3. The vendor gets a **Shop** prompt automatically. Using it opens the store on that player's screen.
+
+- A vendor inside a floor only works while the crew is on that floor. A vendor outside the floors always works.
+- Players can only buy within 16 studs of a working vendor. Walking away closes the store.
+- Until you've tagged a vendor, a stand-in store counter shows up next to where the crew arrives, so the store
+  still works while you build.
 
 ## Chores (optional)
 
@@ -64,5 +78,6 @@ All three tags are optional; chores still show up without them.
 
 - [ ] Desks tagged `Computer`, a few per floor (crews are up to 4 players).
 - [ ] Floors 1–6, each tagged `OfficeFloor`, with a `Floor` number attribute and a `FloorSpawn` part.
+- [ ] A store room with a vendor tagged `StoreVendor`.
 - [ ] Optional: `FloorSign`, `TrashSpot`, `TrashBin`, `Equipment`.
 - [ ] Game Settings > Avatar > **R15**, so players look like their own avatars.

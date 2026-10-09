@@ -1,14 +1,19 @@
 --[[
 	PhoneApp (client)
 	The Phone window: your leads on the left, the call on the right (caller card with the trust meter, the
-	conversation, and a talk bar with mic / text / send / caller voice).
+	conversation, and a talk bar with mic / text / ideas / send / caller voice).
+
+	What the mic hears goes in the text box first (Settings: "Check mic lines"), so you can fix it before the
+	caller hears it; press Send or Enter. Lines Roblox hides aren't sent and don't use a line, and three
+	ready-made lines (Ideas) pop up so the call can go on. Ideas also work any time from the IDEAS button, and
+	change with what the caller just said.
 
 	PhoneApp.Start(window)
 ]]
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
@@ -20,6 +25,7 @@ local ButtonFx = require(Ui.ButtonFx)
 local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
 local Theme = require(Ui.Theme)
+local SettingsStore = require(Client:WaitForChild("Stores"):WaitForChild("SettingsStore"))
 
 local CallStore = require(script.Parent.CallStore)
 local CallVoice = require(script.Parent.CallVoice)
@@ -28,6 +34,8 @@ local LeadAvatar = require(script.Parent.LeadAvatar)
 local Phase = CallConfig.Phase
 local Outcome = CallConfig.Outcome
 local Status = CallConfig.LeadStatus
+local LineStatus = CallConfig.LineStatus
+local IdeaReason = CallConfig.IdeaReason
 
 local STATUS_LOOK = {
 	[Status.Available] = { "AVAILABLE", "LeadAvailableBg", "GreenText" },
@@ -55,9 +63,17 @@ local OUTCOME_TEXT = {
 }
 
 -- Chat bubbles are sized from the measured text (Roblox's AutomaticSize collapses wrapped text to nothing).
-local BUBBLE_MAX_WIDTH = 290
-local BUBBLE_PAD_X = 24 -- matches the bubble's UIPadding (12 left + 12 right)
-local BUBBLE_PAD_Y = 16 -- 8 top + 8 bottom
+local BUBBLE_MAX_WIDTH = 320
+local BUBBLE_PAD_X = 28 -- matches the bubble's UIPadding (14 left + 14 right)
+local BUBBLE_PAD_Y = 20 -- 10 top + 10 bottom
+local CAPTION_HEIGHT = 18 -- the note under one of your lines ("Not sent", "Idea")
+
+-- Notes under your own lines, by YourLine.Status.
+local STATUS_CAPTION = {
+	[LineStatus.Hidden] = { "Not sent: Roblox hid this line. No line used.", "TrustLow" },
+	[LineStatus.PartlyHidden] = { "Some words were hidden, so it's free.", "TrustMid" },
+	[LineStatus.Idea] = { "Idea", "DarkMuted" },
+}
 
 local PhoneApp = {}
 
@@ -69,6 +85,9 @@ local order = 0
 local lastPaid = 0
 local sending = false
 local payAt = 70 -- the current caller's pay line (it depends on how sharp they are)
+local micDraft: string? = nil -- what the mic heard, waiting in the text box to be checked and sent
+local ideasOpen = false
+local ideasWanted = false -- asked for ideas and still want them (false once closed, used or a line is sent)
 
 local function firstName(name: string): string
 	return string.match(name, "^(%S+)") or name
@@ -125,7 +144,7 @@ local function measure(label: TextLabel, text: string): (number, number)
 	return math.min(inner, math.ceil(#text * charWidth) + 2), math.ceil(lines * label.TextSize * 1.25)
 end
 
-local function addBubble(text: string, mine: boolean)
+local function addBubble(text: string, mine: boolean, status: number?)
 	order += 1
 	local row = (if mine then ui.templates.YouTemplate else ui.templates.ThemTemplate):Clone()
 	local label = row.Bubble :: TextLabel
@@ -140,7 +159,21 @@ local function addBubble(text: string, mine: boolean)
 
 	local width, height = measure(label, text)
 	label.Size = UDim2.fromOffset(width + BUBBLE_PAD_X, height + BUBBLE_PAD_Y)
-	row.Size = UDim2.new(1, 0, 0, height + BUBBLE_PAD_Y)
+	local rowHeight = height + BUBBLE_PAD_Y
+	local caption = row:FindFirstChild("Caption") :: TextLabel?
+	local note = if mine and status then STATUS_CAPTION[status] else nil
+	if caption then
+		caption.Visible = note ~= nil
+		if note then
+			caption.Text = note[1]
+			caption.TextColor3 = Theme[note[2]]
+			rowHeight += CAPTION_HEIGHT
+		end
+	end
+	if status == LineStatus.Hidden then
+		label.BackgroundColor3 = Theme.PhoneHead -- greyed out: it never reached the caller
+	end
+	row.Size = UDim2.new(1, 0, 0, rowHeight)
 	scrollToBottom()
 end
 
@@ -286,8 +319,16 @@ local function updateTalkBar(state: any)
 	talk.SendButton.TextColor3 = if connected then Theme.White else Theme.DarkFaint
 
 	local thinking = ui.thinking
+	local drafting = connected and micDraft ~= nil and talk.InputBox.Text ~= ""
+	local stroke = talk.InputBox:FindFirstChildOfClass("UIStroke")
+	if stroke then
+		stroke.Color = if drafting then Theme.Yellow else Theme.PhoneLine
+	end
 	if state and connected and state.Thinking then
 		thinking.Text = `{firstName(state.Lead.DisplayName)} is thinking...`
+			.. (if drafting then " Check your mic line, then Send." else "")
+	elseif drafting then
+		thinking.Text = "Your mic heard this. Fix it if it's wrong, then press Send or Enter."
 	elseif connected and CallVoice.MicOn then
 		thinking.Text = if CallVoice.Hearing then "Hearing you..." else "Listening. Just talk."
 	else
@@ -314,6 +355,89 @@ local function paintVoiceButtons()
 	updateTalkBar(CallStore.State)
 end
 
+-- ---------------------------------------------------------------------------
+-- Ideas (ready-made lines)
+-- ---------------------------------------------------------------------------
+
+local function closeIdeas()
+	ideasOpen = false
+	ideasWanted = false
+	ui.ideas.Visible = false
+end
+
+local function askIdeas()
+	ideasWanted = true
+	CallStore.AskIdeas()
+end
+
+local function showIdeas(ideas: any)
+	if not CallStore.IsConnected() then
+		return
+	end
+	-- Ideas the player asked for, but closed (or answered) before they arrived, stay closed. Ideas for a
+	-- hidden line always show.
+	if ideas.Reason ~= IdeaReason.Blocked and not ideasWanted then
+		return
+	end
+	ideasWanted = true
+	local panel = ui.ideas
+	panel.Reason.Text = if ideas.Reason == IdeaReason.Blocked
+		then "Roblox hid your last line, so it wasn't sent and didn't use a line. Try one of these:"
+		else "Tap a line to say it. They change with what the caller says."
+	for index = 1, 3 do
+		local button = panel:FindFirstChild(`Option{index}`)
+		if button then
+			local option = ideas.Options[index]
+			button.Visible = option ~= nil
+			if option then
+				button.Text = option.Text
+				button:SetAttribute("IdeaId", option.Id)
+			end
+		end
+	end
+	panel.Visible = true
+	ideasOpen = true
+end
+
+local function useIdea(index: number)
+	local button = ui.ideas:FindFirstChild(`Option{index}`)
+	local id = button and button:GetAttribute("IdeaId")
+	if type(id) == "number" and CallStore.IsConnected() then
+		closeIdeas()
+		CallStore.UseIdea(id)
+	end
+end
+
+-- Clears what the mic heard (a new call, the call ended, or the line was sent).
+local function clearDraft()
+	if micDraft ~= nil then
+		micDraft = nil
+		if ui.talk.InputBox.Text ~= "" and not ui.talk.InputBox:IsFocused() then
+			ui.talk.InputBox.Text = ""
+		end
+	end
+end
+
+-- A sentence the mic heard: straight to the caller, or into the text box to check first.
+local function onHeard(text: string)
+	if not CallStore.IsConnected() then
+		return
+	end
+	if SettingsStore.Settings.MicReview == false then
+		CallStore.Say(text, true)
+		return
+	end
+	local box = ui.talk.InputBox
+	local current = box.Text
+	local untouched = current == "" or current == micDraft
+	local combined = if current == "" then text else `{current} {text}`
+	combined = string.sub(combined, 1, CallConfig.MaxSayLength)
+	box.Text = combined
+	-- Only a draft nobody has edited counts as the mic's own words (the caller allows for misheard words).
+	micDraft = if untouched then combined else nil
+	updateTalkBar(CallStore.State)
+end
+
 local function renderCall(state: any, previous: any)
 	if not state then
 		ui.idle.Visible = true
@@ -330,6 +454,8 @@ local function renderCall(state: any, previous: any)
 		CallVoice.StopSpeaking() -- the last caller's backlog doesn't spill into this call
 		lastPaid = 0
 		clearTranscript()
+		closeIdeas()
+		clearDraft()
 		LeadAvatar.render(card.Portrait.View, state.Lead)
 		card.NameBar.DisplayName.Text = string.upper(state.Lead.DisplayName)
 		card.Username.Text = `@{state.Lead.Username}`
@@ -351,6 +477,8 @@ local function renderCall(state: any, previous: any)
 		if CallVoice.MicOn then
 			CallVoice.SetMic(false)
 		end
+		closeIdeas()
+		clearDraft()
 	end
 
 	payAt = state.PayAt or payAt
@@ -386,8 +514,12 @@ local function send()
 		return
 	end
 	sending = true
+	local spoken = micDraft ~= nil and text == micDraft
+	micDraft = nil
 	box.Text = ""
-	CallStore.Say(text)
+	closeIdeas()
+	CallStore.Say(text, spoken)
+	updateTalkBar(CallStore.State)
 	sending = false
 end
 
@@ -409,7 +541,9 @@ function PhoneApp.Start(window: Frame)
 		thinking = convo:WaitForChild("Thinking"),
 		talk = convo:WaitForChild("Talk"),
 		answer = convo:WaitForChild("Answer"),
+		ideas = convo:WaitForChild("Ideas"),
 	}
+	ui.ideas.Visible = false
 	ui.card.Status.Text = ""
 
 	-- If the server can't reach Claude (no key, key rejected, HTTP off), say so where calls start.
@@ -477,10 +611,49 @@ function PhoneApp.Start(window: Frame)
 		Notify.show("Phone", if CallVoice.VoiceEnabled then "Caller voice on." else "Caller voice off. Lines still show as text.")
 	end)
 	CallVoice.Changed:Connect(paintVoiceButtons)
-	CallVoice.Heard:Connect(function(text)
-		CallStore.Say(text)
-	end)
+	CallVoice.Heard:Connect(onHeard)
 	paintVoiceButtons()
+	talk.InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+		if micDraft ~= nil and talk.InputBox.Text ~= micDraft then
+			micDraft = nil -- they edited what the mic heard
+		end
+		updateTalkBar(CallStore.State)
+	end)
+	-- Enter sends a mic line waiting in the box without clicking into it first.
+	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
+		if processed or input.KeyCode ~= Enum.KeyCode.Return then
+			return
+		end
+		if micDraft ~= nil and window.Visible and CallStore.IsConnected() then
+			send()
+		end
+	end)
+
+	-- Ideas
+	local ideas = ui.ideas
+	ButtonFx.attach(talk.IdeasButton, 1.06, 0.94)
+	talk.IdeasButton.MouseButton1Click:Connect(function()
+		if ideasOpen then
+			closeIdeas()
+		elseif CallStore.IsConnected() then
+			askIdeas()
+		else
+			Notify.show("Phone", "Ideas show up once the call connects.", Theme.Yellow)
+		end
+	end)
+	ButtonFx.attach(ideas.RefreshButton, 1.04, 0.95)
+	ideas.RefreshButton.MouseButton1Click:Connect(askIdeas)
+	ideas.CloseButton.MouseButton1Click:Connect(closeIdeas)
+	for index = 1, 3 do
+		local button = ideas:FindFirstChild(`Option{index}`)
+		if button then
+			ButtonFx.attach(button, 1.02, 0.97)
+			button.MouseButton1Click:Connect(function()
+				useIdea(index)
+			end)
+		end
+	end
+	CallStore.Ideas:Connect(showIdeas)
 
 	CallStore.LeadsChanged:Connect(renderLeads)
 	CallStore.Changed:Connect(renderCall)
@@ -488,6 +661,9 @@ function PhoneApp.Start(window: Frame)
 		addBubble(line.Text, false)
 		renderTrust(line.Trust)
 		showDelta(line.Delta)
+		if ideasOpen then
+			askIdeas() -- fresh ideas for what the caller just said
+		end
 		local state = CallStore.State
 		if state then
 			-- Don't read out "(The line crackles.)" or words the filter hid.
@@ -500,7 +676,7 @@ function PhoneApp.Start(window: Frame)
 		end
 	end)
 	CallStore.YourLine:Connect(function(line)
-		addBubble(line.Text, true)
+		addBubble(line.Text, true, line.Status)
 	end)
 	CallStore.Payout:Connect(function(payout)
 		lastPaid = payout.Amount

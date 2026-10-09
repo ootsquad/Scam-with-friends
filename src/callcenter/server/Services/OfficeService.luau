@@ -1,7 +1,7 @@
 --[[
 	OfficeService (server, Call Center Place)
-	The office tower. Every shift starts on floor 1; each passed review moves the crew one floor up, ending
-	at the Executive Penthouse (OfficeConfig.Floors). The floor's perk applies to every call.
+	The office tower. Every shift starts on floor 1 (Rock Bottom); each passed review moves the crew one
+	floor up, ending at the Penthouse on floor 6 (OfficeConfig.Floors). The floor's perk applies to every call.
 
 	Floors are built in Studio (see OFFICE.md): a Model or Folder tagged "OfficeFloor" with a number
 	attribute "Floor", holding that floor's Computer seats and a Part named "FloorSpawn". When the crew moves
@@ -19,6 +19,7 @@
 	OfficeService.IsActive(instance) -> boolean         on the floor the crew works on (or not on any floor)
 	OfficeService.FloorOf(instance) -> number?           the built floor it's on
 	OfficeService.ActiveFloorInstance() -> Instance?
+	OfficeService.ArrivalPoint() -> CFrame?              where the crew arrives on its floor (or in the office)
 	OfficeService.OnFloorChanged(callback(floor))
 ]]
 
@@ -122,6 +123,26 @@ local function spawnOf(floorInstance: Instance): CFrame?
 	for _, descendant in floorInstance:GetDescendants() do
 		if descendant:IsA("Seat") then
 			return descendant.CFrame * CFrame.new(0, 2, 4)
+		end
+	end
+	return nil
+end
+
+function OfficeService.ArrivalPoint(): CFrame?
+	local floorInstance = builtFor(floor)
+	if floorInstance then
+		return spawnOf(floorInstance)
+	end
+	-- No floors built: the place's spawn, else next to the first desk.
+	for _, descendant in workspace:GetDescendants() do
+		if descendant:IsA("SpawnLocation") then
+			return descendant.CFrame + Vector3.new(0, descendant.Size.Y / 2 + 3, 0)
+		end
+	end
+	for _, desk in CollectionService:GetTagged("Computer") do
+		local seat = if desk:IsA("BasePart") then desk else desk:FindFirstChildWhichIsA("Seat", true)
+		if seat and seat:IsDescendantOf(workspace) then
+			return seat.CFrame * CFrame.new(0, 2, 4)
 		end
 	end
 	return nil

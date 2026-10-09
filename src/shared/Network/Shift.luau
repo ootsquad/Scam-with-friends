@@ -21,6 +21,7 @@ export type Review = {
 	TopName: string, -- top earner's display name ("" if nobody earned anything)
 	TopAmount: number,
 	NextQuota: number, -- 0 when the crew was fired
+	Tips: { string }, -- for this player, based on how their day went
 }
 
 return Namespace.define("Shift", function()
@@ -32,6 +33,7 @@ return Namespace.define("Shift", function()
 		TopName = ByteNet.string,
 		TopAmount = ByteNet.uint32,
 		NextQuota = ByteNet.uint32,
+		Tips = ByteNet.array(ByteNet.string),
 	})
 
 	return {

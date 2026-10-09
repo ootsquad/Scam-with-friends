@@ -1,7 +1,7 @@
 --[[
 	CareerApp (client, Call Center Place)
 	The Career window: your job title, career cash and lifetime stats on the left, and the office tower on
-	the right (floor 6, the Executive Penthouse, at the top). Each floor row shows its perk; the crew's
+	the right (floor 6, the Penthouse, at the top). Each floor row shows its perk; the crew's
 	current floor and your best floor are marked.
 
 	CareerApp.Start(window)

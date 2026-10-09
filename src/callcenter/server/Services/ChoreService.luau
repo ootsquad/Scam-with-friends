@@ -30,6 +30,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local OfficeConfig = require(Shared.Config.OfficeConfig)
 local Career = require(Shared:WaitForChild("Network")).Career
 local CareerService = require(script.Parent.CareerService)
+local CoachService = require(script.Parent.CoachService)
 local DeskService = require(script.Parent.DeskService)
 local EconomyService = require(script.Parent.EconomyService)
 local OfficeService = require(script.Parent.OfficeService)
@@ -205,6 +206,7 @@ local function complete(chore: Chore, player: Player)
 	local reward = Config.Reward[chore.kind] or 0
 	EconomyService.Award(player, reward)
 	CareerService.Count(player, "Chores")
+	CoachService.Note(player, "Chores")
 	CareerService.CompleteStep(player, "Chore")
 	if CareerService.IsReady(player) then
 		Career.packets.Chore.sendTo({ Kind = chore.kind, Reward = reward }, player)

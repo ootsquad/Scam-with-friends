@@ -31,8 +31,8 @@ local LESSONS: { { title: string, text: string } } = {
 			.. "• Open <b>Phone</b> to see your leads: made-up people you can call. Press <b>Call</b>, or wait, "
 			.. "because leads call you too.\n"
 			.. "• Every dollar you make counts for you and for the team.\n"
-			.. "• The team has to hit the <b>quota</b> before the day clock runs out. Miss it and the whole crew "
-			.. "is fired.",
+			.. `• Each day lasts {math.round(CallConfig.DayLength / 60)} minutes. The team has to hit the `
+			.. "<b>quota</b> before the day clock runs out. Miss it and the whole crew is fired.",
 	},
 	{
 		title = "The trust meter",
@@ -40,7 +40,8 @@ local LESSONS: { { title: string, text: string } } = {
 			.. "• Friendly, believable lines push it up. Rude, pushy or confusing ones push it down.\n"
 			.. "• The white mark on the bar is the <b>pay line</b>. Once trust is past it, ask and they'll pay.\n"
 			.. `• If trust falls to {CallConfig.HangUpTrust}%, they hang up and won't pick up for a while.\n`
-			.. `• You get {CallConfig.MaxTurns} lines per call, so don't waste them.`,
+			.. `• You get {CallConfig.MaxTurns} lines per call. Lines Roblox hides, and lines the caller didn't `
+			.. "catch, don't count.",
 	},
 	{
 		title = "Read the caller file",
@@ -76,25 +77,29 @@ local LESSONS: { { title: string, text: string } } = {
 			.. "Missed a code? Ask them to repeat it.",
 	},
 	{
-		title = "The chat filter",
-		text = "Roblox hides anything that looks like personal info: numbers, phone numbers, addresses, emails, "
-			.. "last names and links.\n\n"
-			.. "• Hidden words reach the caller as static. Static never costs you trust; just say it again in "
-			.. "plain words.\n"
-			.. "• Give your company a made-up name with words, not numbers.\n"
-			.. "• If the caller's line gets hidden, they'll ask you to say it again.",
+		title = "Talking and the filter",
+		text = "<b>Talk with the mic or type.</b> What the mic hears waits in the text box so you can fix it; "
+			.. "press <b>Send</b> or Enter. (Turn that off in Settings to send straight away.)\n\n"
+			.. "Roblox hides anything that looks like personal info: numbers, phone numbers, addresses, emails, "
+			.. "last names and links.\n"
+			.. "• A line that's mostly hidden isn't sent and doesn't use a line. Three <b>Ideas</b> pop up: "
+			.. "ready-made lines that fit the call. Tap one to say it.\n"
+			.. "• A few hidden words reach the caller as static. That line is free and never costs you trust.\n"
+			.. "• Stuck? Press <b>IDEAS</b> any time, and <b>Refresh</b> for new ones.\n"
+			.. "• Give your company a made-up name with words, not numbers.",
 	},
 	{
 		title = "Quota and reviews",
 		text = "• The taskbar shows your money, the team against the quota, your floor, your career cash, open "
 			.. "leads and the time left until the review.\n"
 			.. "• Make the easy money early: callers get sharper as the team gets closer to quota.\n"
-			.. "• Meet the quota and the crew is promoted one floor up the tower, all the way to the Executive "
-			.. "Penthouse. Higher floors warm callers up and pay bonuses. Miss it and the crew is fired.\n"
+			.. "• Meet the quota and the crew is promoted one floor up the tower, from Rock Bottom all the way to "
+			.. "the Penthouse. Higher floors warm callers up and pay bonuses. Miss it and the crew is fired, and "
+			.. "the review gives you tips for next time.\n"
 			.. "• Trash, messy desks and smoking computers show up around the office. Hold the prompt to fix them "
 			.. "for a small bonus; a tidy office warms callers up too.\n"
-			.. "• Everything you earn goes to your career cash. Spend it on headsets, computers and routers in the "
-			.. "Store.\n"
+			.. "• Everything you earn goes to your career cash. Spend it on headsets, computers and routers at the "
+			.. "<b>equipment store</b>: walk up to the vendor and use the Shop prompt.\n"
 			.. "• Leave shift from the Start menu to go back to the lobby.\n\n"
 			.. "<b>Real life tip:</b> this is a comedy game. Real companies never ask for gift cards, card numbers "
 			.. "or donations over the phone. If a caller does, hang up.",

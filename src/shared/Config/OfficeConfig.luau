@@ -3,8 +3,8 @@
 	OfficeConfig
 	The office tower, your career, the equipment store, office chores and the first-shift checklist.
 
-	Floors: every shift starts on floor 1. Each passed performance review moves the crew one floor up, until
-	the Executive Penthouse on floor 6. Each floor gives every desk on it a small perk. Your best floor is
+	Floors: every shift starts on floor 1, Rock Bottom. Each passed performance review (one per 15-minute
+	day) moves the crew one floor up, until the Penthouse on floor 6. Each floor gives every desk on it a small perk. Your best floor is
 	saved and unlocks better equipment in the store.
 
 	Building the floors (in Studio): see OFFICE.md. In short, put each floor in a Model or Folder tagged
@@ -38,43 +38,43 @@ export type Category = {
 local OfficeConfig = {
 	Floors = {
 		{
-			Name = "Basement Boiler Room",
+			Name = "Rock Bottom",
 			Title = "Cold Caller",
 			StartTrust = 0,
 			PayoutBonus = 0,
 			Perk = "No perks yet. Pass the review to move up.",
 		},
 		{
-			Name = "Cubicle Farm",
-			Title = "Phone Jockey",
+			Name = "Getting Started",
+			Title = "Junior Agent",
 			StartTrust = 3,
 			PayoutBonus = 0,
 			Perk = "Callers start at +3 trust.",
 		},
 		{
-			Name = "Sales Floor",
+			Name = "Established",
 			Title = "Senior Agent",
 			StartTrust = 3,
 			PayoutBonus = 0.05,
 			Perk = "Callers start at +3 trust. Payouts +5%.",
 		},
 		{
-			Name = "Middle Management",
-			Title = "Team Lead",
+			Name = "Corporate",
+			Title = "Account Manager",
 			StartTrust = 5,
 			PayoutBonus = 0.05,
 			Perk = "Callers start at +5 trust. Payouts +5%.",
 		},
 		{
-			Name = "Corner Offices",
-			Title = "Regional Manager",
+			Name = "Executive",
+			Title = "Executive",
 			StartTrust = 5,
 			PayoutBonus = 0.1,
 			Perk = "Callers start at +5 trust. Payouts +10%.",
 		},
 		{
-			Name = "Executive Penthouse",
-			Title = "Vice President of Sales",
+			Name = "Penthouse",
+			Title = "CEO",
 			StartTrust = 8,
 			PayoutBonus = 0.15,
 			Perk = "Callers start at +8 trust. Payouts +15%. You made it to the top.",
@@ -87,7 +87,11 @@ local OfficeConfig = {
 	SignTag = "FloorSign", -- TextLabels inside it show the floor's number and name
 	ElevatorTime = 3.5, -- seconds the elevator screen stays up when the crew moves floors
 
-	-- Equipment store. You always use the best tier you own.
+	-- Equipment store, run by a vendor in a store room. Tag the vendor (a Model with a Humanoid, or any
+	-- Part such as a counter) "StoreVendor"; its "Shop" prompt opens the store. Floors without a vendor get
+	-- a stand-in vendor next to the floor's spawn. You always use the best tier you own.
+	VendorTag = "StoreVendor",
+	ShopRange = 16, -- studs from a vendor where buying works (the store closes if you walk further)
 	EquipmentOrder = { "Headset", "Computer", "Router" },
 	Equipment = {
 		Headset = {

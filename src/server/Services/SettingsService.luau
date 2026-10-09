@@ -62,6 +62,7 @@ local function sanitize(raw: any): SettingsData
 		UiSize = index(data.UiSize, #SettingsConfig.UiSizes, defaults.UiSize),
 		Clock24 = if type(data.Clock24) == "boolean" then data.Clock24 else defaults.Clock24,
 		ReduceMotion = if type(data.ReduceMotion) == "boolean" then data.ReduceMotion else defaults.ReduceMotion,
+		MicReview = if type(data.MicReview) == "boolean" then data.MicReview else defaults.MicReview,
 	}
 end
 

@@ -6,12 +6,14 @@
 	Client -> server
 		Career.queries.Get.invoke()                        -> CareerData   (also: start sending me updates)
 		Career.queries.Buy.invoke({ Kind = 1, Tier = 2 })  -> Result       Kind: index in OfficeConfig.EquipmentOrder
+		                                                    (only works next to the store's vendor)
 		Career.packets.HideTutorial.send(true)
 
 	Server -> client
 		Update     your career changed
 		Elevator   the crew is moving to another floor (shown as the elevator screen)
 		Chore      you finished a chore ({ Kind, Reward })
+		OpenStore  you used the vendor's Shop prompt: show the equipment store
 ]]
 
 local Namespace = require(script.Parent.Namespace)
@@ -87,6 +89,7 @@ return Namespace.define("Career", function()
 			Update = ByteNet.definePacket({ value = CareerData }),
 			Elevator = ByteNet.definePacket({ value = Elevator }),
 			Chore = ByteNet.definePacket({ value = ChoreDone }),
+			OpenStore = ByteNet.definePacket({ value = ByteNet.nothing }),
 		},
 		queries = {
 			Get = ByteNet.defineQuery({ request = ByteNet.nothing, response = CareerData }),

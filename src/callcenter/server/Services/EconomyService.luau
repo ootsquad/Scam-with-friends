@@ -30,6 +30,7 @@ local CallConfig = require(Shared.Config.CallConfig)
 local LobbyConfig = require(Shared.Config.LobbyConfig)
 local Shift = require(Shared:WaitForChild("Network")).Shift
 local CareerService = require(script.Parent.CareerService)
+local CoachService = require(script.Parent.CoachService)
 local LeadService = require(script.Parent.LeadService)
 local ShiftService = require(script.Parent.ShiftService)
 
@@ -81,15 +82,19 @@ local function endOfDay(token: number)
 	local top, topAmount = topEarner()
 	ReplicatedStorage:SetAttribute("ShiftDayEndsAt", 0)
 	ReplicatedStorage:SetAttribute("ShiftReviewing", true)
-	Shift.packets.Review.sendToList({
-		Day = day,
-		Team = reviewed,
-		Quota = quota,
-		Passed = passed,
-		TopName = if top then top.DisplayName else "",
-		TopAmount = topAmount,
-		NextQuota = if passed then quotaFor(day + 1) else 0,
-	}, LeadService.ReadyPlayers())
+	-- Everyone gets the same review, with tips of their own.
+	for _, player in LeadService.ReadyPlayers() do
+		Shift.packets.Review.sendTo({
+			Day = day,
+			Team = reviewed,
+			Quota = quota,
+			Passed = passed,
+			TopName = if top then top.DisplayName else "",
+			TopAmount = topAmount,
+			NextQuota = if passed then quotaFor(day + 1) else 0,
+			Tips = CoachService.Tips(player, passed),
+		}, player)
+	end
 	print(`[EconomyService] day {day}: ${reviewed} of ${quota} -> {if passed then "passed" else "fired"}`)
 
 	if passed then
@@ -126,6 +131,7 @@ local function endOfDay(token: number)
 end
 
 startDay = function()
+	CoachService.NewDay()
 	dayToken += 1
 	local token = dayToken
 	ticking = true

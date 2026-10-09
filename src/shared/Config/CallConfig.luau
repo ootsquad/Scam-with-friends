@@ -21,7 +21,9 @@ local CallConfig = {
 		["claude-opus-5-5"] = { Context = 1000000, Output = 128000 },
 	} :: { [string]: { Context: number, Output: number } },
 	PromptCaching = true, -- caches the caller's instructions between turns (cheaper, faster replies)
-	CallMemory = 3, -- earlier calls with the same caller they remember (recap of each goes in their instructions)
+	CallMemory = 5, -- earlier calls with the same caller they remember (recap of each goes in their instructions)
+	-- Print every line Roblox's text filter hid (any of) to the server output, with why. See TextFilter.
+	LogFilter = true,
 
 	UseRealAvatars = true, -- players look like their own Roblox avatars in the call center
 
@@ -29,17 +31,22 @@ local CallConfig = {
 	StartTrust = 50,
 	HangUpTrust = 5,
 	MaxTurns = 25, -- your lines per call before the caller has to go
+	-- Lines that never cost one of your 25: lines Roblox's filter hid (they aren't sent), lines with words
+	-- hidden as [static], and lines the caller found garbled or that only asked them to repeat something
+	-- (free_turn). Free lines per call are capped so a call can't go on forever.
+	MaxFreeTurns = 8,
 
 	-- How sharp callers are. They start out dumber than rocks and get sharper the closer the crew gets to
 	-- today's quota (From = share of the quota already made). Each level sets the trust a caller needs before
-	-- they'll pay and how far one of your lines can move their trust. The lobby difficulty gives the crew a
-	-- head start (Intern) or a handicap (Senior) on that progress.
+	-- they'll pay and how far one of your lines can move their trust. Pushover callers are reminded, once
+	-- they're past the pay line, to pay when asked. The lobby difficulty gives the crew a head start (Intern)
+	-- or a handicap (Senior) on that progress.
 	Smarts = {
-		{ Name = "Dumber than a rock", From = 0, PayTrust = 55, MaxGain = 25, MaxLoss = 6 },
-		{ Name = "Gullible", From = 0.35, PayTrust = 60, MaxGain = 20, MaxLoss = 10 },
-		{ Name = "Getting suspicious", From = 0.7, PayTrust = 65, MaxGain = 16, MaxLoss = 14 },
-		{ Name = "Sharp", From = 1, PayTrust = 70, MaxGain = 14, MaxLoss = 18 },
-	} :: { { Name: string, From: number, PayTrust: number, MaxGain: number, MaxLoss: number } },
+		{ Name = "Dumber than a rock", From = 0, PayTrust = 52, MaxGain = 30, MaxLoss = 3, Pushover = true },
+		{ Name = "Gullible", From = 0.4, PayTrust = 56, MaxGain = 25, MaxLoss = 6, Pushover = true },
+		{ Name = "Getting suspicious", From = 0.75, PayTrust = 65, MaxGain = 16, MaxLoss = 14, Pushover = false },
+		{ Name = "Sharp", From = 1, PayTrust = 72, MaxGain = 12, MaxLoss = 18, Pushover = false },
+	} :: { { Name: string, From: number, PayTrust: number, MaxGain: number, MaxLoss: number, Pushover: boolean } },
 	SmartsHeadStart = { -0.15, 0, 0.15 }, -- added to quota progress for Intern, Associate, Senior
 
 	MaxSayLength = 300, -- characters per line you say
@@ -71,7 +78,7 @@ local CallConfig = {
 	BlockedFor = 90, -- seconds a lead won't pick up after hanging up on you
 
 	-- Work day
-	DayLength = 8 * 60, -- seconds; the clock starts when the first player logs in
+	DayLength = 15 * 60, -- seconds; the clock starts when the first player logs in
 	ReviewTime = 12, -- seconds the performance review stays up before the next day
 	FiredReturnDelay = 20, -- seconds before a fired crew is sent back to the lobby
 
@@ -174,6 +181,17 @@ local CallConfig = {
 		YouHungUp = 6,
 		LineDown = 7, -- the AI couldn't be reached
 	}),
+
+	-- What happened to a line you said (Call YourLine.Status)
+	LineStatus = table.freeze({
+		Sent = 1,
+		Hidden = 2, -- Roblox hid it, so it wasn't sent (free)
+		PartlyHidden = 3, -- sent with [static] in place of the hidden words (free)
+		Idea = 4, -- a ready-made line from Ideas
+	}),
+
+	-- Why Ideas were sent (Call Ideas.Reason)
+	IdeaReason = table.freeze({ Asked = 1, Blocked = 2 }),
 }
 
 return table.freeze(CallConfig)

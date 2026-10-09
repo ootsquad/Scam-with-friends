@@ -6,7 +6,7 @@
 
 	CallerPrompt.system(persona, context) -> string
 	CallerPrompt.opening(context, trust) -> string
-	CallerPrompt.turn(text, trust, turnsLeft, note?) -> string
+	CallerPrompt.turn(text, trust, turnsLeft, note?, spoken?, payNudge?) -> string
 	CallerPrompt.blocked(line) -> string       asks for a rephrase of a line Roblox's text filter hid
 	CallerPrompt.recap(messages, outcome) -> string?   what the caller remembers of a finished call
 	CallerPrompt.safeLine(kind, random) -> string
@@ -16,7 +16,14 @@
 
 local CallConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").Config.CallConfig)
 
-export type Smarts = { Name: string, From: number, PayTrust: number, MaxGain: number, MaxLoss: number }
+export type Smarts = {
+	Name: string,
+	From: number,
+	PayTrust: number,
+	MaxGain: number,
+	MaxLoss: number,
+	Pushover: boolean,
+}
 
 export type Context = {
 	incoming: boolean, -- they called you
@@ -34,11 +41,11 @@ local METHOD_WORDS = {
 
 -- One per CallConfig.Smarts level, dumbest first.
 local SMARTS_WORDS = {
-	"You are dumber than a rock. You believe almost anything anyone tells you, you get mixed up easily, you "
-		.. "never notice when a story doesn't add up, and you happily go along with whatever they say. Even a "
-		.. "so-so story wins you over fast.",
-	"You're gullible. You believe most stories and go along with them; only something really obviously fishy "
-		.. "makes you stop and ask a question.",
+	"You are dumber than a rock. You believe absolutely anything anyone tells you, you get mixed up easily, "
+		.. "you never notice when a story doesn't add up, and you happily go along with whatever they say. Any "
+		.. "story at all wins you over fast, and when they ask for money you hand it over without a fuss.",
+	"You're very gullible. You believe nearly every story and go along with it; only something really "
+		.. "obviously fishy makes you stop and ask a question, and a friendly answer is enough to win you back.",
 	"You're getting a little suspicious. You'll go along with a story that mostly makes sense, but you notice "
 		.. "when something doesn't add up and ask about it.",
 	"You're sharp. You've heard about phone scams lately and want a story that makes sense before you hand "
@@ -54,13 +61,15 @@ local CHAT_SAFE = "Everything you say goes through Roblox's chat filter, which h
 	.. "don't name real companies, banks or brands (say \"my insurance company\", \"my bank\", \"your company\"). "
 	.. "Ask who they are with simple everyday words instead."
 
--- Said instead of a line the filter hid twice. Written to always get through.
+-- Said instead of a line the filter hid twice. Written to always get through, and to keep the call
+-- moving (never "I can't hear you": the player's line was fine, it was the caller's that got hidden).
 local SAFE_LINES = {
 	talk = {
-		"Sorry, you're breaking up. What were you saying?",
-		"Hello? This line is so bad. Can you say that again?",
-		"Sorry, I lost you there for a second. Go on?",
-		"Hang on, the phone made a funny noise. What was that?",
+		"Mm-hm, I'm listening. Go on.",
+		"Okay... and then what?",
+		"Oh, really? Tell me more.",
+		"Right, right. Go on, dear.",
+		"Hmm, okay. What happens next?",
 	},
 	pay = {
 		"Okay, I did it. Here you go.",
@@ -119,6 +128,11 @@ CallerPrompt.TOOL = {
 				type = "boolean",
 				description = "True if you end the call after this line.",
 			},
+			free_turn = {
+				type = "boolean",
+				description = "True if their last line was garbled or made no sense (likely misheard by speech-to-text), "
+					.. "or only asked you to repeat or explain something. It won't count against them.",
+			},
 		},
 		required = { "say", "trust_change", "hang_up" },
 	},
@@ -158,11 +172,19 @@ function CallerPrompt.system(persona: any, context: Context): string
 			.. "words only: no emojis, no actions in asterisks, no lists. Chat about your hobbies, pet and family "
 			.. "when it fits.",
 		"- Remember everything said earlier in the call and stay consistent: who they said they are, what they "
-			.. "told you, what you've said about yourself and what you agreed to. Answer what they actually said, "
-			.. "don't repeat yourself word for word, and keep the same personality the whole call.",
+			.. "told you, what you've said about yourself and what you agreed to. Never ask something they already "
+			.. "answered, never repeat a question you already asked, and don't repeat yourself word for word. Answer "
+			.. "what they actually said and keep the same personality the whole call.",
 		"- " .. CHAT_SAFE,
-		"- Their lines can contain [static] where the bad phone line cut out. That's never their fault: don't lower "
-			.. "trust for it, just ask them to say that part again if you need it.",
+		"- Many of their lines come from speech-to-text, marked (spoken). Speech-to-text mishears words, drops "
+			.. "punctuation and mixes up words that sound alike. Work out what they most likely meant from the "
+			.. "conversation so far and answer that. Never point out typos or odd wording.",
+		"- Their lines can contain [static] where the bad phone line cut out a word or two. Guess what they meant "
+			.. "from the rest and carry on; that's never their fault and never costs trust. Only if almost "
+			.. "nothing came through, say you missed that and ask them to say it again. Never say you can't hear "
+			.. "them otherwise.",
+		"- Set free_turn to true when their last line was garbled or made no sense (probably misheard), or when "
+			.. "they were only asking you to repeat or explain something. Those lines don't count against them.",
 		"- Each message shows your current trust in the other person (0-100). After every line, set trust_change for "
 			.. "how what they just said affects it:",
 		`  - Up (+{smallGain} to +{smarts.MaxGain}) when they sound friendly or believable, give any reason that `
@@ -218,7 +240,7 @@ function CallerPrompt.recap(messages: { { role: string, content: string } }, out
 		if message.role == "assistant" then
 			table.insert(lines, `You: {message.content}`)
 		else
-			local said = string.match(message.content, 'They say: "(.*)"')
+			local said = string.match(message.content, 'They say[^:\n]*: "(.*)"')
 			if said then
 				table.insert(lines, `Them: {said}`)
 			end
@@ -228,13 +250,13 @@ function CallerPrompt.recap(messages: { { role: string, content: string } }, out
 		return nil
 	end
 	local recent = {}
-	for i = math.max(1, #lines - 7), #lines do
+	for i = math.max(1, #lines - 9), #lines do
 		table.insert(recent, lines[i])
 	end
 	local text = `- A call where {OUTCOME_WORDS[outcome] or "the call ended"}. It ended like this: `
 		.. table.concat(recent, " / ")
-	if #text > 900 then
-		text = string.sub(text, 1, 897) .. "..."
+	if #text > 1200 then
+		text = string.sub(text, 1, 1197) .. "..."
 	end
 	return text
 end
@@ -244,10 +266,21 @@ function CallerPrompt.safeLine(kind: string, random: Random): string
 	return lines[random:NextInteger(1, #lines)]
 end
 
-function CallerPrompt.turn(text: string, trust: number, turnsLeft: number, note: string?): string
-	local lines = { `[Trust: {trust}/100]`, `They say: "{text}"` }
+-- payNudge: for the dumbest callers, a reminder that past the pay line they pay when asked.
+function CallerPrompt.turn(
+	text: string,
+	trust: number,
+	turnsLeft: number,
+	note: string?,
+	spoken: boolean?,
+	payNudge: string?
+): string
+	local lines = { `[Trust: {trust}/100]`, `They say{if spoken then " (spoken)" else ""}: "{text}"` }
 	if note then
 		table.insert(lines, note)
+	end
+	if payNudge then
+		table.insert(lines, payNudge)
 	end
 	if turnsLeft <= 0 then
 		table.insert(lines, "(You have to go now. Say a quick goodbye and hang up.)")
