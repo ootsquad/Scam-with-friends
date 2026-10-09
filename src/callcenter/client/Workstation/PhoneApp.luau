@@ -6,11 +6,15 @@
 	What the mic hears goes in the text box first (Settings: "Check mic lines"), so you can fix it before the
 	caller hears it; press Send or Enter. Lines Roblox hides aren't sent and don't use a line, and three
 	ready-made lines (Ideas) pop up so the call can go on. Ideas also work any time from the IDEAS button, and
-	change with what the caller just said.
+	change with what the caller just said. Asking uses an on-call tip (the number on the button): 3 free per
+	shift, then Extra Tips (Robux). Out of tips, the button offers Extra Tips.
+
+	After a caller hangs up on you, the idle screen offers to save the call (Save My Call).
 
 	PhoneApp.Start(window)
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
 local UserInputService = game:GetService("UserInputService")
@@ -27,7 +31,9 @@ local Notify = require(Ui.Notify)
 local Theme = require(Ui.Theme)
 local SettingsStore = require(Client:WaitForChild("Stores"):WaitForChild("SettingsStore"))
 
+local ShopConfig = require(Shared.Config.ShopConfig)
 local CallStore = require(script.Parent.CallStore)
+local ShopStore = require(script.Parent.ShopStore)
 local CallVoice = require(script.Parent.CallVoice)
 local LeadAvatar = require(script.Parent.LeadAvatar)
 
@@ -76,6 +82,8 @@ local STATUS_CAPTION = {
 }
 
 local PhoneApp = {}
+
+local player = Players.LocalPlayer
 
 local ui: any
 local rowLeads: { [number]: number } = {} -- slot -> lead id currently drawn
@@ -366,8 +374,57 @@ local function closeIdeas()
 end
 
 local function askIdeas()
+	if ShopStore.TipsLeft() <= 0 then
+		closeIdeas()
+		Notify.show("Out of tips", `You've used your free tips this shift. Get {ShopConfig.TipsPerPurchase} more?`, Theme.Yellow)
+		ShopStore.BuyProduct("ExtraTips")
+		return
+	end
 	ideasWanted = true
 	CallStore.AskIdeas()
+end
+
+-- The number of tips left, on the IDEAS button.
+local function renderTips()
+	local count = ui.talk.IdeasButton:FindFirstChild("Count")
+	if not count then
+		return
+	end
+	local tips = ShopStore.TipsLeft()
+	count.Text = if tips <= 0 then "+" elseif tips > 99 then "99+" else tostring(tips)
+	count.BackgroundColor3 = if tips > 0 then Theme.Yellow else Theme.Red
+	count.TextColor3 = if tips > 0 then Theme.NativeText else Theme.White
+end
+
+-- "Save the call" on the idle screen after a caller hung up on you.
+local function renderSave()
+	local bar = ui.idle:FindFirstChild("SaveCall")
+	if not bar then
+		return
+	end
+	local name = player:GetAttribute("SaveableCall")
+	local idle = CallStore.State == nil
+	bar.Visible = idle and type(name) == "string" and name ~= ""
+	if not bar.Visible then
+		return
+	end
+	bar.Label.Text = `Lost the call with {name}.`
+	local saves = ShopStore.SavesLeft()
+	if saves > 0 then
+		bar.SaveButton.Text = `SAVE CALL ({saves} {if saves == 1 then "SAVE" else "SAVES"} LEFT)`
+	else
+		local item = ShopConfig.Product("SaveMyCall")
+		local price = item and ShopStore.Price(item)
+		bar.SaveButton.Text = if price then `SAVE CALL · R$ {price}` else "SAVE CALL"
+	end
+end
+
+local function saveCall()
+	if ShopStore.SavesLeft() > 0 then
+		ShopStore.UseCallSave()
+	else
+		ShopStore.BuyProduct("SaveMyCall")
+	end
 end
 
 local function showIdeas(ideas: any)
@@ -383,7 +440,7 @@ local function showIdeas(ideas: any)
 	local panel = ui.ideas
 	panel.Reason.Text = if ideas.Reason == IdeaReason.Blocked
 		then "Roblox hid your last line, so it wasn't sent and didn't use a line. Try one of these:"
-		else "Tap a line to say it. They change with what the caller says."
+		else `Tap a line to say it. {ShopStore.TipsLeft()} {if ShopStore.TipsLeft() == 1 then "tip" else "tips"} left.`
 	for index = 1, 3 do
 		local button = panel:FindFirstChild(`Option{index}`)
 		if button then
@@ -424,6 +481,7 @@ local function onHeard(text: string)
 		return
 	end
 	if SettingsStore.Settings.MicReview == false then
+		closeIdeas()
 		CallStore.Say(text, true)
 		return
 	end
@@ -655,6 +713,22 @@ function PhoneApp.Start(window: Frame)
 	end
 	CallStore.Ideas:Connect(showIdeas)
 
+	-- Tips left and Save My Call
+	local saveBar = ui.idle:FindFirstChild("SaveCall")
+	if saveBar then
+		saveBar.Visible = false
+		ButtonFx.attach(saveBar.SaveButton, 1.03, 0.96)
+		saveBar.SaveButton.MouseButton1Click:Connect(saveCall)
+	end
+	ShopStore.Changed:Connect(function()
+		renderTips()
+		renderSave()
+	end)
+	ShopStore.PricesLoaded:Connect(renderSave)
+	CallStore.Changed:Connect(renderSave)
+	renderTips()
+	renderSave()
+
 	CallStore.LeadsChanged:Connect(renderLeads)
 	CallStore.Changed:Connect(renderCall)
 	CallStore.Line:Connect(function(line)
@@ -662,7 +736,8 @@ function PhoneApp.Start(window: Frame)
 		renderTrust(line.Trust)
 		showDelta(line.Delta)
 		if ideasOpen then
-			askIdeas() -- fresh ideas for what the caller just said
+			ideasWanted = true
+			CallStore.AskIdeas(true) -- fresh ideas for what the caller just said (free while they're open)
 		end
 		local state = CallStore.State
 		if state then

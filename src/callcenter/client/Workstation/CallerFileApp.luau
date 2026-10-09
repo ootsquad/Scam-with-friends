@@ -49,7 +49,9 @@ local function fill(): boolean
 	body.Username.Text = `@{lead.Username}`
 	body.Tag.Text = string.upper(lead.Tag)
 	body.Smarts.Value.Text = file.Smarts
-	body.Smarts.PayAt.Text = `Pays once trust hits {file.PayAt}%`
+	body.Smarts.PayAt.Text = if file.PayAt <= 0
+		then "Won't pay. It's a prank call!"
+		else `Pays once trust hits {file.PayAt}%`
 	for index, key in FACTS do
 		local row = body.Facts:FindFirstChild(`Row{index}`)
 		if row then
@@ -63,7 +65,7 @@ local function fill(): boolean
 			chip.Visible = table.find(file.Methods, chip.Name) ~= nil
 		end
 	end
-	body.Wallet.Text = `About {Ledger.money(file.Wallet)}`
+	body.Wallet.Text = if file.PayAt <= 0 then "Nothing. Just jokes." else `About {Ledger.money(file.Wallet)}`
 	return true
 end
 

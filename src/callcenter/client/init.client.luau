@@ -54,6 +54,8 @@ local booted = LoadingController.RunSteps({
 		status = "Booting the workstations…",
 		run = function()
 			require(Workstation.CallStore).Start()
+			require(Workstation.ShopStore).Start()
+			require(Workstation.ChatTags).Start()
 			require(Workstation.Sfx).Start()
 			require(Workstation.WorkstationController).Start()
 			require(Workstation.HudController).Start()

@@ -56,7 +56,7 @@ The store is a room in the office with a vendor players walk up to. It isn't an 
 
 1. Build the store room wherever you like: on a floor, or outside the floors (a lobby or a ground-floor shop).
 2. Tag the vendor `StoreVendor`. The vendor can be an NPC **Model** (with a Humanoid) or any **Part**, like the
-   counter.
+   counter. A plain brick with the tag is enough for now.
 3. The vendor gets a **Shop** prompt automatically. Using it opens the store on that player's screen.
 
 - A vendor inside a floor only works while the crew is on that floor. A vendor outside the floors always works.

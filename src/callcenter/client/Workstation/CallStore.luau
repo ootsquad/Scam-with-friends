@@ -11,7 +11,8 @@
 	CallStore.Logoff()
 	CallStore.StartCall(leadId) -> Result   (yields)
 	CallStore.Answer(accept) / Say(text, spoken?) / HangUp()
-	CallStore.AskIdeas() / UseIdea(id)         ready-made lines to say (the server answers with Ideas)
+	CallStore.AskIdeas(followUp?) / UseIdea(id)   ready-made lines to say (the server answers with Ideas);
+	                                           followUp: new ones for the caller's latest line while open (free)
 	CallStore.RedeemGiftCard(code) -> Result   ChargeCard(number, exp, cvv, amount) -> Result   (yield)
 	CallStore.PayoutsOf(method) -> { Payout }
 	CallStore.IsConnected() -> boolean
@@ -90,9 +91,9 @@ function CallStore.Say(text: string, spoken: boolean?)
 	end
 end
 
-function CallStore.AskIdeas()
+function CallStore.AskIdeas(followUp: boolean?)
 	if CallStore.IsConnected() then
-		Call.packets.AskIdeas.send(nil)
+		Call.packets.AskIdeas.send(followUp == true)
 	end
 end
 

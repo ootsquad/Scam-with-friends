@@ -8,6 +8,9 @@
 	StarterCharacter is set or a character spawns as R6.
 
 	PlayerLookService.Start()
+	PlayerLookService.SetDecorator(fn(player, description))   changes a player's look before it's applied
+	                                                           (PerkService: the VIP outfit and emotes)
+	PlayerLookService.Refresh(player)                          applies their look again (e.g. after buying VIP)
 ]]
 
 local Players = game:GetService("Players")
@@ -22,6 +25,7 @@ local PlayerLookService = {}
 
 local descriptions: { [number]: HumanoidDescription } = {}
 local warnedR6 = false
+local decorator: ((Player, HumanoidDescription) -> ())? = nil
 
 local function descriptionFor(player: Player): HumanoidDescription?
 	local userId = player.UserId
@@ -77,7 +81,11 @@ local function apply(player: Player, character: Model)
 		return
 	end
 	local ok, err = pcall(function()
-		humanoid:ApplyDescriptionAsync(description:Clone())
+		local look = description:Clone()
+		if decorator then
+			decorator(player, look)
+		end
+		humanoid:ApplyDescriptionAsync(look)
 	end)
 	if not ok then
 		warn(`[PlayerLookService] couldn't apply {player.Name}'s avatar: {err}`)
@@ -89,6 +97,16 @@ local function onPlayerAdded(player: Player)
 		task.spawn(apply, player, character)
 	end)
 	if player.Character then
+		task.spawn(apply, player, player.Character)
+	end
+end
+
+function PlayerLookService.SetDecorator(fn: (Player, HumanoidDescription) -> ())
+	decorator = fn
+end
+
+function PlayerLookService.Refresh(player: Player)
+	if CallConfig.UseRealAvatars and player.Character then
 		task.spawn(apply, player, player.Character)
 	end
 end

@@ -13,7 +13,8 @@
 
 	EconomyService.Start()
 	EconomyService.StartClock()
-	EconomyService.Award(player, amount)
+	EconomyService.Award(player, amount) -> number    pays out amount x their perks (2x cash, Team Leader bonus);
+	                                                  returns what they actually got
 	EconomyService.IsFired() -> boolean
 	EconomyService.IsRunning() -> boolean          the day clock is ticking (not before login, not in a review)
 	EconomyService.Day() -> number
@@ -32,6 +33,7 @@ local Shift = require(Shared:WaitForChild("Network")).Shift
 local CareerService = require(script.Parent.CareerService)
 local CoachService = require(script.Parent.CoachService)
 local LeadService = require(script.Parent.LeadService)
+local PerkService = require(script.Parent.PerkService)
 local ShiftService = require(script.Parent.ShiftService)
 
 local EconomyService = {}
@@ -76,6 +78,7 @@ local function endOfDay(token: number)
 		return
 	end
 	ticking = false
+	PerkService.SetTicking(false) -- 2x time doesn't run during the review
 	local quota = quotaFor(day)
 	local reviewed = team
 	local passed = reviewed >= quota
@@ -135,6 +138,7 @@ startDay = function()
 	dayToken += 1
 	local token = dayToken
 	ticking = true
+	PerkService.SetTicking(true)
 	ReplicatedStorage:SetAttribute("ShiftDayEndsAt", workspace:GetServerTimeNow() + CallConfig.DayLength)
 	task.delay(CallConfig.DayLength, endOfDay, token)
 	for _, callback in dayStartCallbacks do
@@ -150,10 +154,10 @@ function EconomyService.StartClock()
 	startDay()
 end
 
-function EconomyService.Award(player: Player, amount: number)
-	amount = math.max(0, math.floor(amount))
+function EconomyService.Award(player: Player, amount: number): number
+	amount = math.max(0, math.floor(amount * PerkService.Multiplier(player) + 0.5))
 	if amount == 0 then
-		return
+		return 0
 	end
 	personal[player] = (personal[player] or 0) + amount
 	today[player] = (today[player] or 0) + amount
@@ -161,6 +165,7 @@ function EconomyService.Award(player: Player, amount: number)
 	player:SetAttribute("ShiftPersonal", personal[player])
 	ReplicatedStorage:SetAttribute("ShiftTeam", team)
 	CareerService.Earned(player, amount)
+	return amount
 end
 
 function EconomyService.IsFired(): boolean

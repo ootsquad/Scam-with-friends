@@ -8,6 +8,9 @@
 	Each tier row's button shows its state: EQUIPPED (best you own), OWNED, a price (next one you can buy),
 	or FLOOR n (not unlocked yet).
 
+	Two more tabs sell Robux items (ShopConfig): ROBUX ITEMS (developer products, buy as often as you like)
+	and GAME PASSES. Prank Call asks who should get the call first.
+
 	It closes with the X, Esc (or the gamepad's B), sitting down at a desk, or walking away from the vendor.
 	While it's open the mouse stays free (shift lock and first person can't grab it).
 
@@ -24,6 +27,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local OfficeConfig = require(Shared.Config.OfficeConfig)
+local ShopConfig = require(Shared.Config.ShopConfig)
 local Format = require(Shared.Util.Format)
 
 local Client = script.Parent.Parent
@@ -33,6 +37,10 @@ local Theme = require(Ui.Theme)
 local CareerStore = require(script.Parent.CareerStore)
 local Ledger = require(script.Parent.Ledger)
 local Sfx = require(script.Parent.Sfx)
+local ShopStore = require(script.Parent.ShopStore)
+
+local TABS = { Equipment = "EquipmentTab", Robux = "RobuxTab", Passes = "PassesTab" }
+local ROBUX_GREEN = Color3.fromHex("#00A651")
 
 local BIND_NAME = "ChaosStoreMouse"
 local CLOSE_MARGIN = 1 -- studs past OfficeConfig.ShopRange before walking away closes the store (the server
@@ -66,7 +74,7 @@ local function render()
 		else "Everything you earn on shifts goes to your career cash. Walk away or press Esc to close."
 
 	for _, kind in OfficeConfig.EquipmentOrder do
-		local column = body:FindFirstChild(kind)
+		local column = body.Equipment:FindFirstChild(kind)
 		local category = OfficeConfig.Equipment[kind]
 		if column then
 			column.Title.Text = string.upper(category.Label)
@@ -95,6 +103,169 @@ local function render()
 				end
 			end
 		end
+	end
+end
+
+-- ---------------------------------------------------------------------------
+-- Robux items
+-- ---------------------------------------------------------------------------
+
+local function robuxLabel(item: ShopConfig.Item): string
+	local price = ShopStore.Price(item)
+	return if price then `R$ {price}` else "BUY"
+end
+
+local function fillCard(card: any, item: ShopConfig.Item)
+	card.ItemName.Text = item.Name
+	card.Blurb.Text = item.Blurb
+	card.Tile.BackgroundColor3 = Color3.fromHex(item.Color)
+	card.Tile.Symbol.Text = item.Symbol
+end
+
+local function productState(item: ShopConfig.Item): (string, boolean, string?)
+	-- (state line, can buy, button text instead of the price)
+	if item.ComingSoon then
+		return "Coming soon", false, "COMING SOON"
+	end
+	local key = item.Key
+	if key == "DoubleCash" then
+		if ShopStore.Owns("CashForever") then
+			return "You have Permanent 2x Cash", false, "OWNED"
+		end
+		local seconds = ShopStore.BoostSeconds()
+		return if seconds > 0 then `2x for {Format.duration(seconds)} more` else "", true, nil
+	elseif key == "ExtraTips" then
+		local tips = ShopStore.TipsLeft()
+		return `You have {tips} {if tips == 1 then "tip" else "tips"}`, true, nil
+	elseif key == "SaveMyCall" then
+		local saves = ShopStore.SavesLeft()
+		return if saves > 0 then `{saves} {if saves == 1 then "save" else "saves"} ready` else "", true, nil
+	elseif key == "PrankCall" then
+		local line = ReplicatedStorage:GetAttribute("PhoneLine")
+		if type(line) == "string" and line ~= "ok" then
+			return "The phone line is down", false, "UNAVAILABLE"
+		end
+		local others, atDesks = 0, 0
+		for _, other in Players:GetPlayers() do
+			if other ~= player then
+				others += 1
+				if other:GetAttribute("LoggedIn") == true then
+					atDesks += 1
+				end
+			end
+		end
+		if others > 0 and atDesks == 0 then
+			return "Nobody's at a desk right now", false, "WAIT"
+		end
+	elseif key == "VirusAttack" or key == "OfficeChaos" then
+		local endsAt = ReplicatedStorage:GetAttribute("ShiftDayEndsAt") or 0
+		local closing = endsAt > 0 and endsAt - workspace:GetServerTimeNow() <= ShopConfig.DisasterCutoff
+		if ReplicatedStorage:GetAttribute("ShiftReviewing") or ReplicatedStorage:GetAttribute("ShiftFired") or closing then
+			return "Wait for the next day", false, "WAIT"
+		end
+	end
+	return "", true, nil
+end
+
+local function paintBuy(button: TextButton, text: string, active: boolean, owned: boolean?)
+	if owned then
+		paint(button, text, Theme.StoreOwned, Theme.Green, false)
+	elseif active then
+		paint(button, text, ROBUX_GREEN, Theme.White, true)
+	else
+		paint(button, text, Theme.NativeLine, Theme.NativeMuted, false)
+	end
+end
+
+local function renderRobux()
+	for _, item in ShopConfig.Products do
+		local card = body.Robux:FindFirstChild(`Card_{item.Key}`)
+		if card then
+			fillCard(card, item)
+			local state, canBuy, buttonText = productState(item)
+			card.State.Text = state
+			card.State.TextColor3 = if canBuy then Theme.Green else Theme.NativeMuted
+			paintBuy(card.BuyButton, buttonText or robuxLabel(item), canBuy, buttonText == "OWNED")
+		end
+	end
+	for _, item in ShopConfig.Passes do
+		local card = body.Passes:FindFirstChild(`Pass_{item.Key}`)
+		if card then
+			fillCard(card, item)
+			local owned = ShopStore.Owns(item.Key)
+			card.State.Text = if owned then "Owned" else ""
+			card.State.TextColor3 = Theme.Green
+			paintBuy(card.BuyButton, if owned then "OWNED" else robuxLabel(item), not owned, owned)
+		end
+	end
+end
+
+local function selectTab(name: string)
+	for page, buttonName in TABS do
+		local on = page == name
+		body[page].Visible = on
+		local button = body.Tabs[buttonName]
+		button.BackgroundColor3 = if on then Theme.Accent else Theme.White
+		button.TextColor3 = if on then Theme.White else Theme.NativeText
+	end
+	body.Picker.Visible = false
+	Ledger.setStatus(body.Status, "")
+	if name ~= "Equipment" then
+		renderRobux()
+	end
+end
+
+-- Prank Call: pick who gets it, then buy.
+local function openPicker()
+	local picker = body.Picker
+	local others, anyone = {}, false
+	for _, other in Players:GetPlayers() do
+		if other ~= player then
+			anyone = true
+			if other:GetAttribute("LoggedIn") == true then
+				table.insert(others, other) -- prank calls ring at a desk
+			end
+		end
+	end
+	local alone = not anyone
+	if alone then
+		others = { player }
+	end
+	for index = 1, 4 do
+		local option = picker.Card:FindFirstChild(`Option{index}`)
+		if option then
+			local who = others[index]
+			option.Visible = who ~= nil
+			if who then
+				option.Text = if alone then "Me (no one else is here)" else who.DisplayName
+				option:SetAttribute("UserId", who.UserId)
+			end
+		end
+	end
+	picker.Visible = true
+end
+
+local function pickPrankTarget(index: number)
+	local option = body.Picker.Card:FindFirstChild(`Option{index}`)
+	local userId = option and option:GetAttribute("UserId")
+	body.Picker.Visible = false
+	if type(userId) == "number" then
+		ShopStore.PrankTarget(userId)
+		ShopStore.BuyProduct("PrankCall")
+	end
+end
+
+local function buyProduct(item: ShopConfig.Item)
+	local _, canBuy = productState(item)
+	if not canBuy then
+		Sfx.Play("Error")
+		return
+	end
+	Sfx.Play("Click")
+	if item.Key == "PrankCall" then
+		openPicker()
+	else
+		ShopStore.BuyProduct(item.Key)
 	end
 end
 
@@ -195,6 +366,8 @@ function StoreApp.Open()
 	end
 	Ledger.setStatus(body.Status, "")
 	render()
+	renderRobux()
+	body.Picker.Visible = false
 	if open then
 		return
 	end
@@ -206,11 +379,16 @@ function StoreApp.Open()
 	RunService:BindToRenderStep(BIND_NAME, Enum.RenderPriority.Camera.Value + 1, keepMouseFree)
 	-- Walking away (or sitting down, or dying) closes it.
 	task.spawn(function()
+		local ticks = 0
 		while open and openToken == token do
 			local distance = vendorDistance()
 			if atDesk() or not distance or distance > OfficeConfig.ShopRange + CLOSE_MARGIN then
 				StoreApp.Close()
 				return
+			end
+			ticks += 1
+			if ticks % 4 == 0 then
+				renderRobux() -- who's at a desk, the day clock
 			end
 			task.wait(0.25)
 		end
@@ -242,7 +420,7 @@ function StoreApp.Start(storeScreen: Frame)
 	CareerStore.OpenStore:Connect(StoreApp.Open)
 	Ledger.setStatus(body.Status, "")
 	for kindIndex, kind in OfficeConfig.EquipmentOrder do
-		local column = body:FindFirstChild(kind)
+		local column = body.Equipment:FindFirstChild(kind)
 		if column then
 			for tierIndex in OfficeConfig.Equipment[kind].Tiers do
 				local row = column:FindFirstChild(`Tier{tierIndex}`)
@@ -259,6 +437,64 @@ function StoreApp.Start(storeScreen: Frame)
 	end
 	CareerStore.Changed:Connect(render)
 	render()
+
+	-- Tabs and Robux items
+	for page, buttonName in TABS do
+		local button = body.Tabs:FindFirstChild(buttonName)
+		if button then
+			ButtonFx.attach(button, 1.03, 0.96)
+			button.MouseButton1Click:Connect(function()
+				Sfx.Play("Click")
+				selectTab(page)
+			end)
+		end
+	end
+	for _, item in ShopConfig.Products do
+		local card = body.Robux:FindFirstChild(`Card_{item.Key}`)
+		if card then
+			ButtonFx.attach(card.BuyButton, 1.04, 0.95)
+			card.BuyButton.MouseButton1Click:Connect(function()
+				buyProduct(item)
+			end)
+		else
+			warn(`[StoreApp] the store screen has no card for {item.Name}`)
+		end
+	end
+	for _, item in ShopConfig.Passes do
+		local card = body.Passes:FindFirstChild(`Pass_{item.Key}`)
+		if card then
+			ButtonFx.attach(card.BuyButton, 1.04, 0.95)
+			card.BuyButton.MouseButton1Click:Connect(function()
+				if not ShopStore.Owns(item.Key) then
+					Sfx.Play("Click")
+					ShopStore.BuyPass(item.Key)
+				end
+			end)
+		else
+			warn(`[StoreApp] the store screen has no card for {item.Name}`)
+		end
+	end
+	local picker = body.Picker
+	for index = 1, 4 do
+		local option = picker.Card:FindFirstChild(`Option{index}`)
+		if option then
+			ButtonFx.attach(option, 1.02, 0.97)
+			option.MouseButton1Click:Connect(function()
+				pickPrankTarget(index)
+			end)
+		end
+	end
+	picker.Card.CancelButton.MouseButton1Click:Connect(function()
+		picker.Visible = false
+	end)
+	ShopStore.Changed:Connect(renderRobux)
+	ShopStore.PricesLoaded:Connect(renderRobux)
+	ShopStore.Message:Connect(function(message)
+		if open then
+			Ledger.setStatus(body.Status, message.Text, if message.Kind == 2 then true elseif message.Kind == 3 then false else nil)
+		end
+	end)
+	selectTab("Equipment")
 end
 
 return StoreApp
