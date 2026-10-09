@@ -28,6 +28,7 @@ local Format = require(Shared.Util.Format)
 local Call = require(Shared:WaitForChild("Network")).Call
 local Namespace = require(Shared.Network.Namespace)
 local CareerService = require(script.Parent.CareerService)
+local CoachService = require(script.Parent.CoachService)
 local EconomyService = require(script.Parent.EconomyService)
 local OfficeService = require(script.Parent.OfficeService)
 
@@ -111,6 +112,9 @@ local function pay(player: Player, method: string, detail: string, amount: numbe
 	local share = OfficeService.Perks().PayoutBonus + CareerService.Tier(player, "Router").Value
 	local bonus = math.max(0, math.round(amount * share))
 	EconomyService.Award(player, amount + bonus)
+	if method ~= "donation" then
+		CoachService.Note(player, "Cashed")
+	end
 	CareerService.CompleteStep(player, "CashIn")
 	Call.packets.Payout.sendTo({
 		Method = method,

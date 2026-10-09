@@ -18,6 +18,8 @@
 	CareerService.CompleteStep(player, key)          OfficeConfig.Tutorial key
 	CareerService.Tier(player, kind) -> Tier          the equipment they use ("Headset" | "Computer" | "Router")
 	CareerService.IsReady(player) -> boolean          their client asked for the career (can receive packets)
+	CareerService.SetShopCheck(check(player) -> boolean)   buying only works when this says yes (VendorService:
+	                                                  next to the store's vendor)
 ]]
 
 local DataStoreService = game:GetService("DataStoreService")
@@ -64,6 +66,7 @@ local profiles: { [Player]: Profile } = {}
 local ready: { [Player]: boolean } = {}
 local startedShift: { [Player]: boolean } = {}
 local store: DataStore? | false = nil
+local shopCheck: ((Player) -> boolean)? = nil
 
 -- ---------------------------------------------------------------------------
 -- Records
@@ -314,6 +317,9 @@ local function onBuy(request: any, player: Player): CareerNet.Result
 	if not kind or not category or not tier then
 		return result(false, "That item isn't in the store.")
 	end
+	if shopCheck and not shopCheck(player) then
+		return result(false, "Walk back to the equipment store to buy that.")
+	end
 	local profile = profileOf(player)
 	if not profile then
 		return result(false, "Your career hasn't loaded. Try again in a moment.")
@@ -336,6 +342,10 @@ local function onBuy(request: any, player: Player): CareerNet.Result
 	push(player)
 	task.spawn(save, player) -- purchases are saved straight away
 	return result(true, `Bought the {tier.Name}! {tier.Blurb}.`)
+end
+
+function CareerService.SetShopCheck(check: (Player) -> boolean)
+	shopCheck = check
 end
 
 local function onHideTutorial(hidden: boolean, player: Player)

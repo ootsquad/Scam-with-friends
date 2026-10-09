@@ -7,6 +7,7 @@
 	CareerStore.Changed:Connect(function(data) end)
 	CareerStore.Elevator:Connect(function(info) end)     -- { Floor, Promoted }: the crew is moving floors
 	CareerStore.Chore:Connect(function(done) end)        -- { Kind, Reward }: you finished a chore
+	CareerStore.OpenStore:Connect(function() end)         -- you used the store vendor's Shop prompt
 	CareerStore.Buy(kindIndex, tier) -> Result            (yields)
 	CareerStore.SetTutorialHidden(hidden)
 	CareerStore.StepDone(index) -> boolean
@@ -26,6 +27,7 @@ local CareerStore = {
 	Changed = Signal.new(),
 	Elevator = Signal.new(),
 	Chore = Signal.new(),
+	OpenStore = Signal.new(),
 }
 
 local Career: any
@@ -46,6 +48,9 @@ function CareerStore.Start()
 	end)
 	Career.packets.Chore.listen(function(done)
 		CareerStore.Chore:Fire(done)
+	end)
+	Career.packets.OpenStore.listen(function()
+		CareerStore.OpenStore:Fire()
 	end)
 	-- Asking for the career also tells the server this client can receive career packets.
 	set(Namespace.invoke(Career.queries.Get, nil))

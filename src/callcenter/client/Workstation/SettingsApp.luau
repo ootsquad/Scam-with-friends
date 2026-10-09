@@ -79,6 +79,10 @@ local function render(settings: any)
 	end
 	renderToggle(body.ClockRow.Toggle, settings.Clock24)
 	renderToggle(body.MotionRow.Toggle, settings.ReduceMotion)
+	local micRow = body:FindFirstChild("MicRow")
+	if micRow then
+		renderToggle(micRow.Toggle, settings.MicReview ~= false)
+	end
 	body.SaveStatus.Text = if SettingsStore.Persistent
 		then "Saved to your Roblox account (the lobby uses them too)"
 		else "Settings reset when you leave (saving works in the published game)"
@@ -178,6 +182,12 @@ function SettingsApp.Start(window: Frame)
 	body.MotionRow.Toggle.MouseButton1Click:Connect(function()
 		SettingsStore.Set("ReduceMotion", not SettingsStore.Settings.ReduceMotion)
 	end)
+	local micRow = body:FindFirstChild("MicRow")
+	if micRow then
+		micRow.Toggle.MouseButton1Click:Connect(function()
+			SettingsStore.Set("MicReview", SettingsStore.Settings.MicReview == false)
+		end)
+	end
 
 	SettingsStore.Changed:Connect(render)
 	render(SettingsStore.Settings)

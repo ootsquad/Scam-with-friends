@@ -18,9 +18,9 @@ local LobbyConfig = {
 	DeskNames = { "Window", "Printer", "Coffee", "Boss's door" },
 
 	Difficulties = {
-		{ Name = "Intern", Quota = 450, Growth = 0.3 },
-		{ Name = "Associate", Quota = 600, Growth = 0.4 },
-		{ Name = "Senior", Quota = 800, Growth = 0.5 },
+		{ Name = "Intern", Quota = 700, Growth = 0.3 },
+		{ Name = "Associate", Quota = 900, Growth = 0.4 },
+		{ Name = "Senior", Quota = 1200, Growth = 0.5 },
 	} :: { Difficulty },
 	DefaultDifficulty = 2,
 

@@ -8,7 +8,9 @@
 		Call.queries.GetLeads.invoke()             -> { Lead }
 		Call.queries.StartCall.invoke(leadId)      -> Result
 		Call.packets.Answer.send(true/false)       -- pick up / decline an incoming call
-		Call.packets.Say.send("text")              -- typed, spoken (speech-to-text) or Roblox chat
+		Call.packets.Say.send({ Text = "text", Spoken = false })   -- typed, spoken (speech-to-text) or Roblox chat
+		Call.packets.AskIdeas.send()               -- three ready-made lines to say ("Ideas")
+		Call.packets.UseIdea.send(id)              -- say one of them
 		Call.packets.HangUp.send()
 		Call.queries.RedeemGiftCard.invoke("K7Q2-9XMB-4RTA")              -> Result
 		Call.queries.ChargeCard.invoke({ Number, Exp, Cvv, Amount })     -> Result
@@ -17,7 +19,9 @@
 		State     the current call (nil = no call)
 		File      the caller's file, sent when a call starts (shown in a pop-up)
 		Line      something the caller said, with their new trust
-		YourLine  what you said, after Roblox's text filter
+		YourLine  what you said, after Roblox's text filter (Status: 1 sent, 2 hidden so not sent, 3 partly
+		          hidden, 4 a ready-made idea)
+		Ideas     three ready-made lines (Reason: 1 you asked, 2 your line was hidden)
 		Payout    the caller paid
 		Leads     your lead list changed
 		Notice    a message for the desktop
@@ -78,6 +82,20 @@ export type Line = {
 	Trust: number,
 	Delta: number,
 	Method: string, -- payment handed over in this line ("gift_card" | "card" | "donation"), "" if none
+}
+
+export type YourLine = {
+	CallId: number,
+	Text: string,
+	Status: number,
+}
+
+export type Idea = { Id: number, Text: string }
+
+export type Ideas = {
+	CallId: number,
+	Reason: number,
+	Options: { Idea },
 }
 
 export type Payout = {
@@ -152,6 +170,23 @@ return Namespace.define("Call", function()
 	local YourLine = ByteNet.struct({
 		CallId = ByteNet.uint32,
 		Text = ByteNet.string,
+		Status = ByteNet.uint8,
+	})
+
+	local Idea = ByteNet.struct({
+		Id = ByteNet.uint16,
+		Text = ByteNet.string,
+	})
+
+	local Ideas = ByteNet.struct({
+		CallId = ByteNet.uint32,
+		Reason = ByteNet.uint8,
+		Options = ByteNet.array(Idea),
+	})
+
+	local Say = ByteNet.struct({
+		Text = ByteNet.string,
+		Spoken = ByteNet.bool,
 	})
 
 	local Payout = ByteNet.struct({
@@ -180,7 +215,9 @@ return Namespace.define("Call", function()
 			-- client -> server
 			Logoff = ByteNet.definePacket({ value = ByteNet.nothing }),
 			Answer = ByteNet.definePacket({ value = ByteNet.bool }),
-			Say = ByteNet.definePacket({ value = ByteNet.string }),
+			Say = ByteNet.definePacket({ value = Say }),
+			AskIdeas = ByteNet.definePacket({ value = ByteNet.nothing }),
+			UseIdea = ByteNet.definePacket({ value = ByteNet.uint16 }),
 			HangUp = ByteNet.definePacket({ value = ByteNet.nothing }),
 
 			-- server -> client
@@ -188,6 +225,7 @@ return Namespace.define("Call", function()
 			File = ByteNet.definePacket({ value = CallerFile }),
 			Line = ByteNet.definePacket({ value = Line }),
 			YourLine = ByteNet.definePacket({ value = YourLine }),
+			Ideas = ByteNet.definePacket({ value = Ideas }),
 			Payout = ByteNet.definePacket({ value = Payout }),
 			Leads = ByteNet.definePacket({ value = ByteNet.array(Lead) }),
 			Notice = ByteNet.definePacket({ value = ByteNet.string }),

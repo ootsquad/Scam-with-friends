@@ -28,8 +28,6 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local TextService = game:GetService("TextService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
@@ -38,16 +36,19 @@ local Namespace = require(Shared.Network.Namespace)
 
 local Data = script.Parent.Parent.Data
 local CallerPrompt = require(Data.CallerPrompt)
+local Ideas = require(Data.Ideas)
 local Personas = require(Data.Personas)
 local CareerService = require(script.Parent.CareerService)
 local ChoreService = require(script.Parent.ChoreService)
 local ClaudeClient = require(script.Parent.ClaudeClient)
+local CoachService = require(script.Parent.CoachService)
 local DeskService = require(script.Parent.DeskService)
 local EconomyService = require(script.Parent.EconomyService)
 local LeadService = require(script.Parent.LeadService)
 local OfficeService = require(script.Parent.OfficeService)
 local PaymentService = require(script.Parent.PaymentService)
 local ShiftService = require(script.Parent.ShiftService)
+local TextFilter = require(script.Parent.TextFilter)
 
 local Phase = CallConfig.Phase
 local Outcome = CallConfig.Outcome
@@ -57,6 +58,12 @@ local ENDED_LINGER = 4 -- seconds the "call ended" screen stays before the phone
 local SAY_COOLDOWN = 0.25
 local MAX_PENDING = 3 -- lines said while the caller is still thinking get sent together
 local STATIC = "[static]" -- what the caller hears in place of words Roblox's filter hid
+local MAX_EARLY_ASKS = 2 -- "asked for money too early" notes per call, for the review tips
+-- Words that ask for money (matched as whole words; "donat" also matches donate / donation).
+local PAY_WORDS = { "gift card", "card", "cards", "pay", "money", "donate", "donation", "code", "cash", "dollars", "bucks" }
+
+local LineStatus = CallConfig.LineStatus
+local IdeaReason = CallConfig.IdeaReason
 
 type Session = {
 	id: number,
@@ -70,9 +77,19 @@ type Session = {
 	smarts: CallerPrompt.Smarts,
 	system: string,
 	messages: { ClaudeClient.Message },
-	turns: number,
+	turns: number, -- lines that counted (CallConfig.MaxTurns)
+	freeTurns: number, -- lines that didn't (CallConfig.MaxFreeTurns)
+	lastFree: boolean, -- the line the caller is answering didn't count
+	spoken: boolean, -- the line the caller is answering came from the mic
 	thinking: boolean,
-	pending: { string },
+	pending: { { text: string, free: boolean, spoken: boolean } },
+	lastCaller: string, -- the caller's last line as the player saw it (for ideas)
+	ideas: { [number]: string }, -- ideas on screen, by id
+	oldIdeas: { [number]: string }, -- the set before (a click can cross a refresh on the way)
+	offered: { [string]: boolean }, -- ideas offered this call (refresh offers different ones)
+	nextIdea: number,
+	earlyAsks: number,
+	warnedChat: boolean,
 	heard: string, -- everything you've said this call (for the fundraiser ID check)
 	note: string?, -- added to your next line for the caller (e.g. why their payment failed)
 	staticTurn: boolean, -- your last line had words the filter hid: it can't cost you trust
@@ -149,42 +166,6 @@ local function clean(text: string, max: number): string
 	return string.sub(text, 1, cut) .. "..."
 end
 
--- Roblox's text filter, for text shown to (and only to) `player`. If the filter is unavailable, a player's
--- own words are still shown back to them, and in Studio (where test players can't always be filtered)
--- everything is shown as-is. Otherwise nil.
-local warnedFilter = false
-local function filterFor(player: Player, text: string, ownWords: boolean?): string?
-	local ok, filtered = pcall(function()
-		local filterResult = TextService:FilterStringAsync(text, player.UserId, Enum.TextFilterContext.PrivateChat)
-		return filterResult:GetNonChatStringForUserAsync(player.UserId)
-	end)
-	if ok and type(filtered) == "string" then
-		return filtered
-	end
-	if not warnedFilter then
-		warnedFilter = true
-		warn(`[CallService] Roblox's text filter failed ({filtered}); using fallbacks`)
-	end
-	if ownWords or RunService:IsStudio() then
-		return text
-	end
-	return nil
-end
-
--- ---------------------------------------------------------------------------
--- Call flow
--- ---------------------------------------------------------------------------
-
--- How much of `original` Roblox's filter replaced with # (0 to 1).
-local function hiddenShare(original: string, filtered: string): number
-	if #original == 0 then
-		return 0
-	end
-	local _, before = string.gsub(original, "#", "")
-	local _, after = string.gsub(filtered, "#", "")
-	return math.clamp((after - before) / #original, 0, 1)
-end
-
 local scheduleIncoming: (Player) -> ()
 local requestReply: (Session, string?) -> ()
 
@@ -211,6 +192,9 @@ local function endCall(session: Session, outcome: number)
 	session.outcome = if session.paid then Outcome.Paid else outcome
 	pushState(session)
 	rememberCall(session)
+	if outcome == Outcome.TheyHungUp and not session.paid and session.turns < CallConfig.MaxTurns then
+		CoachService.Note(session.player, "HungUp") -- not when the call just ran out of lines
+	end
 
 	local player, lead = session.player, session.lead
 	if session.paid then
@@ -253,6 +237,7 @@ local function tryPay(session: Session, pay: { Method: string, Amount: number })
 		session.paid = true
 		CareerService.CompleteStep(player, "Paid")
 		CareerService.Count(player, "Scams")
+		CoachService.Note(player, "Paid")
 		PaymentService.Donate(player, leadName, amount)
 		return nil
 	end
@@ -260,6 +245,8 @@ local function tryPay(session: Session, pay: { Method: string, Amount: number })
 	session.paid = true
 	CareerService.CompleteStep(player, "Paid")
 	CareerService.Count(player, "Scams")
+	CoachService.Note(player, "Paid")
+	CoachService.Note(player, "Issued")
 	if pay.Method == "gift_card" then
 		return PaymentService.IssueGiftCard(player, leadName, amount)
 	end
@@ -267,15 +254,28 @@ local function tryPay(session: Session, pay: { Method: string, Amount: number })
 	return PaymentService.IssueCard(player, leadName, math.min(persona.Budget, method.Max))
 end
 
-local function addTurn(session: Session, text: string)
-	session.turns += 1
+-- Sends one of the player's lines to the caller. `free` lines don't use up one of their lines.
+local function addTurn(session: Session, text: string, free: boolean, spoken: boolean)
+	if free and session.freeTurns < CallConfig.MaxFreeTurns then
+		session.freeTurns += 1
+	else
+		free = false
+		session.turns += 1
+	end
+	session.lastFree = free
+	session.spoken = spoken
 	session.staticTurn = string.find(text, STATIC, 1, true) ~= nil
 	local note = session.note
 	session.note = nil
+	local smarts = session.smarts
+	local nudge = if smarts.Pushover and not session.paid and session.trust >= smarts.PayTrust
+		then "(Your trust is past your pay line. If they ask you to pay, agree right away and pay.)"
+		else nil
 	table.insert(session.messages, {
 		role = "user",
-		content = CallerPrompt.turn(text, session.trust, CallConfig.MaxTurns - session.turns, note),
+		content = CallerPrompt.turn(text, session.trust, CallConfig.MaxTurns - session.turns, note, spoken, nudge),
 	})
+	pushState(session)
 	requestReply(session)
 end
 
@@ -289,13 +289,12 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 	-- Roblox's filter can hide a whole line (it does that for anything that looks like personal info).
 	-- Ask for the line again in other words once; if that's hidden too (or the filter is down), the caller
 	-- says a stock line that always gets through, and that's what goes in the call history.
-	local shown = filterFor(player, spoken)
+	local shown, share = TextFilter.Caller(player, spoken)
 	if session.ended then
 		return
 	end
 	local hidden = shown == nil
-	if shown and hiddenShare(spoken, shown) >= CallConfig.BlockedLineShare then
-		print(`[CallService] Roblox's text filter hid a caller line{if rephrased then " again" else ""}: "{spoken}"`)
+	if shown and share >= CallConfig.BlockedLineShare then
 		if not rephrased then
 			requestReply(session, spoken)
 			return
@@ -303,13 +302,25 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 		hidden = true
 	end
 
+	-- A line the caller found garbled, or that only asked them to repeat something, doesn't count.
+	if
+		reply.FreeTurn
+		and not session.lastFree
+		and session.turns > 0
+		and session.turns < CallConfig.MaxTurns -- the last line stays the last line
+		and session.freeTurns < CallConfig.MaxFreeTurns
+	then
+		session.turns -= 1
+		session.freeTurns += 1
+		session.lastFree = true
+	end
+
 	-- The greeting doesn't move trust; after that the caller decides, within their smarts level. A bad line is
-	-- never your fault: if your line had static or theirs got hidden, trust can't go down this turn.
+	-- never your fault: if your line had static, was misheard, or theirs got hidden, trust can't go down.
 	local smarts = session.smarts
-	local delta = if session.turns == 0
-		then 0
-		else math.clamp(math.round(reply.TrustChange), -smarts.MaxLoss, smarts.MaxGain)
-	if hidden or session.staticTurn then
+	local greeting = session.turns == 0 and session.freeTurns == 0
+	local delta = if greeting then 0 else math.clamp(math.round(reply.TrustChange), -smarts.MaxLoss, smarts.MaxGain)
+	if hidden or session.staticTurn or session.lastFree then
 		delta = math.max(delta, 0)
 	end
 	if delta > 0 and session.gainScale ~= 1 then
@@ -340,6 +351,7 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 	})
 
 	session.thinking = false
+	session.lastCaller = shown :: string
 	Call.packets.Line.sendTo({
 		CallId = session.id,
 		Text = if details then `{shown} {details}` else shown,
@@ -355,9 +367,15 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 
 	pushState(session)
 	if #session.pending > 0 then
-		local text = table.concat(session.pending, " ")
+		-- Lines said while the caller was thinking go together; they're free only if every one of them was.
+		local texts, free, fromMic = {}, true, false
+		for _, item in session.pending do
+			table.insert(texts, item.text)
+			free = free and item.free
+			fromMic = fromMic or item.spoken
+		end
 		session.pending = {}
-		addTurn(session, text)
+		addTurn(session, table.concat(texts, " "), free, fromMic)
 	end
 end
 
@@ -392,6 +410,7 @@ end
 local function connect(session: Session)
 	session.phase = Phase.Connected
 	CareerService.Count(session.player, "Calls")
+	CoachService.Note(session.player, "Calls")
 	table.insert(session.messages, { role = "user", content = CallerPrompt.opening(session.context, session.trust) })
 	requestReply(session)
 end
@@ -464,8 +483,18 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		system = CallerPrompt.system(lead.Persona, context),
 		messages = {},
 		turns = 0,
+		freeTurns = 0,
+		lastFree = false,
+		spoken = false,
 		thinking = false,
 		pending = {},
+		lastCaller = "",
+		ideas = {},
+		oldIdeas = {},
+		offered = {},
+		nextIdea = 0,
+		earlyAsks = 0,
+		warnedChat = false,
 		heard = "",
 		note = nil,
 		staticTurn = false,
@@ -567,9 +596,69 @@ local function onAnswer(accept: boolean, player: Player)
 	end
 end
 
-local function onSay(text: string, player: Player)
+-- Ready-made lines for this moment in the call (Ideas), replacing the ones on screen.
+local function sendIdeas(session: Session, reason: number)
+	local player = session.player
+	local fundraiser = player:GetAttribute("FundraiserCode")
+	local texts = Ideas.pick({
+		persona = session.lead.Persona,
+		firstName = string.match(session.lead.DisplayName, "^(%S+)") or session.lead.DisplayName,
+		trust = session.trust,
+		payAt = session.smarts.PayTrust,
+		turns = session.turns + session.freeTurns,
+		paid = session.paid,
+		lastCaller = session.lastCaller,
+		blocked = reason == IdeaReason.Blocked,
+		fundraiser = if type(fundraiser) == "string" then fundraiser else nil,
+	}, random, session.offered)
+	session.oldIdeas = session.ideas
+	session.ideas = {}
+	local options = {}
+	for _, text in texts do
+		session.nextIdea = session.nextIdea % 60000 + 1
+		session.ideas[session.nextIdea] = text
+		session.offered[text] = true
+		table.insert(options, { Id = session.nextIdea, Text = text })
+	end
+	if player.Parent then
+		Call.packets.Ideas.sendTo({ CallId = session.id, Reason = reason, Options = options }, player)
+	end
+end
+
+-- Sends a line the player said (already filtered) to the caller, or queues it while they're thinking.
+local function deliver(session: Session, heard: string, free: boolean, spoken: boolean)
+	session.heard = string.sub(session.heard .. " " .. heard, -2000)
+	if session.thinking then
+		if #session.pending < MAX_PENDING then
+			table.insert(session.pending, { text = heard, free = free, spoken = spoken })
+		end
+		return
+	end
+	addTurn(session, heard, free, spoken)
+end
+
+-- Asking for money before the caller trusts you is noted for the review tips.
+local function noteEarlyAsk(session: Session, line: string)
+	if session.paid or session.trust >= session.smarts.PayTrust or session.earlyAsks >= MAX_EARLY_ASKS then
+		return
+	end
+	local lower = " " .. string.gsub(string.lower(line), "[^%a]+", " ") .. " "
+	for _, word in PAY_WORDS do
+		if string.find(lower, ` {word} `, 1, true) then
+			session.earlyAsks += 1
+			CoachService.Note(session.player, "EarlyAsk")
+			return
+		end
+	end
+end
+
+local function onSay(request: any, player: Player)
 	local session = sessions[player]
-	if not session or session.ended or session.phase ~= Phase.Connected or type(text) ~= "string" then
+	if not session or session.ended or session.phase ~= Phase.Connected or type(request) ~= "table" then
+		return
+	end
+	local text, spoken = request.Text, request.Spoken == true
+	if type(text) ~= "string" then
 		return
 	end
 	-- Lines that come in quick succession (two spoken sentences, chat and phone at once) are spaced out
@@ -593,26 +682,57 @@ local function onSay(text: string, player: Player)
 	if line == "" then
 		return
 	end
-	local filtered = filterFor(player, line, true)
-	if not filtered then
-		notice(player, "Couldn't send that. Try saying it again.")
+	local filtered, share = TextFilter.Player(player, line)
+	if session.ended or not filtered then
 		return
 	end
-	if session.ended then
-		return
-	end
-	Call.packets.YourLine.sendTo({ CallId = session.id, Text = filtered }, player)
-	-- The caller hears words the filter hid as static.
-	local heard = if hiddenShare(line, filtered) > 0 then (string.gsub(filtered, "#+", STATIC)) else filtered
-	session.heard = string.sub(session.heard .. " " .. heard, -2000)
 
-	if session.thinking then
-		if #session.pending < MAX_PENDING then
-			table.insert(session.pending, heard)
+	-- Mostly hidden: it isn't sent and costs nothing. Ready-made lines pop up so the call can go on.
+	if share >= CallConfig.BlockedLineShare then
+		Call.packets.YourLine.sendTo({ CallId = session.id, Text = filtered, Status = LineStatus.Hidden }, player)
+		CoachService.Note(player, "Blocked")
+		sendIdeas(session, IdeaReason.Blocked)
+		if TextFilter.CanChat(player) == false and not session.warnedChat then
+			session.warnedChat = true
+			notice(player, "Roblox hides everything you type or say because your account can't use chat yet "
+				.. "(Roblox's age check). Use Ideas to keep talking.")
 		end
 		return
 	end
-	addTurn(session, heard)
+
+	-- Partly hidden: the caller hears static in place of the hidden words, and it's free.
+	local partly = share > 0
+	Call.packets.YourLine.sendTo({
+		CallId = session.id,
+		Text = filtered,
+		Status = if partly then LineStatus.PartlyHidden else LineStatus.Sent,
+	}, player)
+	noteEarlyAsk(session, line)
+	local heard = if partly then (string.gsub(filtered, "#+", STATIC)) else filtered
+	deliver(session, heard, partly, spoken)
+end
+
+local function onAskIdeas(_: nil, player: Player)
+	local session = sessions[player]
+	if session and not session.ended and session.phase == Phase.Connected then
+		sendIdeas(session, IdeaReason.Asked)
+	end
+end
+
+local function onUseIdea(id: number, player: Player)
+	local session = sessions[player]
+	if not session or session.ended or session.phase ~= Phase.Connected or type(id) ~= "number" then
+		return
+	end
+	local text = session.ideas[id] or session.oldIdeas[id]
+	if not text then
+		return
+	end
+	session.ideas = {}
+	session.oldIdeas = {}
+	Call.packets.YourLine.sendTo({ CallId = session.id, Text = text, Status = LineStatus.Idea }, player)
+	CoachService.Note(player, "Ideas")
+	deliver(session, text, false, false)
 end
 
 local function onHangUp(_: nil, player: Player)
@@ -627,6 +747,8 @@ function CallService.Start()
 	Namespace.listen(Call.queries.StartCall, onStartCall, Namespace.busy)
 	Call.packets.Answer.listen(onAnswer)
 	Call.packets.Say.listen(onSay)
+	Call.packets.AskIdeas.listen(onAskIdeas)
+	Call.packets.UseIdea.listen(onUseIdea)
 	Call.packets.HangUp.listen(onHangUp)
 
 	DeskService.OnLogin(function(player)

@@ -6,11 +6,12 @@
 	CallStore.Start()                           loads your leads (also tells the server you're ready)
 	CallStore.State / File / Leads / Payouts
 	CallStore.Changed(state, previous)  FileChanged(file)  LeadsChanged(leads)  Line(line)  YourLine(line)
-	CallStore.Payout(payout)  Notice(text)
+	CallStore.Payout(payout)  Notice(text)  Ideas(ideas)
 	CallStore.Login(username) -> Result     (yields)
 	CallStore.Logoff()
 	CallStore.StartCall(leadId) -> Result   (yields)
-	CallStore.Answer(accept) / Say(text) / HangUp()
+	CallStore.Answer(accept) / Say(text, spoken?) / HangUp()
+	CallStore.AskIdeas() / UseIdea(id)         ready-made lines to say (the server answers with Ideas)
 	CallStore.RedeemGiftCard(code) -> Result   ChargeCard(number, exp, cvv, amount) -> Result   (yield)
 	CallStore.PayoutsOf(method) -> { Payout }
 	CallStore.IsConnected() -> boolean
@@ -38,6 +39,7 @@ local CallStore = {
 	YourLine = Signal.new(),
 	Payout = Signal.new(),
 	Notice = Signal.new(),
+	Ideas = Signal.new(),
 }
 
 local Call: any
@@ -81,9 +83,22 @@ function CallStore.Answer(accept: boolean)
 	Call.packets.Answer.send(accept)
 end
 
-function CallStore.Say(text: string)
+-- spoken: the line came from the microphone (speech-to-text), so the caller allows for misheard words.
+function CallStore.Say(text: string, spoken: boolean?)
 	if CallStore.IsConnected() and string.find(text, "%S") then
-		Call.packets.Say.send(string.sub(text, 1, CallConfig.MaxSayLength))
+		Call.packets.Say.send({ Text = string.sub(text, 1, CallConfig.MaxSayLength), Spoken = spoken == true })
+	end
+end
+
+function CallStore.AskIdeas()
+	if CallStore.IsConnected() then
+		Call.packets.AskIdeas.send(nil)
+	end
+end
+
+function CallStore.UseIdea(id: number)
+	if CallStore.IsConnected() then
+		Call.packets.UseIdea.send(id)
 	end
 end
 
@@ -147,6 +162,11 @@ function CallStore.Start()
 	end)
 	Call.packets.Notice.listen(function(text)
 		CallStore.Notice:Fire(text)
+	end)
+	Call.packets.Ideas.listen(function(ideas)
+		if current(ideas.CallId) then
+			CallStore.Ideas:Fire(ideas)
+		end
 	end)
 
 	-- Asking for leads also tells the server this client can receive call packets.
