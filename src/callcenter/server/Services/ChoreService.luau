@@ -20,6 +20,10 @@
 
 	ChoreService.Start()
 	ChoreService.CallModifiers(player) -> (startTrust, gainMultiplier)
+	ChoreService.Burst({ Trash = n, Desk = n, Fix = n }) -> number   sets off this many chores at once, past the
+	                                                                  usual limits (Office Chaos); returns how many
+	ChoreService.BoostRewards(multiplier, seconds)    chores pay more for a while
+	ChoreService.ComputerOf(seat) -> BasePart          the desk's computer (a part named like one, else the tallest)
 ]]
 
 local CollectionService = game:GetService("CollectionService")
@@ -55,6 +59,7 @@ local chores: { Chore } = {}
 local folder: Folder
 local nextId = 0
 local random = Random.new()
+local boostMultiplier, boostUntil = 1, 0 -- chores pay more for a while (Office Chaos)
 
 -- ---------------------------------------------------------------------------
 -- Helpers
@@ -203,8 +208,8 @@ local function complete(chore: Chore, player: Player)
 	end
 	chore.done = true
 	remove(chore)
-	local reward = Config.Reward[chore.kind] or 0
-	EconomyService.Award(player, reward)
+	local multiplier = if os.clock() < boostUntil then boostMultiplier else 1
+	local reward = EconomyService.Award(player, (Config.Reward[chore.kind] or 0) * multiplier)
 	CareerService.Count(player, "Chores")
 	CoachService.Note(player, "Chores")
 	CareerService.CompleteStep(player, "Chore")
@@ -590,6 +595,33 @@ function ChoreService.CallModifiers(player: Player): (number, number)
 		end
 	end
 	return start, gain
+end
+
+function ChoreService.Burst(counts: { [string]: number }): number
+	local spawners = { Trash = spawnTrash, Desk = spawnMessy, Fix = spawnBroken }
+	local made = 0
+	for kind, n in counts do
+		local spawner = spawners[kind]
+		for _ = 1, if spawner then n else 0 do
+			local ok, spawned = pcall(spawner)
+			if ok and spawned then
+				made += 1
+			elseif not ok then
+				warn(`[ChoreService] couldn't set up a chore: {spawned}`)
+			end
+		end
+	end
+	publish()
+	return made
+end
+
+function ChoreService.BoostRewards(multiplier: number, seconds: number)
+	boostMultiplier = multiplier
+	boostUntil = os.clock() + seconds
+end
+
+function ChoreService.ComputerOf(seat: Seat): BasePart
+	return computerOf(seat)
 end
 
 function ChoreService.Start()

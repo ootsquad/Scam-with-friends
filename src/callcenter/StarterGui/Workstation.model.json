@@ -8403,6 +8403,229 @@
 																"TextYAlignment": "Top",
 																"TextWrapped": true
 															}
+														},
+														{
+															"Name": "SaveCall",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			108
+																		],
+																		[
+																			0,
+																			352
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			400
+																		],
+																		[
+																			0,
+																			98
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	0.1569,
+																	0.1725,
+																	0.2078
+																],
+																"Visible": false
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0,
+																				12
+																			]
+																		}
+																	}
+																},
+																{
+																	"Name": "Stroke",
+																	"ClassName": "UIStroke",
+																	"Properties": {
+																		"Color": [
+																			0.2078,
+																			0.2275,
+																			0.2706
+																		],
+																		"Thickness": 1,
+																		"ApplyStrokeMode": "Border"
+																	}
+																},
+																{
+																	"Name": "Label",
+																	"ClassName": "TextLabel",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					16
+																				],
+																				[
+																					0,
+																					12
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					368
+																				],
+																				[
+																					0,
+																					20
+																				]
+																			]
+																		},
+																		"BackgroundTransparency": 1,
+																		"Text": "Linda Parker hung up on you.",
+																		"FontFace": {
+																			"family": "rbxasset://fonts/families/Roboto.json",
+																			"weight": "Bold",
+																			"style": "Normal"
+																		},
+																		"TextSize": 15,
+																		"TextColor3": [
+																			0.9294,
+																			0.9373,
+																			0.949
+																		],
+																		"TextXAlignment": "Left",
+																		"TextTruncate": "AtEnd"
+																	}
+																},
+																{
+																	"Name": "Sub",
+																	"ClassName": "TextLabel",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					16
+																				],
+																				[
+																					0,
+																					33
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					368
+																				],
+																				[
+																					0,
+																					18
+																				]
+																			]
+																		},
+																		"BackgroundTransparency": 1,
+																		"Text": "Save the call: they ring right back, where you left off.",
+																		"FontFace": {
+																			"family": "rbxasset://fonts/families/Roboto.json",
+																			"weight": "Regular",
+																			"style": "Normal"
+																		},
+																		"TextSize": 12,
+																		"TextColor3": [
+																			0.6039,
+																			0.6392,
+																			0.6784
+																		],
+																		"TextXAlignment": "Left",
+																		"TextTruncate": "AtEnd"
+																	}
+																},
+																{
+																	"Name": "SaveButton",
+																	"ClassName": "TextButton",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					200
+																				],
+																				[
+																					0,
+																					73
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					368
+																				],
+																				[
+																					0,
+																					30
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.1176,
+																			0.5569,
+																			0.2431
+																		],
+																		"AnchorPoint": [
+																			0.5,
+																			0.5
+																		],
+																		"AutoButtonColor": false,
+																		"Text": "SAVE CALL · R$ 39",
+																		"FontFace": {
+																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																			"weight": "Bold",
+																			"style": "Normal"
+																		},
+																		"TextSize": 14,
+																		"TextColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		]
+																	},
+																	"Children": [
+																		{
+																			"Name": "Corner",
+																			"ClassName": "UICorner",
+																			"Properties": {
+																				"CornerRadius": {
+																					"UDim": [
+																						0.5,
+																						0
+																					]
+																				}
+																			}
+																		}
+																	]
+																}
+															]
 														}
 													]
 												},
@@ -11158,6 +11381,68 @@
 																						"Thickness": 1,
 																						"ApplyStrokeMode": "Border"
 																					}
+																				},
+																				{
+																					"Name": "Count",
+																					"ClassName": "TextLabel",
+																					"Properties": {
+																						"BorderSizePixel": 0,
+																						"Position": {
+																							"UDim2": [
+																								[
+																									0,
+																									36
+																								],
+																								[
+																									0,
+																									-6
+																								]
+																							]
+																						},
+																						"Size": {
+																							"UDim2": [
+																								[
+																									0,
+																									22
+																								],
+																								[
+																									0,
+																									18
+																								]
+																							]
+																						},
+																						"BackgroundColor3": [
+																							1.0,
+																							0.8353,
+																							0.2902
+																						],
+																						"Text": "3",
+																						"FontFace": {
+																							"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																							"weight": "Bold",
+																							"style": "Normal"
+																						},
+																						"TextSize": 11,
+																						"TextColor3": [
+																							0.102,
+																							0.102,
+																							0.102
+																						]
+																					},
+																					"Children": [
+																						{
+																							"Name": "Corner",
+																							"ClassName": "UICorner",
+																							"Properties": {
+																								"CornerRadius": {
+																									"UDim": [
+																										0.5,
+																										0
+																									]
+																								}
+																							}
+																						}
+																					]
 																				}
 																			]
 																		},
@@ -39792,6 +40077,438 @@
 													]
 												}
 											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"Name": "VirusLayer",
+							"ClassName": "Frame",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											0
+										],
+										[
+											0,
+											0
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											1,
+											0
+										],
+										[
+											1,
+											-56
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"ZIndex": 6,
+								"Visible": false
+							},
+							"Children": [
+								{
+									"Name": "PopupTemplate",
+									"ClassName": "Frame",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													320
+												],
+												[
+													0,
+													164
+												]
+											]
+										},
+										"BackgroundColor3": [
+											1.0,
+											1.0,
+											1.0
+										],
+										"Visible": false,
+										"ClipsDescendants": true
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0,
+														10
+													]
+												}
+											}
+										},
+										{
+											"Name": "Stroke",
+											"ClassName": "UIStroke",
+											"Properties": {
+												"Color": [
+													0.8824,
+													0.1137,
+													0.2824
+												],
+												"Thickness": 2,
+												"ApplyStrokeMode": "Border"
+											}
+										},
+										{
+											"Name": "TitleBar",
+											"ClassName": "Frame",
+											"Properties": {
+												"BorderSizePixel": 0,
+												"Position": {
+													"UDim2": [
+														[
+															0,
+															0
+														],
+														[
+															0,
+															0
+														]
+													]
+												},
+												"Size": {
+													"UDim2": [
+														[
+															0,
+															320
+														],
+														[
+															0,
+															32
+														]
+													]
+												},
+												"BackgroundColor3": [
+													0.8824,
+													0.1137,
+													0.2824
+												]
+											},
+											"Children": [
+												{
+													"Name": "Title",
+													"ClassName": "TextLabel",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	12
+																],
+																[
+																	0,
+																	0
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	260
+																],
+																[
+																	0,
+																	32
+																]
+															]
+														},
+														"BackgroundTransparency": 1,
+														"Text": "SuperDeals.exe",
+														"FontFace": {
+															"family": "rbxasset://fonts/families/Roboto.json",
+															"weight": "Bold",
+															"style": "Normal"
+														},
+														"TextSize": 14,
+														"TextColor3": [
+															1.0,
+															1.0,
+															1.0
+														],
+														"TextXAlignment": "Left",
+														"TextTruncate": "AtEnd"
+													}
+												},
+												{
+													"Name": "CloseButton",
+													"ClassName": "TextButton",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	300
+																],
+																[
+																	0,
+																	16
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	28
+																],
+																[
+																	0,
+																	26
+																]
+															]
+														},
+														"BackgroundColor3": [
+															0.6235,
+															0.0706,
+															0.2235
+														],
+														"AnchorPoint": [
+															0.5,
+															0.5
+														],
+														"AutoButtonColor": false,
+														"Text": "X",
+														"FontFace": {
+															"family": "rbxasset://fonts/families/RobotoCondensed.json",
+															"weight": "Bold",
+															"style": "Normal"
+														},
+														"TextSize": 14,
+														"TextColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													},
+													"Children": [
+														{
+															"Name": "Corner",
+															"ClassName": "UICorner",
+															"Properties": {
+																"CornerRadius": {
+																	"UDim": [
+																		0,
+																		6
+																	]
+																}
+															}
+														}
+													]
+												}
+											]
+										},
+										{
+											"Name": "Message",
+											"ClassName": "TextLabel",
+											"Properties": {
+												"BorderSizePixel": 0,
+												"Position": {
+													"UDim2": [
+														[
+															0,
+															16
+														],
+														[
+															0,
+															42
+														]
+													]
+												},
+												"Size": {
+													"UDim2": [
+														[
+															0,
+															288
+														],
+														[
+															0,
+															54
+														]
+													]
+												},
+												"BackgroundTransparency": 1,
+												"Text": "",
+												"FontFace": {
+													"family": "rbxasset://fonts/families/Roboto.json",
+													"weight": "Bold",
+													"style": "Normal"
+												},
+												"TextSize": 15,
+												"TextColor3": [
+													0.102,
+													0.102,
+													0.102
+												],
+												"TextXAlignment": "Left",
+												"TextYAlignment": "Top",
+												"TextWrapped": true
+											}
+										},
+										{
+											"Name": "ClaimButton",
+											"ClassName": "TextButton",
+											"Properties": {
+												"BorderSizePixel": 0,
+												"Position": {
+													"UDim2": [
+														[
+															0,
+															160
+														],
+														[
+															0,
+															130
+														]
+													]
+												},
+												"Size": {
+													"UDim2": [
+														[
+															0,
+															288
+														],
+														[
+															0,
+															36
+														]
+													]
+												},
+												"BackgroundColor3": [
+													0.0863,
+													0.6392,
+													0.2902
+												],
+												"AnchorPoint": [
+													0.5,
+													0.5
+												],
+												"AutoButtonColor": false,
+												"Text": "CLAIM PRIZE",
+												"FontFace": {
+													"family": "rbxasset://fonts/families/RobotoCondensed.json",
+													"weight": "Bold",
+													"style": "Normal"
+												},
+												"TextSize": 15,
+												"TextColor3": [
+													1.0,
+													1.0,
+													1.0
+												]
+											},
+											"Children": [
+												{
+													"Name": "Corner",
+													"ClassName": "UICorner",
+													"Properties": {
+														"CornerRadius": {
+															"UDim": [
+																0.5,
+																0
+															]
+														}
+													}
+												}
+											]
+										}
+									]
+								},
+								{
+									"Name": "Banner",
+									"ClassName": "TextLabel",
+									"Properties": {
+										"BorderSizePixel": 0,
+										"Position": {
+											"UDim2": [
+												[
+													0.5,
+													0
+												],
+												[
+													0,
+													12
+												]
+											]
+										},
+										"Size": {
+											"UDim2": [
+												[
+													0,
+													520
+												],
+												[
+													0,
+													34
+												]
+											]
+										},
+										"BackgroundColor3": [
+											0.0863,
+											0.6392,
+											0.2902
+										],
+										"AnchorPoint": [
+											0.5,
+											0
+										],
+										"Text": "VIRUS! Close every pop-up (the X) to clean your computer.",
+										"FontFace": {
+											"family": "rbxasset://fonts/families/RobotoCondensed.json",
+											"weight": "Bold",
+											"style": "Normal"
+										},
+										"TextSize": 15,
+										"TextColor3": [
+											1.0,
+											1.0,
+											1.0
+										]
+									},
+									"Children": [
+										{
+											"Name": "Corner",
+											"ClassName": "UICorner",
+											"Properties": {
+												"CornerRadius": {
+													"UDim": [
+														0.5,
+														0
+													]
+												}
+											}
 										}
 									]
 								}

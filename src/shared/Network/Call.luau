@@ -9,7 +9,9 @@
 		Call.queries.StartCall.invoke(leadId)      -> Result
 		Call.packets.Answer.send(true/false)       -- pick up / decline an incoming call
 		Call.packets.Say.send({ Text = "text", Spoken = false })   -- typed, spoken (speech-to-text) or Roblox chat
-		Call.packets.AskIdeas.send()               -- three ready-made lines to say ("Ideas")
+		Call.packets.AskIdeas.send(followUp)       -- three ready-made lines to say ("Ideas"). followUp = true:
+		                                           -- fresh ones for the caller's new line while Ideas are open
+		                                           -- (free); false = you asked (uses an on-call tip)
 		Call.packets.UseIdea.send(id)              -- say one of them
 		Call.packets.HangUp.send()
 		Call.queries.RedeemGiftCard.invoke("K7Q2-9XMB-4RTA")              -> Result
@@ -216,7 +218,7 @@ return Namespace.define("Call", function()
 			Logoff = ByteNet.definePacket({ value = ByteNet.nothing }),
 			Answer = ByteNet.definePacket({ value = ByteNet.bool }),
 			Say = ByteNet.definePacket({ value = Say }),
-			AskIdeas = ByteNet.definePacket({ value = ByteNet.nothing }),
+			AskIdeas = ByteNet.definePacket({ value = ByteNet.bool }),
 			UseIdea = ByteNet.definePacket({ value = ByteNet.uint16 }),
 			HangUp = ByteNet.definePacket({ value = ByteNet.nothing }),
 

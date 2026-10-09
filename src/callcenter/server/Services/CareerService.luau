@@ -6,6 +6,8 @@
 	  stats         shifts, days passed, lifetime earnings, calls, callers who paid, chores
 	  equipment     the best headset / computer / router tier you own (you always use the best one)
 	  checklist     which first-shift steps you've done
+	  credits       Robux items bought and not used up yet: on-call tips, call saves, 2x cash time
+	  receipts      the last purchases granted, so a purchase is never granted twice (ShopService)
 
 	If DataStores aren't reachable (Studio without API access, a Studio test player), the career works for the
 	session and the client is told it won't be saved.
@@ -18,13 +20,19 @@
 	CareerService.CompleteStep(player, key)          OfficeConfig.Tutorial key
 	CareerService.Tier(player, kind) -> Tier          the equipment they use ("Headset" | "Computer" | "Router")
 	CareerService.IsReady(player) -> boolean          their client asked for the career (can receive packets)
+	CareerService.IsLoaded(player) -> boolean         their career has loaded
 	CareerService.SetShopCheck(check(player) -> boolean)   buying only works when this says yes (VendorService:
 	                                                  next to the store's vendor)
+	CareerService.Credit(player, name) -> number      "TipCredits" | "CallSaves" | "BoostSeconds"
+	CareerService.AddCredit(player, name, amount)      (negative to spend; never below 0)
+	CareerService.ApplyReceipt(player, purchaseId, grant() -> boolean) -> boolean   (yields)
+		Runs grant once per purchase id and saves right away. true = granted (now or before), false = try later.
 ]]
 
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local OfficeConfig = require(Shared.Config.OfficeConfig)
@@ -46,6 +54,10 @@ type Record = {
 	Computer: number,
 	Router: number,
 	Tutorial: number,
+	TipCredits: number,
+	CallSaves: number,
+	BoostSeconds: number,
+	Receipts: { string },
 }
 
 type Profile = {
@@ -53,10 +65,13 @@ type Profile = {
 	persistent: boolean, -- loaded from (and saved to) the DataStore
 	dirty: boolean,
 	loaded: boolean,
+	saving: boolean,
 	waiting: { thread },
 }
 
 local STATS = { "Cash", "BestFloor", "Shifts", "DaysPassed", "Earned", "Calls", "Scams", "Chores", "Tutorial" }
+local CREDITS = { "TipCredits", "CallSaves", "BoostSeconds" }
+local MAX_RECEIPTS = 60 -- purchase ids remembered (Roblox retries a purchase until it's granted)
 local LOAD_ATTEMPTS = 3
 local MAX_NUMBER = 2 ^ 31 -- keeps values inside the network's uint32 fields
 
@@ -104,6 +119,17 @@ local function sanitize(raw: any): Record
 	for _, kind in OfficeConfig.EquipmentOrder do
 		record[kind] = count(data[kind], 1, #OfficeConfig.Equipment[kind].Tiers, 1)
 	end
+	for _, credit in CREDITS do
+		record[credit] = count(data[credit], 0, MAX_NUMBER, 0)
+	end
+	record.Receipts = {}
+	if type(data.Receipts) == "table" then
+		for _, id in data.Receipts do
+			if type(id) == "string" and #id <= 64 and #record.Receipts < MAX_RECEIPTS then
+				table.insert(record.Receipts, id)
+			end
+		end
+	end
 	return record :: Record
 end
 
@@ -127,30 +153,39 @@ local function push(player: Player)
 	end
 end
 
-local function save(player: Player)
+-- Saves the career if it changed. true when it's safely stored (or there's nothing to store).
+local function save(player: Player): boolean
 	local profile = profiles[player]
+	-- One save at a time: a second one waits, so "saved" always means everything up to now is stored.
+	while profile and profile.saving do
+		task.wait(0.1)
+	end
 	if not profile or not profile.persistent or not profile.dirty then
-		return
+		return true
 	end
 	local dataStore = getStore()
 	if not dataStore then
-		return
+		return true
 	end
 	profile.dirty = false
+	profile.saving = true
 	local record = table.clone(profile.record)
+	record.Receipts = table.clone(profile.record.Receipts)
 	local ok, err = pcall(function()
 		dataStore:UpdateAsync(key(player), function()
 			return record
 		end, { player.UserId })
 	end)
+	profile.saving = false
 	if not ok then
 		profile.dirty = true -- try again at the next autosave
 		warn(`[CareerService] couldn't save {player.Name}'s career: {err}`)
 	end
+	return ok
 end
 
 local function load(player: Player)
-	local profile: Profile = { record = sanitize(nil), persistent = false, dirty = false, loaded = false, waiting = {} }
+	local profile: Profile = { record = sanitize(nil), persistent = false, dirty = false, loaded = false, saving = false, waiting = {} }
 	profiles[player] = profile
 
 	local dataStore = getStore()
@@ -281,6 +316,11 @@ function CareerService.Tier(player: Player, kind: string): OfficeConfig.Tier
 	return category.Tiers[math.clamp(owned or 1, 1, #category.Tiers)]
 end
 
+function CareerService.IsLoaded(player: Player): boolean
+	local profile = profiles[player]
+	return profile ~= nil and profile.loaded
+end
+
 function CareerService.IsReady(player: Player): boolean
 	return ready[player] == true
 end
@@ -298,7 +338,7 @@ local function onGet(_: nil, player: Player): CareerNet.CareerData
 	local profile = profileOf(player)
 	ready[player] = true
 	if not profile then
-		return snapshot({ record = sanitize(nil), persistent = false, dirty = false, loaded = true, waiting = {} })
+		return snapshot({ record = sanitize(nil), persistent = false, dirty = false, loaded = true, saving = false, waiting = {} })
 	end
 	return snapshot(profile)
 end
@@ -348,6 +388,50 @@ function CareerService.SetShopCheck(check: (Player) -> boolean)
 	shopCheck = check
 end
 
+-- ---------------------------------------------------------------------------
+-- Credits and purchases
+-- ---------------------------------------------------------------------------
+
+function CareerService.Credit(player: Player, name: string): number
+	local profile = profiles[player]
+	local value = profile and (profile.record :: any)[name]
+	return if type(value) == "number" then value else 0
+end
+
+-- Credits change quietly (the client reads them from PerkService's player attributes).
+function CareerService.AddCredit(player: Player, name: string, amount: number)
+	local profile = profiles[player]
+	if not profile or not profile.loaded or not table.find(CREDITS, name) then
+		return
+	end
+	local record = profile.record :: any
+	record[name] = math.clamp(math.floor(record[name] + amount), 0, MAX_NUMBER)
+	profile.dirty = true
+end
+
+function CareerService.ApplyReceipt(player: Player, purchaseId: string, grant: () -> boolean): boolean
+	local profile = profileOf(player)
+	if not profile or profiles[player] ~= profile then
+		return false -- left: Roblox tries again next time they play
+	end
+	if not profile.persistent and player.UserId > 0 and not RunService:IsStudio() then
+		return false -- the career didn't load from the DataStore, so the purchase couldn't be kept: try later
+	end
+	local receipts = profile.record.Receipts
+	if not table.find(receipts, purchaseId) then
+		if not grant() then
+			return false
+		end
+		table.insert(receipts, purchaseId)
+		while #receipts > MAX_RECEIPTS do
+			table.remove(receipts, 1)
+		end
+		profile.dirty = true
+	end
+	-- Remembered in memory either way, so a retry after a failed save doesn't grant it twice.
+	return save(player)
+end
+
 local function onHideTutorial(hidden: boolean, player: Player)
 	change(player, function(record)
 		local bit = bit32.lshift(1, OfficeConfig.TutorialHiddenBit)
@@ -366,7 +450,7 @@ end
 
 function CareerService.Start()
 	Namespace.listen(Career.queries.Get, onGet, function()
-		return snapshot({ record = sanitize(nil), persistent = false, dirty = false, loaded = true, waiting = {} })
+		return snapshot({ record = sanitize(nil), persistent = false, dirty = false, loaded = true, saving = false, waiting = {} })
 	end)
 	Namespace.listen(Career.queries.Buy, onBuy, Namespace.busy)
 	Career.packets.HideTutorial.listen(onHideTutorial)

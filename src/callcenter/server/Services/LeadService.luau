@@ -11,6 +11,8 @@
 	LeadService.SetStatus(player, lead, status)
 	LeadService.MarkScammed(player, lead) / Block(player, lead)
 	LeadService.Public(lead) -> Network.Call Lead
+	LeadService.Temporary(displayName, tag) -> LeadRecord   a one-off caller who isn't in anyone's list (Prank Call)
+	LeadService.Release(lead)                  removes a temporary caller's avatar
 	LeadService.IsReady(player) -> boolean     the client has loaded the Phone app and can receive call packets
 	LeadService.ReadyPlayers() -> { Player }
 ]]
@@ -64,6 +66,21 @@ local function newLead(slot: number): LeadRecord
 		Slot = slot,
 		Memory = {},
 	}
+end
+
+function LeadService.Temporary(displayName: string, tag: string): LeadRecord
+	local lead = newLead(0)
+	lead.DisplayName = displayName
+	lead.Username = string.lower((string.gsub(displayName, "[^%a]", ""))) .. tostring(random:NextInteger(10, 99))
+	lead.Tag = tag
+	lead.Persona.Name = displayName
+	lead.Persona.Methods = {}
+	lead.Persona.Budget = 0
+	return lead
+end
+
+function LeadService.Release(lead: LeadRecord)
+	AvatarService.Remove(lead.Id)
 end
 
 function LeadService.Public(lead: LeadRecord)

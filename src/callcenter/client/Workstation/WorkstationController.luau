@@ -52,7 +52,9 @@ local Ledger = require(script.Parent.Ledger)
 local PhoneApp = require(script.Parent.PhoneApp)
 local SettingsApp = require(script.Parent.SettingsApp)
 local Sfx = require(script.Parent.Sfx)
+local ShopStore = require(script.Parent.ShopStore)
 local TrainingApp = require(script.Parent.TrainingApp)
+local VirusApp = require(script.Parent.VirusApp)
 local WalletApp = require(script.Parent.WalletApp)
 
 local Phase = CallConfig.Phase
@@ -448,7 +450,7 @@ local function updateTray()
 	local day = ReplicatedStorage:GetAttribute("ShiftDay") or 1
 	local floor = ReplicatedStorage:GetAttribute("OfficeFloor") or 1
 	local data = CareerStore.Data
-	stats.Personal.Text = `PERSONAL {Format.money(personal)}`
+	stats.Personal.Text = `PERSONAL {Format.money(personal)}{if ShopStore.Boosted() then " · 2x" else ""}`
 	stats.Team.Text = `TEAM {Format.money(team)} / {Format.money(quota)}`
 	stats.Team.TextColor3 = if quota > 0 and team >= quota then Theme.GreenText else Theme.White
 	stats.Floor.Text = `FLOOR {floor}`
@@ -536,6 +538,7 @@ function WorkstationController.Start()
 	CareerApp.Start(windows.CareerWindow)
 	SettingsApp.Start(windows.SettingsWindow)
 	CallerFileApp.Start(windows.CallerFileWindow)
+	VirusApp.Start(desktop)
 	local fileButton = windows.PhoneWindow.Body.CallView.CallerCard.FileButton
 	ButtonFx.attach(fileButton, 1.05, 0.95)
 	fileButton.MouseButton1Click:Connect(CallerFileApp.Show)
@@ -558,6 +561,27 @@ function WorkstationController.Start()
 	wireIncoming()
 	forwardChat()
 	Checklist.bind(desktop.Checklist)
+
+	-- Robux items: notes for you and office events, as toasts while you're at the desk.
+	ShopStore.Message:Connect(function(message)
+		if desktop.Visible and gui.Enabled then
+			Notify.show("Store", message.Text,
+				if message.Kind == 3 then Theme.Red elseif message.Kind == 2 then Theme.Green else nil)
+			Sfx.Play(if message.Kind == 3 then "Error" else "Notify")
+		end
+	end)
+	ShopStore.Event:Connect(function(event)
+		if not (desktop.Visible and gui.Enabled) then
+			return
+		end
+		if event.Kind == "Virus" then
+			Notify.show("Virus attack!", `{event.By} infected every computer. Close the pop-ups for a bonus.`, Theme.Red)
+		elseif event.Kind == "Chaos" then
+			Notify.show("Office chaos!", `{event.By} wrecked the office. Chores pay double for a while!`, Theme.Red)
+		elseif event.Kind == "Prank" and event.Target ~= player.DisplayName then
+			Notify.show("Prank call", `{event.By} sent {event.Target} a prank call.`, Theme.Yellow)
+		end
+	end)
 
 	CallStore.Notice:Connect(function(message: string)
 		Notify.show("Phone", message, Theme.Yellow)

@@ -13,4 +13,5 @@ return {
 	Shift = require(script.Shift),
 	Call = require(script.Call),
 	Career = require(script.Career),
+	Shop = require(script.Shop),
 }

@@ -8,6 +8,8 @@
 	  checklist   the first-shift checklist (Checklist)
 	  flash       "+$10 · Trash taken out" after a chore
 	  review      the performance review with your tips, if it comes while you're away from a desk
+	  boosts      2x cash (time left) and a Team Leader's bonus
+	  banner      office events: a virus attack, office chaos (with flashing alarms), prank calls
 	  store       the equipment store, opened by the vendor's Shop prompt (StoreApp)
 	  elevator    full-screen card when the crew moves floors (shown over everything, desk or not)
 
@@ -33,6 +35,7 @@ local CallStore = require(script.Parent.CallStore)
 local CareerStore = require(script.Parent.CareerStore)
 local Checklist = require(script.Parent.Checklist)
 local Sfx = require(script.Parent.Sfx)
+local ShopStore = require(script.Parent.ShopStore)
 local StoreApp = require(script.Parent.StoreApp)
 
 local CHORE_TEXT = {
@@ -51,6 +54,8 @@ local root: Frame
 local flashToken = 0
 local elevatorToken = 0
 local reviewToken = 0
+local bannerToken = 0
+local ALARM_PULSE = 0.6 -- seconds per flash
 
 local function openLeads(): number
 	local count = 0
@@ -91,8 +96,14 @@ local function update()
 	root.Side.Visible = not hidden
 	root.Hint.Visible = not hidden
 	root.Checklist:SetAttribute("Allowed", not hidden)
+	local permanent = player:GetAttribute("BoostPermanent") == true
+	local boostLeft = ShopStore.BoostSeconds()
+	root.Boost.Visible = not hidden and (permanent or boostLeft > 0)
+	root.Boost.Text = if permanent then "2x CASH · ALWAYS" else `2x CASH · {Format.duration(boostLeft)}`
+	root.TeamBonus.Visible = not hidden and player:GetAttribute("TeamBonus") == true
 	if hidden then
 		root.Review.Visible = false -- the computer shows the review
+		root.Banner.Visible = false
 		return
 	end
 
@@ -132,11 +143,12 @@ local function update()
 	root.Hint.Text = hintText()
 end
 
-local function flash(text: string)
+local function flash(text: string, color: Color3?)
 	flashToken += 1
 	local token = flashToken
 	local label = root.Flash
 	label.Text = text
+	label.BackgroundColor3 = color or Theme.Green
 	label.Visible = true
 	task.delay(FLASH_TIME, function()
 		if flashToken == token then
@@ -211,6 +223,58 @@ local function showReview(review: any)
 	end)
 end
 
+-- What an office event says on the HUD banner (nil = no banner).
+local function bannerText(event: any): (string?, string?)
+	if event.Kind == "Virus" then
+		return "VIRUS ATTACK!", `Set off by {event.By}. Close the pop-ups at a desk for a cleanup bonus.`
+	elseif event.Kind == "Chaos" then
+		return "OFFICE CHAOS!", `Set off by {event.By}. Clean up the mess: chores pay double for a while!`
+	elseif event.Kind == "Prank" then
+		if event.Target == player.DisplayName then
+			return nil -- don't spoil it
+		end
+		return "PRANK CALL!", `{event.By} sent {event.Target} a prank call.`
+	end
+	return nil
+end
+
+local function showBanner(event: any)
+	local title, sub = bannerText(event)
+	if not title or atDesk() then
+		return
+	end
+	bannerToken += 1
+	local token = bannerToken
+	local banner = root.Banner
+	banner.Title.Text = title
+	banner.Sub.Text = sub or ""
+	banner.Visible = true
+	Sfx.Play("Ding")
+	task.delay(6, function()
+		if bannerToken == token then
+			banner.Visible = false
+		end
+	end)
+end
+
+-- Flashing red alarms while office chaos is on (ReplicatedStorage OfficeAlarmUntil).
+local function runAlarm()
+	local alarm = root.Alarm
+	while gui.Parent do
+		local untilTime = ReplicatedStorage:GetAttribute("OfficeAlarmUntil") or 0
+		local on = workspace:GetServerTimeNow() < untilTime
+		if on then
+			alarm.Visible = true
+			alarm.BackgroundTransparency = 0.78
+			TweenService:Create(alarm, TweenInfo.new(ALARM_PULSE / 2), { BackgroundTransparency = 0.94 }):Play()
+			task.wait(ALARM_PULSE)
+		else
+			alarm.Visible = false
+			task.wait(0.5)
+		end
+	end
+end
+
 function HudController.Start()
 	gui = player:WaitForChild("PlayerGui"):WaitForChild("ShiftHud") :: ScreenGui
 	root = gui:WaitForChild("Root") :: Frame
@@ -218,8 +282,20 @@ function HudController.Start()
 	root.Elevator.Visible = false
 	root.Flash.Visible = false
 	root.Review.Visible = false
+	root.Banner.Visible = false
+	root.Alarm.Visible = false
+	root.Boost.Visible = false
+	root.TeamBonus.Visible = false
 	gui.Enabled = true
 	StoreApp.Start(root.Store)
+	ShopStore.Event:Connect(showBanner)
+	ShopStore.Message:Connect(function(message)
+		if not atDesk() then
+			flash(message.Text, if message.Kind == 3 then Theme.Red elseif message.Kind == 2 then Theme.Green else Theme.Accent)
+		end
+	end)
+	ShopStore.Changed:Connect(update)
+	task.spawn(runAlarm)
 	root.Review.CloseButton.MouseButton1Click:Connect(function()
 		reviewToken += 1
 		root.Review.Visible = false

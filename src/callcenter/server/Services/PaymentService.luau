@@ -107,11 +107,12 @@ local function throttled(player: Player, app: string): boolean
 	return false
 end
 
--- Pays out what a caller handed over, plus the floor's and the player's router bonus. Returns the bonus.
+-- Pays out what a caller handed over, plus the floor's and the player's router bonus (and 2x cash or a Team
+-- Leader's bonus, through EconomyService). Returns the bonus.
 local function pay(player: Player, method: string, detail: string, amount: number, leadName: string): number
 	local share = OfficeService.Perks().PayoutBonus + CareerService.Tier(player, "Router").Value
-	local bonus = math.max(0, math.round(amount * share))
-	EconomyService.Award(player, amount + bonus)
+	local total = EconomyService.Award(player, amount + math.max(0, math.round(amount * share)))
+	local bonus = math.max(0, total - amount)
 	if method ~= "donation" then
 		CoachService.Note(player, "Cashed")
 	end
@@ -120,7 +121,7 @@ local function pay(player: Player, method: string, detail: string, amount: numbe
 		Method = method,
 		Label = CallConfig.PaymentMethods[method].Label,
 		Detail = detail,
-		Amount = amount + bonus,
+		Amount = total,
 		Bonus = bonus,
 		LeadName = leadName,
 	}, player)

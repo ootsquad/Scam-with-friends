@@ -145,6 +145,33 @@ Roblox hides anything that looks like personal info: numbers, phone numbers, add
   game tells you when that's the case; Ideas still work.
 - If the caller's line gets hidden, they say a short stand-in line instead.
 
+## 13. Robux items
+
+The equipment store also sells Robux items. Find them on the **ROBUX ITEMS** and **GAME PASSES** tabs.
+
+**Developer products** can be bought again and again:
+
+| Item | What it does |
+| --- | --- |
+| Prank Call | A silly prank caller rings the crewmate you pick. At the end, the caller reveals who sent it. |
+| Virus Attack | Every computer on the floor fills with fake pop-ups. Closing them all pays a small cleanup bonus. |
+| Office Chaos | Alarms flash, trash and messy desks pile up, broken equipment, and every computer gets the virus. Chores pay double for 2 minutes. |
+| 2x Cash | Double earnings for 15 minutes of work-day time. Extra time is saved for later shifts. |
+| Save My Call | After a caller hangs up on you (or the line drops), they call straight back where you left off, with their trust from before it went wrong. |
+| Extra Tips | 5 more uses of the IDEAS button. Everyone gets 3 free per shift, and unused tips are saved. |
+| Boss Meltdown, Police Raid | Coming soon |
+
+**Game passes** are bought once and kept:
+
+| Pass | What it does |
+| --- | --- |
+| 2x Cash (15 min) / (1 hour) | 2x earnings for the first 15 minutes / hour of every shift |
+| Permanent 2x Cash | 2x earnings, always |
+| Team Leader | Teammates earn 10% more while playing with you |
+| VIP Employee | VIP nametag and chat tag, 5 free tips and 1 free call save every shift |
+
+2x cash sources don't stack with each other. The Team Leader bonus stacks with 2x.
+
 ## Apps
 
 | App | What it's for |

@@ -19,11 +19,21 @@
 	When a call starts, the caller's file (job, hobbies, pet, soft spot, red flag, how they pay, how sharp
 	they are) is sent to the player for the pop-up.
 
+	Robux extras (ShopService / PerkService):
+	  Prank Call     a silly prank caller rings a player (queued until they're at a desk with no call)
+	  Save My Call   a call that failed (they hung up, or the line dropped) can be brought back for a while:
+	                 the caller calls straight back with their trust from before it went wrong. Player
+	                 attribute SaveableCall = the caller's name while there's one to save.
+	  On-call tips   asking for Ideas uses a tip (PerkService); Ideas for a hidden line are always free.
+
 	Paying is handled by PaymentService: for gift cards and credit cards the game makes up the code or card
 	details and adds them to the caller's line, and you cash them in with the Gift Cards / Card Terminal
 	apps. Donations only go through if you told the caller your fundraiser ID during the call.
 
 	CallService.Start()
+	CallService.QueuePrank(target, fromName)
+	CallService.CanSave(player) -> boolean
+	CallService.SaveCall(player) -> (ok, message)       brings the last failed call back (the save is paid for)
 ]]
 
 local Players = game:GetService("Players")
@@ -32,6 +42,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
 local Call = require(Shared:WaitForChild("Network")).Call
+local Shop = require(Shared:WaitForChild("Network")).Shop
+local ShopConfig = require(Shared.Config.ShopConfig)
 local Namespace = require(Shared.Network.Namespace)
 
 local Data = script.Parent.Parent.Data
@@ -47,6 +59,7 @@ local EconomyService = require(script.Parent.EconomyService)
 local LeadService = require(script.Parent.LeadService)
 local OfficeService = require(script.Parent.OfficeService)
 local PaymentService = require(script.Parent.PaymentService)
+local PerkService = require(script.Parent.PerkService)
 local ShiftService = require(script.Parent.ShiftService)
 local TextFilter = require(script.Parent.TextFilter)
 
@@ -65,6 +78,20 @@ local PAY_WORDS = { "gift card", "card", "cards", "pay", "money", "donate", "don
 local LineStatus = CallConfig.LineStatus
 local IdeaReason = CallConfig.IdeaReason
 
+local PRANK_NAMES = {
+	"Justin Case", "Al Beback", "Paige Turner", "Anita Sandwich", "Chris P. Bacon", "Ella Vader", "Noah Fence",
+	"Olive Yew", "Rick O'Shea", "Barb Dwyer", "Teddy Bear", "Will Power", "Bill Board", "Sandy Beach",
+}
+-- The prank caller's "smarts": they never pay and trust never moves.
+local PRANKSTER: CallerPrompt.Smarts = {
+	Name = "Prank caller",
+	From = 0,
+	PayTrust = 101,
+	MaxGain = 0,
+	MaxLoss = 0,
+	Pushover = false,
+}
+
 type Session = {
 	id: number,
 	player: Player,
@@ -77,7 +104,10 @@ type Session = {
 	smarts: CallerPrompt.Smarts,
 	system: string,
 	messages: { ClaudeClient.Message },
-	turns: number, -- lines that counted (CallConfig.MaxTurns)
+	turns: number, -- lines that counted (maxTurns)
+	maxTurns: number, -- CallConfig.MaxTurns (ShopConfig.PrankLines for a prank call)
+	prank: string?, -- a prank call: who sent it
+	trustBefore: number, -- trust before the caller's last answer (what Save My Call goes back to)
 	freeTurns: number, -- lines that didn't (CallConfig.MaxFreeTurns)
 	lastFree: boolean, -- the line the caller is answering didn't count
 	spoken: boolean, -- the line the caller is answering came from the mic
@@ -85,6 +115,7 @@ type Session = {
 	pending: { { text: string, free: boolean, spoken: boolean } },
 	lastCaller: string, -- the caller's last line as the player saw it (for ideas)
 	ideas: { [number]: string }, -- ideas on screen, by id
+	ideasOpen: boolean, -- Ideas are on screen (asked for or popped up), so follow-ups for new caller lines are free
 	oldIdeas: { [number]: string }, -- the set before (a click can cross a refresh on the way)
 	offered: { [string]: boolean }, -- ideas offered this call (refresh offers different ones)
 	nextIdea: number,
@@ -102,6 +133,8 @@ local CallService = {}
 
 local sessions: { [Player]: Session } = {}
 local incomingToken: { [Player]: number } = {}
+local pranks: { [Player]: { { from: string, fromUserId: number } } } = {} -- prank calls waiting to ring
+local failed: { [Player]: { session: Session, at: number } } = {} -- the last call that failed (Save My Call)
 local lastSay: { [Player]: number } = {}
 local nextCallId = 0
 local random = Random.new()
@@ -131,7 +164,7 @@ local function stateOf(session: Session)
 		Thinking = session.thinking,
 		Paid = session.paid,
 		PayAt = session.smarts.PayTrust,
-		LinesLeft = math.max(0, CallConfig.MaxTurns - session.turns),
+		LinesLeft = math.max(0, session.maxTurns - session.turns),
 	}
 end
 
@@ -168,6 +201,7 @@ end
 
 local scheduleIncoming: (Player) -> ()
 local requestReply: (Session, string?) -> ()
+local requeuePranks: (Player, boolean?) -> ()
 
 -- The caller remembers how the call went, for the next time you talk (CallConfig.CallMemory calls).
 local function rememberCall(session: Session)
@@ -191,13 +225,34 @@ local function endCall(session: Session, outcome: number)
 	session.thinking = false
 	session.outcome = if session.paid then Outcome.Paid else outcome
 	pushState(session)
-	rememberCall(session)
-	if outcome == Outcome.TheyHungUp and not session.paid and session.turns < CallConfig.MaxTurns then
-		CoachService.Note(session.player, "HungUp") -- not when the call just ran out of lines
+	local player, lead = session.player, session.lead
+
+	if session.prank then
+		task.delay(ENDED_LINGER + 10, LeadService.Release, lead) -- the prankster's avatar, once the phone is done with it
+	else
+		rememberCall(session)
+		if outcome == Outcome.TheyHungUp and not session.paid and session.turns < session.maxTurns then
+			CoachService.Note(player, "HungUp") -- not when the call just ran out of lines
+		end
+		-- A call that went wrong (not one you ended) can be saved for a while.
+		if not session.paid and (outcome == Outcome.TheyHungUp or outcome == Outcome.LineDown) then
+			failed[player] = { session = session, at = os.clock() }
+			player:SetAttribute("SaveableCall", lead.DisplayName)
+			local entry = failed[player]
+			task.delay(ShopConfig.SaveWindow, function()
+				if failed[player] == entry then
+					failed[player] = nil
+					if player.Parent then
+						player:SetAttribute("SaveableCall", nil)
+					end
+				end
+			end)
+		end
 	end
 
-	local player, lead = session.player, session.lead
-	if session.paid then
+	if session.prank then
+		-- nothing to update in the player's leads
+	elseif session.paid then
 		LeadService.MarkScammed(player, lead)
 	elseif outcome == Outcome.TheyHungUp and session.trust < 50 then
 		LeadService.Block(player, lead)
@@ -214,6 +269,7 @@ local function endCall(session: Session, outcome: number)
 			Call.packets.State.sendTo(nil, player)
 			if DeskService.IsLoggedIn(player) then
 				scheduleIncoming(player)
+				task.defer(CallService.TryPrank, player)
 			end
 		end
 	end)
@@ -273,7 +329,7 @@ local function addTurn(session: Session, text: string, free: boolean, spoken: bo
 		else nil
 	table.insert(session.messages, {
 		role = "user",
-		content = CallerPrompt.turn(text, session.trust, CallConfig.MaxTurns - session.turns, note, spoken, nudge),
+		content = CallerPrompt.turn(text, session.trust, session.maxTurns - session.turns, note, spoken, nudge),
 	})
 	pushState(session)
 	requestReply(session)
@@ -307,7 +363,7 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 		reply.FreeTurn
 		and not session.lastFree
 		and session.turns > 0
-		and session.turns < CallConfig.MaxTurns -- the last line stays the last line
+		and session.turns < session.maxTurns -- the last line stays the last line
 		and session.freeTurns < CallConfig.MaxFreeTurns
 	then
 		session.turns -= 1
@@ -327,6 +383,7 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 		delta = math.max(1, math.round(delta * session.gainScale))
 	end
 	local before = session.trust
+	session.trustBefore = before
 	session.trust = math.clamp(session.trust + delta, 0, 100)
 
 	-- Payment details are made up by the game, so they're added after the filtered line.
@@ -360,7 +417,7 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 		Method = method,
 	}, player)
 
-	if reply.HangUp or session.trust <= CallConfig.HangUpTrust or session.turns >= CallConfig.MaxTurns then
+	if reply.HangUp or session.trust <= CallConfig.HangUpTrust or session.turns >= session.maxTurns then
 		endCall(session, Outcome.TheyHungUp)
 		return
 	end
@@ -409,8 +466,13 @@ end
 
 local function connect(session: Session)
 	session.phase = Phase.Connected
-	CareerService.Count(session.player, "Calls")
-	CoachService.Note(session.player, "Calls")
+	if not session.prank then
+		CareerService.Count(session.player, "Calls")
+		CoachService.Note(session.player, "Calls")
+		-- Talking to someone new: the last failed call can't be saved anymore.
+		failed[session.player] = nil
+		session.player:SetAttribute("SaveableCall", nil)
+	end
 	table.insert(session.messages, { role = "user", content = CallerPrompt.opening(session.context, session.trust) })
 	requestReply(session)
 end
@@ -434,6 +496,24 @@ local function sendFile(session: Session)
 	if not session.player.Parent then
 		return
 	end
+	if session.prank then
+		Call.packets.File.sendTo({
+			CallId = session.id,
+			About = "Unknown number",
+			Hobbies = "bad jokes, silly voices",
+			Pet = "a parrot that laughs at everything",
+			Family = "a long line of pranksters",
+			Lately = "calling people for a laugh",
+			Tech = "knows exactly one phone trick",
+			SoftSpot = "a good laugh",
+			RedFlag = "nothing, they're just having fun",
+			Methods = {},
+			Wallet = 0,
+			Smarts = session.smarts.Name,
+			PayAt = 0, -- won't pay
+		}, session.player)
+		return
+	end
 	Call.packets.File.sendTo({
 		CallId = session.id,
 		About = `{persona.Age} · {persona.Town}`,
@@ -451,9 +531,12 @@ local function sendFile(session: Session)
 	}, session.player)
 end
 
-local function startSession(player: Player, lead: LeadService.LeadRecord, incoming: boolean): Session
+local function startSession(player: Player, lead: LeadService.LeadRecord, incoming: boolean, prankFrom: string?): Session
 	nextCallId += 1
 	local smarts, level = smartsNow()
+	if prankFrom then
+		smarts, level = PRANKSTER, 1
+	end
 	local context: CallerPrompt.Context = {
 		incoming = incoming,
 		reason = if incoming then Personas.incomingReason(random) else nil,
@@ -480,9 +563,14 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		outcome = Outcome.None,
 		context = context,
 		smarts = smarts,
-		system = CallerPrompt.system(lead.Persona, context),
+		system = if prankFrom
+			then CallerPrompt.prank(lead.DisplayName, prankFrom, ShopConfig.PrankLines)
+			else CallerPrompt.system(lead.Persona, context),
 		messages = {},
 		turns = 0,
+		maxTurns = if prankFrom then ShopConfig.PrankLines else CallConfig.MaxTurns,
+		prank = prankFrom,
+		trustBefore = startTrust,
 		freeTurns = 0,
 		lastFree = false,
 		spoken = false,
@@ -490,6 +578,7 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		pending = {},
 		lastCaller = "",
 		ideas = {},
+		ideasOpen = false,
 		oldIdeas = {},
 		offered = {},
 		nextIdea = 0,
@@ -613,6 +702,7 @@ local function sendIdeas(session: Session, reason: number)
 	}, random, session.offered)
 	session.oldIdeas = session.ideas
 	session.ideas = {}
+	session.ideasOpen = true
 	local options = {}
 	for _, text in texts do
 		session.nextIdea = session.nextIdea % 60000 + 1
@@ -701,6 +791,7 @@ local function onSay(request: any, player: Player)
 	end
 
 	-- Partly hidden: the caller hears static in place of the hidden words, and it's free.
+	session.ideasOpen = false -- you said your own line, so the Ideas panel closed
 	local partly = share > 0
 	Call.packets.YourLine.sendTo({
 		CallId = session.id,
@@ -712,11 +803,25 @@ local function onSay(request: any, player: Player)
 	deliver(session, heard, partly, spoken)
 end
 
-local function onAskIdeas(_: nil, player: Player)
+-- Asking for Ideas uses an on-call tip (3 free per shift, then Extra Tips). While they're on screen, new ones
+-- for the caller's latest line are free.
+local function onAskIdeas(followUp: boolean, player: Player)
 	local session = sessions[player]
-	if session and not session.ended and session.phase == Phase.Connected then
-		sendIdeas(session, IdeaReason.Asked)
+	if not session or session.ended or session.phase ~= Phase.Connected then
+		return
 	end
+	if followUp == true then
+		if session.ideasOpen then
+			sendIdeas(session, IdeaReason.Asked)
+		end
+		return
+	end
+	if not PerkService.UseTip(player) then
+		notice(player, "You're out of tips for this shift. Get Extra Tips at the equipment store (or from the "
+			.. "IDEAS button).")
+		return
+	end
+	sendIdeas(session, IdeaReason.Asked)
 end
 
 local function onUseIdea(id: number, player: Player)
@@ -730,9 +835,145 @@ local function onUseIdea(id: number, player: Player)
 	end
 	session.ideas = {}
 	session.oldIdeas = {}
+	session.ideasOpen = false
 	Call.packets.YourLine.sendTo({ CallId = session.id, Text = text, Status = LineStatus.Idea }, player)
 	CoachService.Note(player, "Ideas")
 	deliver(session, text, false, false)
+end
+
+-- ---------------------------------------------------------------------------
+-- Prank calls
+-- ---------------------------------------------------------------------------
+
+-- Rings a waiting prank call if the player is at a desk with nothing else going on.
+function CallService.TryPrank(player: Player)
+	local queue = pranks[player]
+	if not queue or #queue == 0 or not player.Parent then
+		return
+	end
+	if sessions[player] or not DeskService.IsLoggedIn(player) then
+		return -- on a call (or one just ended)
+	end
+	if not LeadService.IsReady(player) or not ClaudeClient.HasKey() then
+		return
+	end
+	local prank = table.remove(queue, 1)
+	local name = PRANK_NAMES[random:NextInteger(1, #PRANK_NAMES)]
+	local lead = LeadService.Temporary(name, "Prank caller")
+	startSession(player, lead, true, prank.from)
+end
+
+-- Prank calls waiting for a player who left their desk (or the game) go to someone else at a desk. If nobody
+-- is, they keep waiting for this player (unless they left).
+function requeuePranks(player: Player, leaving: boolean?)
+	local waiting = pranks[player]
+	if not waiting or #waiting == 0 then
+		return
+	end
+	local others, fallback = {}, {}
+	for _, other in Players:GetPlayers() do
+		if other ~= player and DeskService.IsLoggedIn(other) then
+			table.insert(fallback, other)
+			if other.UserId ~= waiting[1].fromUserId then
+				table.insert(others, other)
+			end
+		end
+	end
+	if #others == 0 then
+		others = fallback
+	end
+	if #others == 0 and not leaving then
+		return
+	end
+	pranks[player] = nil
+	for _, prank in waiting do
+		local target = if #others > 0 then others[random:NextInteger(1, #others)] else nil
+		if target then
+			CallService.QueuePrank(target, prank.from, prank.fromUserId)
+		else
+			warn(`[CallService] a prank call from {prank.from} had nobody left to ring`)
+		end
+	end
+end
+
+function CallService.QueuePrank(target: Player, fromName: string, fromUserId: number?)
+	pranks[target] = pranks[target] or {}
+	table.insert(pranks[target], { from = fromName, fromUserId = fromUserId or 0 })
+	CallService.TryPrank(target)
+end
+
+-- ---------------------------------------------------------------------------
+-- Save My Call
+-- ---------------------------------------------------------------------------
+
+function CallService.CanSave(player: Player): boolean
+	local entry = failed[player]
+	if not entry then
+		return false
+	end
+	local lead = entry.session.lead
+	local current = sessions[player]
+	return LeadService.Find(player, lead.Id) == lead
+		and lead.Status ~= Status.Scammed
+		and lead.Status ~= Status.OnCall
+		and not (current and not current.ended)
+end
+
+-- The caller of the last failed call rings straight back: same conversation, trust from before it went
+-- wrong, and at least ShopConfig.SaveMinLines lines to go. Call only once the save is paid for.
+function CallService.SaveCall(player: Player): (boolean, string)
+	if not CallService.CanSave(player) then
+		return false, "There's no call to save right now."
+	end
+	if not DeskService.IsLoggedIn(player) then
+		return false, "Sit down and log in at a desk first."
+	end
+	local old = failed[player].session
+	failed[player] = nil
+	player:SetAttribute("SaveableCall", nil)
+	local trust = math.clamp(math.max(old.trustBefore, CallConfig.StartTrust), CallConfig.HangUpTrust + 10, 100)
+	local session: Session = table.clone(old)
+	session.phase = Phase.Connected
+	session.trust = trust
+	session.trustBefore = trust
+	session.outcome = Outcome.None
+	session.messages = table.clone(old.messages)
+	session.turns = math.min(old.turns, old.maxTurns - ShopConfig.SaveMinLines)
+	session.thinking = false
+	session.pending = {}
+	session.ideas = {}
+	session.oldIdeas = {}
+	session.note = nil
+	session.staticTurn = false
+	session.ended = false
+	sessions[player] = session
+	incomingToken[player] = (incomingToken[player] or 0) + 1
+	LeadService.SetStatus(player, session.lead, Status.OnCall)
+	table.insert(session.messages, { role = "user", content = CallerPrompt.resumed(trust) })
+	pushState(session)
+	sendFile(session)
+	requestReply(session)
+	return true, `{session.lead.DisplayName} is back on the line!`
+end
+
+local function onUseCallSave(_: nil, player: Player)
+	if not CallService.CanSave(player) then
+		notice(player, "There's no call to save right now.")
+		return
+	end
+	if not DeskService.IsLoggedIn(player) then
+		return
+	end
+	local used = PerkService.UseSave(player)
+	if not used then
+		notice(player, "You don't have any call saves. Get Save My Call at the store (or from the phone).")
+		return
+	end
+	local ok, message = CallService.SaveCall(player)
+	if not ok then
+		PerkService.ReturnSave(player, used) -- give it back
+	end
+	notice(player, message)
 end
 
 local function onHangUp(_: nil, player: Player)
@@ -750,13 +991,16 @@ function CallService.Start()
 	Call.packets.AskIdeas.listen(onAskIdeas)
 	Call.packets.UseIdea.listen(onUseIdea)
 	Call.packets.HangUp.listen(onHangUp)
+	Shop.packets.UseCallSave.listen(onUseCallSave)
 
 	DeskService.OnLogin(function(player)
 		EconomyService.StartClock()
 		scheduleIncoming(player)
+		task.delay(2, CallService.TryPrank, player)
 	end)
 	DeskService.OnLogout(function(player)
 		incomingToken[player] = (incomingToken[player] or 0) + 1
+		requeuePranks(player)
 		local session = sessions[player]
 		if session and not session.ended then
 			endCall(session, Outcome.YouHungUp)
@@ -767,10 +1011,15 @@ function CallService.Start()
 		local session = sessions[player]
 		if session then
 			session.ended = true
+			if session.prank then
+				LeadService.Release(session.lead)
+			end
 		end
 		sessions[player] = nil
 		incomingToken[player] = nil
 		lastSay[player] = nil
+		failed[player] = nil
+		requeuePranks(player, true)
 	end)
 end
 
