@@ -80,16 +80,12 @@ local function renderDesk(desk: number, state: any)
 	card.Stroke.Color = if isMe then Theme.Accent elseif hovering then Theme.HoverOutline else Theme.DarkLine
 	card.Stroke.Thickness = if isMe then 2 else 1
 
-	card.NameBar.DisplayName.Text = if seat then string.upper(seat.DisplayName) else "EMPTY DESK"
+	card.NameBar.DisplayName.Text = if seat then seat.DisplayName else "Empty desk"
 	card.NameBar.DisplayName.TextColor3 = if seat then Theme.DarkText else Theme.DarkFaint
 
-	-- Portrait: the player's avatar head on the phone-style grid
-	local portrait = card.Portrait
+	-- Portrait: the player's round avatar head (their initial until it loads, a + on an empty desk)
+	local portrait = card.Portrait.Ring
 	portrait.BackgroundColor3 = if seat then Theme.Portrait else Theme.PortraitEmpty
-	local lineColor = if seat then Theme.PortraitLine else Theme.PortraitEmptyLine
-	for _, line in portrait.Grid:GetChildren() do
-		line.BackgroundColor3 = lineColor
-	end
 	portrait.Initial.Text = if seat then string.upper(string.sub(seat.DisplayName, 1, 1)) else "+"
 	portrait.Initial.TextColor3 = if seat then Theme.PortraitInitial elseif hovering then Theme.Accent else Theme.DarkFaint
 	Avatar.apply(portrait.Headshot, if seat then seat.UserId else nil, 420, portrait.Initial)

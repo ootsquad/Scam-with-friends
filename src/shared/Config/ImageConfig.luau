@@ -17,7 +17,7 @@
 local ImageConfig = {
 	Icons = {
 		-- Phone
-		Answer = 123777038688551, -- also the Phone app's icon
+		Answer = 123777038688551,
 		Hangup = 100783332728972,
 		Send = 101886206945643,
 		Ideas = 74145142478738,
@@ -25,6 +25,11 @@ local ImageConfig = {
 		Voice = 131454196717418, -- callers' voices (TTS) on or off
 
 		-- Apps and the Start menu
+		Phone = 89217900346844,
+		GiftCards = 115676775663656,
+		GiveHope = 127034370913734,
+		Play = 75145854242406, -- lobby
+		JoinCode = 76102406479009, -- lobby
 		Start = 118681225072089,
 		Settings = 129568295036420,
 		Career = 135685818958126,
