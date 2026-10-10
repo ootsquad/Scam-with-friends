@@ -63,10 +63,10 @@ local function render(settings: any)
 	end
 	for index, name in SettingsConfig.Wallpapers do
 		local swatch = body.Wallpapers:FindFirstChild(name)
-		if swatch then
-			local selected = index == settings.Wallpaper
-			swatch.BackgroundColor3 = if selected then Theme.Accent else Theme.White
-			swatch.TextColor3 = if selected then Theme.White else Theme.NativeText
+		local ring = swatch and swatch:FindFirstChild("Ring")
+		local stroke = ring and ring:FindFirstChildOfClass("UIStroke")
+		if stroke then
+			stroke.Transparency = if index == settings.Wallpaper then 0 else 1
 		end
 	end
 	for index, size in SettingsConfig.UiSizes do

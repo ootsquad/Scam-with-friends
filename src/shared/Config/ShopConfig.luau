@@ -51,7 +51,7 @@ local ShopConfig = {
 			Price = 59,
 			Symbol = "X_X",
 			Color = "#65A30D",
-			Blurb = "Every computer in the office catches a (fake) virus. Close the pop-ups for cash.",
+			Blurb = "Every computer catches a (fake) virus. Close the pop-ups for cash.",
 		},
 		{
 			Key = "PoliceRaid",
@@ -97,7 +97,7 @@ local ShopConfig = {
 			Price = 50,
 			Symbol = "+5",
 			Color = "#EAB308",
-			Blurb = "5 more on-call tips (the IDEAS button). Unused tips are saved.",
+			Blurb = "5 more on-call tips (the lightbulb button). Unused tips are saved.",
 		},
 	} :: { Item },
 
@@ -153,7 +153,7 @@ local ShopConfig = {
 	DoubleCashSeconds = 15 * 60, -- per 2x Cash product
 	TeamLeaderBonus = 0.1, -- teammates of a Team Leader earn this much more (one bonus, however many leaders)
 
-	-- On-call tips (the IDEAS button). Ideas that pop up when Roblox hides your line are always free.
+	-- On-call tips (the Ideas button, a lightbulb on the phone). Ideas that pop up when Roblox hides your line are always free.
 	FreeTipsPerShift = 3,
 	VipFreeTips = 5, -- instead of FreeTipsPerShift
 	TipsPerPurchase = 5,

@@ -4,7 +4,8 @@
 	  career cash   everything you earn on shifts is added to it; spend it in the equipment store
 	  best floor    the highest office floor you've reached; unlocks better equipment
 	  stats         shifts, days passed, lifetime earnings, calls, callers who paid, chores
-	  equipment     the best headset / computer / router tier you own (you always use the best one)
+	  equipment     the best headset / computer / router tier you've bought this shift (you always use the best
+	                one). Gear lasts one shift: it isn't saved, so every shift starts with the starter gear.
 	  checklist     which first-shift steps you've done
 	  credits       Robux items bought and not used up yet: on-call tips, call saves, 2x cash time
 	  receipts      the last purchases granted, so a purchase is never granted twice (ShopService)
@@ -117,7 +118,7 @@ local function sanitize(raw: any): Record
 	record.BestFloor = math.clamp(record.BestFloor, 1, #OfficeConfig.Floors)
 	record.Tutorial = math.clamp(record.Tutorial, 0, 0xFFFF)
 	for _, kind in OfficeConfig.EquipmentOrder do
-		record[kind] = count(data[kind], 1, #OfficeConfig.Equipment[kind].Tiers, 1)
+		record[kind] = 1 -- gear lasts one shift; whatever was stored doesn't count
 	end
 	for _, credit in CREDITS do
 		record[credit] = count(data[credit], 0, MAX_NUMBER, 0)
@@ -169,8 +170,11 @@ local function save(player: Player): boolean
 	end
 	profile.dirty = false
 	profile.saving = true
-	local record = table.clone(profile.record)
+	local record = table.clone(profile.record) :: any
 	record.Receipts = table.clone(profile.record.Receipts)
+	for _, kind in OfficeConfig.EquipmentOrder do
+		record[kind] = nil -- not saved: gear lasts one shift
+	end
 	local ok, err = pcall(function()
 		dataStore:UpdateAsync(key(player), function()
 			return record
@@ -380,8 +384,8 @@ local function onBuy(request: any, player: Player): CareerNet.Result
 	record[kind] = request.Tier
 	profile.dirty = true
 	push(player)
-	task.spawn(save, player) -- purchases are saved straight away
-	return result(true, `Bought the {tier.Name}! {tier.Blurb}.`)
+	task.spawn(save, player) -- the cash spent is saved straight away (the gear itself isn't: one shift)
+	return result(true, `Bought the {tier.Name}! {tier.Blurb}. Yours for this shift.`)
 end
 
 function CareerService.SetShopCheck(check: (Player) -> boolean)

@@ -5,7 +5,7 @@
 
 	What the mic hears goes in the text box first (Settings: "Check mic lines"), so you can fix it before the
 	caller hears it; press Send or Enter. Lines Roblox hides aren't sent and don't use a line, and three
-	ready-made lines (Ideas) pop up so the call can go on. Ideas also work any time from the IDEAS button, and
+	ready-made lines (Ideas) pop up so the call can go on. Ideas also work any time from the lightbulb (Ideas) button, and
 	change with what the caller just said. Asking uses an on-call tip (the number on the button): 3 free per
 	shift, then Extra Tips (Robux). Out of tips, the button offers Extra Tips.
 
@@ -324,7 +324,10 @@ local function updateTalkBar(state: any)
 	talk.InputBox.TextEditable = connected
 	talk.InputBox.PlaceholderText = if connected then "Say something..." else "Waiting for the call..."
 	talk.SendButton.BackgroundColor3 = if connected then Theme.Accent else Theme.PhoneHead
-	talk.SendButton.TextColor3 = if connected then Theme.White else Theme.DarkFaint
+	local sendIcon = talk.SendButton:FindFirstChild("Icon")
+	if sendIcon then
+		sendIcon.ImageTransparency = if connected then 0 else 0.6
+	end
 
 	local thinking = ui.thinking
 	local drafting = connected and micDraft ~= nil and talk.InputBox.Text ~= ""
@@ -344,22 +347,19 @@ local function updateTalkBar(state: any)
 	end
 end
 
+-- The mic and caller-voice buttons are grey circles with white icons (ImageConfig): the mic turns blue when
+-- it's on (green while it hears you); the caller-voice button goes dark with a faded icon when voices are off.
+local ICON_BUTTON = Color3.fromHex("#3A404C")
+
 local function paintVoiceButtons()
 	local talk = ui.talk
 	local micOn = CallVoice.MicOn
-	talk.MicButton.BackgroundColor3 = if micOn then (if CallVoice.Hearing then Theme.TrustHigh else Theme.Accent) else Theme.PhoneHead
-	for _, piece in talk.VoiceButton:GetChildren() do
-		if piece:IsA("Frame") then
-			local stroke = piece:FindFirstChildOfClass("UIStroke")
-			local color = if CallVoice.VoiceEnabled then Theme.DarkText else Theme.DarkFaint
-			if stroke then
-				stroke.Color = color
-			else
-				piece.BackgroundColor3 = color
-			end
-		end
+	talk.MicButton.BackgroundColor3 = if micOn then (if CallVoice.Hearing then Theme.TrustHigh else Theme.Accent) else ICON_BUTTON
+	talk.VoiceButton.BackgroundColor3 = if CallVoice.VoiceEnabled then ICON_BUTTON else Theme.PhoneHead
+	local voiceIcon = talk.VoiceButton:FindFirstChild("Icon")
+	if voiceIcon then
+		voiceIcon.ImageTransparency = if CallVoice.VoiceEnabled then 0 else 0.6
 	end
-	talk.VoiceButton.BackgroundColor3 = if CallVoice.VoiceEnabled then Theme.PhoneHead else Theme.LeadBlockedBg
 	updateTalkBar(CallStore.State)
 end
 
@@ -384,7 +384,7 @@ local function askIdeas()
 	CallStore.AskIdeas()
 end
 
--- The number of tips left, on the IDEAS button.
+-- The number of tips left, on the lightbulb (Ideas) button.
 local function renderTips()
 	local count = ui.talk.IdeasButton:FindFirstChild("Count")
 	if not count then

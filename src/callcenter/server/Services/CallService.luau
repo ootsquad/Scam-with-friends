@@ -818,7 +818,7 @@ local function onAskIdeas(followUp: boolean, player: Player)
 	end
 	if not PerkService.UseTip(player) then
 		notice(player, "You're out of tips for this shift. Get Extra Tips at the equipment store (or from the "
-			.. "IDEAS button).")
+			.. "lightbulb button).")
 		return
 	end
 	sendIdeas(session, IdeaReason.Asked)

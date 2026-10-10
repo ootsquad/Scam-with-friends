@@ -24,6 +24,7 @@ local SettingsStore = require(Client.Stores.SettingsStore)
 local Ui = Client.Ui
 local Avatar = require(Ui.Avatar)
 local ButtonFx = require(Ui.ButtonFx)
+local Images = require(Ui.Images)
 local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
 local Theme = require(Ui.Theme)
@@ -243,6 +244,7 @@ function DesktopController.Start()
 	gui = playerGui:WaitForChild("Desktop") :: ScreenGui
 	root = gui:WaitForChild("Root") :: Frame
 	UiScale.virtual(gui, root)
+	Images.bind(root)
 
 	local windows = root.Windows
 	local apps = root.Taskbar.Apps

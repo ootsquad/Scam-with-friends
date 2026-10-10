@@ -31,6 +31,7 @@ local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
 local Avatar = require(Ui.Avatar)
 local ButtonFx = require(Ui.ButtonFx)
+local Images = require(Ui.Images)
 local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
 local Theme = require(Ui.Theme)
@@ -353,14 +354,14 @@ local function wireReview()
 		local mine = token
 		local banner = body.Banner
 		banner.BackgroundColor3 = if review.Passed then Theme.Green else Theme.Red
-		banner.Day.Text = `PERFORMANCE REVIEW · DAY {review.Day}`
-		banner.Result.Text = if review.Passed then "QUOTA MET" else "YOU'RE FIRED"
+		banner.Check.Visible = review.Passed
+		banner.Cross.Visible = not review.Passed
 		local nextFloor = math.min(review.Day + 1, #OfficeConfig.Floors)
-		banner.Comment.Text = if review.Passed
-			then (if nextFloor > review.Day
-				then `Promoted! The crew moves up to floor {nextFloor}, {OfficeConfig.FloorInfo(nextFloor).Name}.`
-				else "The penthouse suits you. Don't get comfortable.")
-			else "The boss has seen enough. Clear your desks."
+		body.Result.Text = if review.Passed then "Review passed!" else "You're fired."
+		body.Comment.Text = `Day {review.Day} · the crew made {Format.money(review.Team)} of {Format.money(review.Quota)}`
+			.. (if review.Passed and nextFloor > review.Day
+				then ` · up to floor {nextFloor}, {OfficeConfig.FloorInfo(nextFloor).Name}`
+				else "")
 		body.Row1.Value.Text = Format.money(review.Team)
 		body.Row2.Value.Text = Format.money(review.Quota)
 		body.Row3.Value.Text = if review.TopName ~= "" then `{review.TopName} · {Format.money(review.TopAmount)}` else "Nobody"
@@ -377,7 +378,8 @@ local function wireReview()
 				end
 			end
 		end
-		body.OkButton.Text = if review.Passed then "Back to work" else "Okay"
+		body.OkButton.Text = if review.Passed then (if nextFloor > review.Day then "NEXT FLOOR" else "BACK TO WORK") else "LEAVE SHIFT"
+		body.OkButton.BackgroundColor3 = if review.Passed then Theme.Accent else Theme.Red
 		showDialog(window)
 		Sfx.Play(if review.Passed then "Payout" else "Error")
 
@@ -450,7 +452,7 @@ local function updateTray()
 	local day = ReplicatedStorage:GetAttribute("ShiftDay") or 1
 	local floor = ReplicatedStorage:GetAttribute("OfficeFloor") or 1
 	local data = CareerStore.Data
-	stats.Personal.Text = `PERSONAL {Format.money(personal)}{if ShopStore.Boosted() then " · 2x" else ""}`
+	stats.Personal.Text = `PERSONAL {Format.money(personal)}`
 	stats.Team.Text = `TEAM {Format.money(team)} / {Format.money(quota)}`
 	stats.Team.TextColor3 = if quota > 0 and team >= quota then Theme.GreenText else Theme.White
 	stats.Floor.Text = `FLOOR {floor}`
@@ -513,6 +515,7 @@ function WorkstationController.Start()
 	desktop = root:WaitForChild("Desktop") :: Frame
 	login = root:WaitForChild("LoginScreen") :: Frame
 	UiScale.virtual(gui, root)
+	Images.bind(root)
 	root.Active = true -- clicks on the desktop never fall through to the 3D world behind it
 
 	local windows = desktop.Windows

@@ -4,11 +4,10 @@
 	sit at a desk):
 	  top bar     day, time until the review, the crew's floor, and the team against today's quota
 	  side card   your take this shift, your career cash, leads you can call, chores waiting
-	  hint        what to do next ("Sit down at a free computer", "Take the trash to a bin", ...)
 	  checklist   the first-shift checklist (Checklist)
-	  flash       "+$10 · Trash taken out" after a chore
+	  flash       "+$10 · Trash taken out" after a chore, "Take the trash bag to a trash bin" when you pick one up
 	  review      the performance review with your tips, if it comes while you're away from a desk
-	  boosts      2x cash (time left) and a Team Leader's bonus
+	  team bonus  a Team Leader's +10%, while you have one in the crew
 	  banner      office events: a virus attack, office chaos (with flashing alarms), prank calls
 	  store       the equipment store, opened by the vendor's Shop prompt (StoreApp)
 	  elevator    full-screen card when the crew moves floors (shown over everything, desk or not)
@@ -29,6 +28,7 @@ local Network = require(Shared:WaitForChild("Network"))
 
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
+local Images = require(Ui.Images)
 local Theme = require(Ui.Theme)
 local UiScale = require(Ui.UiScale)
 local CallStore = require(script.Parent.CallStore)
@@ -72,34 +72,11 @@ local function atDesk(): boolean
 	return type(desk) == "string" and desk ~= ""
 end
 
-local function hintText(): string
-	if ReplicatedStorage:GetAttribute("ShiftFired") then
-		return "You're fired! Heading back to the lobby…"
-	elseif ReplicatedStorage:GetAttribute("ShiftReviewing") then
-		return "Performance review in progress…"
-	elseif player:GetAttribute("CarryingTrash") then
-		return "Take the trash bag to a trash bin."
-	end
-	local chores = ReplicatedStorage:GetAttribute("OfficeChores") or 0
-	local loggedInOnce = CareerStore.StepDone(OfficeConfig.StepIndex("Login") or 0)
-	if not loggedInOnce then
-		return "Find a free computer and use the Sit down prompt to start your shift."
-	elseif chores > 0 then
-		return `{chores} {if chores == 1 then "chore needs" else "chores need"} doing. Look for prompts around the office.`
-	end
-	return "Sit at a computer to keep calling."
-end
-
 local function update()
 	local hidden = atDesk()
 	root.Bar.Visible = not hidden
 	root.Side.Visible = not hidden
-	root.Hint.Visible = not hidden
 	root.Checklist:SetAttribute("Allowed", not hidden)
-	local permanent = player:GetAttribute("BoostPermanent") == true
-	local boostLeft = ShopStore.BoostSeconds()
-	root.Boost.Visible = not hidden and (permanent or boostLeft > 0)
-	root.Boost.Text = if permanent then "2x CASH · ALWAYS" else `2x CASH · {Format.duration(boostLeft)}`
 	root.TeamBonus.Visible = not hidden and player:GetAttribute("TeamBonus") == true
 	if hidden then
 		root.Review.Visible = false -- the computer shows the review
@@ -140,7 +117,6 @@ local function update()
 	side.Chores.Text = if chores > 0 then `{chores} {if chores == 1 then "CHORE" else "CHORES"} WAITING` else "OFFICE TIDY"
 	side.Chores.TextColor3 = if chores > 0 then Theme.Yellow else Theme.GreenText
 
-	root.Hint.Text = hintText()
 end
 
 local function flash(text: string, color: Color3?)
@@ -279,12 +255,12 @@ function HudController.Start()
 	gui = player:WaitForChild("PlayerGui"):WaitForChild("ShiftHud") :: ScreenGui
 	root = gui:WaitForChild("Root") :: Frame
 	UiScale.virtual(gui, root)
+	Images.bind(root)
 	root.Elevator.Visible = false
 	root.Flash.Visible = false
 	root.Review.Visible = false
 	root.Banner.Visible = false
 	root.Alarm.Visible = false
-	root.Boost.Visible = false
 	root.TeamBonus.Visible = false
 	gui.Enabled = true
 	StoreApp.Start(root.Store)
@@ -312,6 +288,11 @@ function HudController.Start()
 	CareerStore.Chore:Connect(function(done)
 		Sfx.Play("Chore")
 		flash(`+{Format.money(done.Reward)} · {CHORE_TEXT[done.Kind] or "Chore done"}`)
+	end)
+	player:GetAttributeChangedSignal("CarryingTrash"):Connect(function()
+		if player:GetAttribute("CarryingTrash") then
+			flash("Take the trash bag to a trash bin.", Theme.Accent)
+		end
 	end)
 	CareerStore.Changed:Connect(update)
 	player:GetAttributeChangedSignal("Desk"):Connect(update)

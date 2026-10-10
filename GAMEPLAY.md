@@ -32,7 +32,7 @@ everyone gets fired.
 - Talk by typing, with Roblox chat, or with your mic (needs Roblox voice chat).
 - What your mic hears waits in the text box so you can fix it, then press **Send** or Enter. You can turn this
   off in Settings to send mic lines straight away.
-- Stuck? Press **IDEAS** for three ready-made lines that fit the call. Tap one to say it, or **Refresh** for new
+- Stuck? Press the **lightbulb** (Ideas) for three ready-made lines that fit the call. Tap one to say it, or **Refresh** for new
   ones. They change with what the caller just said.
 - The caller answers in text and out loud. Only you can hear your caller.
 - Everyone in the crew can be on a different call at the same time.
@@ -123,13 +123,14 @@ Trash, messy desks and smoking computers show up during the day. Walk up and hol
 
 - Everything you earn on a shift is added to your saved **career cash**.
 - Spend it at the **equipment store**: a room in the office with a vendor. Walk up and use the **Shop** prompt.
-  You always use the best gear you own.
+  You always use the best gear you own. Gear lasts one shift: every shift starts with the starter gear, so buy
+  what you need each time.
 
 | Gear | Does | Tiers (price, unlocks at) |
 | --- | --- | --- |
-| Headset | More trust from every good line (+10% / +20% / +30%) | $400, $1,500 (floor 3), $6,000 (floor 5) |
-| Computer | New leads show up sooner (25% / 45% / 65% faster) | $500, $1,800 (floor 3), $7,000 (floor 5) |
-| Router | Bigger payouts (+5% / +10% / +15%) | $450, $1,600 (floor 3), $6,500 (floor 5) |
+| Headset | More trust from every good line (+10% / +20% / +30%) | $150, $500 (floor 3), $1,200 (floor 5) |
+| Computer | New leads show up sooner (25% / 45% / 65% faster) | $200, $600 (floor 3), $1,400 (floor 5) |
+| Router | Bigger payouts (+5% / +10% / +15%) | $180, $550 (floor 3), $1,300 (floor 5) |
 
 The **Career** app shows your title, lifetime stats and the tower.
 
@@ -158,7 +159,7 @@ The equipment store also sells Robux items. Find them on the **ROBUX ITEMS** and
 | Office Chaos | Alarms flash, trash and messy desks pile up, broken equipment, and every computer gets the virus. Chores pay double for 2 minutes. |
 | 2x Cash | Double earnings for 15 minutes of work-day time. Extra time is saved for later shifts. |
 | Save My Call | After a caller hangs up on you (or the line drops), they call straight back where you left off, with their trust from before it went wrong. |
-| Extra Tips | 5 more uses of the IDEAS button. Everyone gets 3 free per shift, and unused tips are saved. |
+| Extra Tips | 5 more uses of the lightbulb (Ideas) button. Everyone gets 3 free per shift, and unused tips are saved. |
 | Boss Meltdown, Police Raid | Coming soon |
 
 **Game passes** are bought once and kept:
@@ -183,7 +184,7 @@ The equipment store also sells Robux items. Find them on the **ROBUX ITEMS** and
 | Wallet | Your payouts and the team's progress |
 | Training | Short lessons on all of the above |
 | Career | Your title, stats and the office tower |
-| Settings | Volumes (master, caller voices, sound effects), wallpaper, interface size, clock, motion, checking mic lines before they're sent |
+| Settings | Volumes (master, caller voices, sound effects), wallpaper (five photos), interface size, clock, motion, checking mic lines before they're sent |
 
 > Call Center Chaos is a comedy game. In real life, companies never ask for gift cards or card numbers over the
 > phone. If a caller does, hang up.

@@ -1,12 +1,17 @@
 --!strict
 --[[
 	Wallpaper
-	Paints a ChaOS desktop wallpaper (the Wallpaper frame from the GUI generator) in one of the
-	Theme.Wallpapers looks. Used by both desktops (lobby and call center).
+	Shows a ChaOS desktop wallpaper (the Wallpaper frame from the GUI generator): the photo from
+	ImageConfig.Wallpapers on top, and under it a drawn stand-in in the matching Theme.Wallpapers colours, which
+	is what you see until the photo has loaded. Used by both desktops (lobby and call center).
 
-	Wallpaper.apply(wallpaperFrame, index)
+	Wallpaper.apply(wallpaperFrame, index)   index into SettingsConfig.Wallpapers
 ]]
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local SettingsConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("SettingsConfig"))
+local Images = require(script.Parent.Images)
 local Theme = require(script.Parent.Theme)
 
 local Wallpaper = {}
@@ -30,6 +35,12 @@ function Wallpaper.apply(wallpaper: any, index: number)
 			child.BackgroundColor3 = theme.Shine
 			child.BackgroundTransparency = theme.ShineTransparency
 		end
+	end
+
+	local photo = wallpaper:FindFirstChild("Photo")
+	local name = SettingsConfig.Wallpapers[index] or SettingsConfig.Wallpapers[1]
+	if photo then
+		Images.set(photo, `Wallpaper_{name}`)
 	end
 end
 

@@ -17,7 +17,8 @@ export type Settings = {
 }
 
 local SettingsConfig = {
-	Wallpapers = { "Dusk", "Overcast", "Night" },
+	-- Photos in ImageConfig.Wallpapers. Saved as an index, so new ones go at the end.
+	Wallpapers = { "Dusk", "Overcast", "Night", "Sunset", "Moonlight" },
 	UiSizes = {
 		{ Name = "Small", Scale = 0.9 },
 		{ Name = "Normal", Scale = 1 },

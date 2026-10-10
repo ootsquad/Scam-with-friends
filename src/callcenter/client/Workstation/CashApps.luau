@@ -131,7 +131,12 @@ function CashApps.StartDonations(window: Frame)
 	local function renderFundraiser()
 		card.Title.Text = player:GetAttribute("FundraiserTitle") or "Your fundraiser"
 		card.Code.Text = player:GetAttribute("FundraiserCode") or "..."
-		body.Raised.Text = `RAISED {Ledger.money(player:GetAttribute("FundraiserRaised") or 0)}`
+		local raised = player:GetAttribute("FundraiserRaised") or 0
+		body.Raised.Text = `RAISED {Ledger.money(raised)}`
+		local bar = card:FindFirstChild("Bar")
+		if bar then
+			bar.Fill.Size = UDim2.fromScale(math.clamp(raised / 1000, 0, 1), 1) -- fills up over the first $1,000
+		end
 	end
 	for _, name in { "FundraiserTitle", "FundraiserCode", "FundraiserRaised" } do
 		player:GetAttributeChangedSignal(name):Connect(renderFundraiser)

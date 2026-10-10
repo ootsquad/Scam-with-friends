@@ -93,7 +93,8 @@ local Theme = {
 	ChecklistDone = hex("#22C55E"),
 	ChecklistTodo = hex("#4B5563"),
 
-	-- Index matches SettingsConfig.Wallpapers: Dusk, Overcast, Night
+	-- The drawn stand-in for each wallpaper photo (shown until the photo loads). Index matches
+	-- SettingsConfig.Wallpapers: Dusk, Overcast, Night, Sunset, Moonlight
 	Wallpapers = {
 		{
 			Sky = vertical({ { 0, "#1B2440" }, { 0.55, "#4B4F7A" }, { 1, "#E9915A" } }),
@@ -115,6 +116,20 @@ local Theme = {
 			Back = hex("#141D33"), Front = hex("#0A1022"),
 			Water = vertical({ { 0, "#0F1A35" }, { 1, "#04070F" } }),
 			Shine = hex("#9FB3E0"), ShineTransparency = 0.65,
+		},
+		{
+			Sky = vertical({ { 0, "#3A3F5C" }, { 0.55, "#8C6A7A" }, { 1, "#F0A070" } }),
+			Sun = hex("#FFD9A0"), SunTransparency = 0.2, HaloTransparency = 0.74,
+			Back = hex("#4A4560"), Front = hex("#262536"),
+			Water = vertical({ { 0, "#4A4258" }, { 1, "#16162A" } }),
+			Shine = hex("#F0A070"), ShineTransparency = 0.45,
+		},
+		{
+			Sky = vertical({ { 0, "#0A1024" }, { 0.6, "#18234A" }, { 1, "#2C3D66" } }),
+			Sun = hex("#F2EAD0"), SunTransparency = 0, HaloTransparency = 0.8,
+			Back = hex("#1C2642"), Front = hex("#0B101C"),
+			Water = vertical({ { 0, "#18223F" }, { 1, "#060A14" } }),
+			Shine = hex("#E8DDB5"), ShineTransparency = 0.55,
 		},
 	},
 }

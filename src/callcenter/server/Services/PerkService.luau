@@ -6,7 +6,7 @@
 	                 start of every shift, and each 2x Cash product adds 15 minutes (saved until it's used).
 	                 The clock only runs while the work day does. 2x sources don't stack with each other.
 	  Team Leader    everyone else in the server earns TeamLeaderBonus more (one bonus however many leaders).
-	  On-call tips   FreeTipsPerShift free uses of the IDEAS button per shift (VipFreeTips for VIPs), then the
+	  On-call tips   FreeTipsPerShift free uses of the Ideas (lightbulb) button per shift (VipFreeTips for VIPs), then the
 	                 tips bought with Extra Tips (saved in the career until used).
 	  Call saves     Save My Call credits (saved in the career), plus VipFreeSaves free ones per shift for VIPs.
 	  VIP            a VIP nametag and chat tag, the extras above, and the VIP outfit / emotes in ShopConfig.Vip.
