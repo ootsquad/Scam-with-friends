@@ -10213,7 +10213,8 @@
 																			1.0,
 																			1.0,
 																			1.0
-																		]
+																		],
+																		"TextXAlignment": "Left"
 																	},
 																	"Children": [
 																		{
@@ -10235,7 +10236,7 @@
 																				"PaddingLeft": {
 																					"UDim": [
 																						0,
-																						30
+																						72
 																					]
 																				}
 																			}
@@ -12831,7 +12832,8 @@
 																					1.0,
 																					1.0,
 																					1.0
-																				]
+																				],
+																				"TextXAlignment": "Left"
 																			},
 																			"Children": [
 																				{
@@ -12853,7 +12855,7 @@
 																						"PaddingLeft": {
 																							"UDim": [
 																								0,
-																								30
+																								84
 																							]
 																						}
 																					}
@@ -12951,7 +12953,8 @@
 																					1.0,
 																					1.0,
 																					1.0
-																				]
+																				],
+																				"TextXAlignment": "Left"
 																			},
 																			"Children": [
 																				{
@@ -12973,7 +12976,7 @@
 																						"PaddingLeft": {
 																							"UDim": [
 																								0,
-																								30
+																								82
 																							]
 																						}
 																					}
@@ -34844,6 +34847,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 2,
 																		"Image": "rbxthumb://type=Asset&id=125809759926045&w=420&h=420",
 																		"ScaleType": "Crop",
 																		"Attributes": {
@@ -34898,7 +34902,8 @@
 																				]
 																			]
 																		},
-																		"BackgroundTransparency": 1
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 3
 																	},
 																	"Children": [
 																		{
@@ -34958,6 +34963,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 4,
 																		"Text": "Dusk",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/Roboto.json",
@@ -35121,6 +35127,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 2,
 																		"Image": "rbxthumb://type=Asset&id=78346367906573&w=420&h=420",
 																		"ScaleType": "Crop",
 																		"Attributes": {
@@ -35175,7 +35182,8 @@
 																				]
 																			]
 																		},
-																		"BackgroundTransparency": 1
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 3
 																	},
 																	"Children": [
 																		{
@@ -35236,6 +35244,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 4,
 																		"Text": "Sunset",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/Roboto.json",
@@ -35399,6 +35408,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 2,
 																		"Image": "rbxthumb://type=Asset&id=89903488650155&w=420&h=420",
 																		"ScaleType": "Crop",
 																		"Attributes": {
@@ -35453,7 +35463,8 @@
 																				]
 																			]
 																		},
-																		"BackgroundTransparency": 1
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 3
 																	},
 																	"Children": [
 																		{
@@ -35514,6 +35525,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 4,
 																		"Text": "Night",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/Roboto.json",
@@ -35677,6 +35689,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 2,
 																		"Image": "rbxthumb://type=Asset&id=76993092624288&w=420&h=420",
 																		"ScaleType": "Crop",
 																		"Attributes": {
@@ -35731,7 +35744,8 @@
 																				]
 																			]
 																		},
-																		"BackgroundTransparency": 1
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 3
 																	},
 																	"Children": [
 																		{
@@ -35792,6 +35806,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 4,
 																		"Text": "Moonlight",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/Roboto.json",
@@ -35955,6 +35970,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 2,
 																		"Image": "rbxthumb://type=Asset&id=72238794026245&w=420&h=420",
 																		"ScaleType": "Crop",
 																		"Attributes": {
@@ -36009,7 +36025,8 @@
 																				]
 																			]
 																		},
-																		"BackgroundTransparency": 1
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 3
 																	},
 																	"Children": [
 																		{
@@ -36070,6 +36087,7 @@
 																			]
 																		},
 																		"BackgroundTransparency": 1,
+																		"ZIndex": 4,
 																		"Text": "Overcast",
 																		"FontFace": {
 																			"family": "rbxasset://fonts/families/Roboto.json",
@@ -48685,7 +48703,8 @@
 											1.0,
 											1.0,
 											1.0
-										]
+										],
+										"TextXAlignment": "Left"
 									},
 									"Children": [
 										{
@@ -48707,7 +48726,7 @@
 												"PaddingLeft": {
 													"UDim": [
 														0,
-														24
+														65
 													]
 												}
 											}
@@ -48805,7 +48824,8 @@
 											1.0,
 											1.0,
 											1.0
-										]
+										],
+										"TextXAlignment": "Left"
 									},
 									"Children": [
 										{
@@ -48827,7 +48847,7 @@
 												"PaddingLeft": {
 													"UDim": [
 														0,
-														24
+														63
 													]
 												}
 											}
@@ -52989,7 +53009,8 @@
 									1.0,
 									1.0,
 									1.0
-								]
+								],
+								"TextXAlignment": "Left"
 							},
 							"Children": [
 								{
@@ -53024,7 +53045,7 @@
 										"PaddingLeft": {
 											"UDim": [
 												0,
-												24
+												56
 											]
 										}
 									}

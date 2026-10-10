@@ -7,9 +7,10 @@
 
 	The GUI generator marks image slots with an ImageKey attribute (an ImageConfig.Lookup key). A slot can name
 	a sibling in its ImageFallback attribute (a drawn icon or a text label). The fallback stays hidden, and only
-	shows if Roblox can't load the picture (for example while it's still reviewing a new upload, or after it
-	rejected one). Whether a picture loads is asked once per picture (ContentProvider:PreloadAsync), so a slot
-	never shows its picture and its fallback at the same time.
+	shows while Roblox can't load the picture (for example while it's still reviewing a new upload, or after it
+	rejected one): when ContentProvider:PreloadAsync says the picture failed, or when the label still isn't
+	IsLoaded a couple of seconds after getting its picture. Slots are checked every second, so a picture that
+	arrives late hides its fallback again, and the two are never meant to show together.
 
 	Images.content(key) -> string            "rbxassetid://..." ("" for a key that isn't in ImageConfig)
 	Images.set(label, key, fallback?)        shows the picture on an ImageLabel or ImageButton and keeps it current
@@ -24,6 +25,8 @@ local ImageConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChil
 
 local FOLDER_NAME = "ImageIds"
 local FOLDER_WAIT = 30 -- seconds to wait for the server's image ids before using the config's ids as they are
+local GRACE = 2 -- seconds a picture gets to load before its fallback shows
+local POLL = 1
 
 local Images = {}
 
@@ -35,6 +38,8 @@ local slots: { [Instance]: string } = setmetatable({}, { __mode = "k" }) :: any
 local fallbacks: { [Instance]: GuiObject } = setmetatable({}, { __mode = "k" }) :: any
 local loaded: { [string]: boolean } = {} -- picture -> whether Roblox could load it
 local checking: { [string]: boolean } = {}
+local since: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any -- when a slot got its picture
+local polling = false
 
 function Images.content(key: string): string
 	local resolved = if folder then folder:GetAttribute(key) else nil
@@ -50,11 +55,43 @@ local function settled(key: string): boolean
 	return gaveUp or (folder ~= nil and (folder:GetAttribute(key) ~= nil or folder:GetAttribute("Ready") == true))
 end
 
+-- Whether a slot's fallback should show right now.
+local function fallbackWanted(label: any): boolean
+	local content = label.Image
+	if content == "" or loaded[content] == false then
+		return true
+	end
+	if label.IsLoaded then
+		return false
+	end
+	return os.clock() - (since[label] or 0) > GRACE
+end
+
 local function showFallback(label: any)
 	local fallback = fallbacks[label]
 	if fallback then
-		fallback.Visible = loaded[label.Image] == false
+		local show = fallbackWanted(label)
+		if fallback.Visible ~= show then
+			fallback.Visible = show
+		end
 	end
+end
+
+local function poll()
+	if polling then
+		return
+	end
+	polling = true
+	task.spawn(function()
+		while true do
+			task.wait(POLL)
+			for label in fallbacks do
+				if (label :: Instance).Parent then
+					showFallback(label)
+				end
+			end
+		end
+	end)
 end
 
 local function check(content: string, key: string)
@@ -90,6 +127,7 @@ local function paint(label: any)
 	local content = Images.content(key)
 	if label.Image ~= content then
 		label.Image = content
+		since[label] = os.clock()
 	end
 	showFallback(label)
 	if fallbacks[label] and settled(key) then
@@ -138,8 +176,10 @@ function Images.set(label: ImageLabel | ImageButton, key: string, fallback: GuiO
 		return
 	end
 	slots[label] = key
+	since[label] = os.clock()
 	if fallback then
 		fallbacks[label] = fallback
+		poll()
 	end
 	watch()
 	paint(label)

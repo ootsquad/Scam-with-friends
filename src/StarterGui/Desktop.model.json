@@ -13862,7 +13862,8 @@
 																		]
 																	]
 																},
-																"BackgroundTransparency": 1
+																"BackgroundTransparency": 1,
+																"ZIndex": 2
 															},
 															"Children": [
 																{
@@ -13910,6 +13911,7 @@
 																	]
 																},
 																"BackgroundTransparency": 1,
+																"ZIndex": 2,
 																"Text": "Dusk",
 																"FontFace": {
 																	"family": "rbxasset://fonts/families/Roboto.json",
@@ -14370,7 +14372,8 @@
 																		]
 																	]
 																},
-																"BackgroundTransparency": 1
+																"BackgroundTransparency": 1,
+																"ZIndex": 2
 															},
 															"Children": [
 																{
@@ -14419,6 +14422,7 @@
 																	]
 																},
 																"BackgroundTransparency": 1,
+																"ZIndex": 2,
 																"Text": "Sunset",
 																"FontFace": {
 																	"family": "rbxasset://fonts/families/Roboto.json",
@@ -14878,7 +14882,8 @@
 																		]
 																	]
 																},
-																"BackgroundTransparency": 1
+																"BackgroundTransparency": 1,
+																"ZIndex": 2
 															},
 															"Children": [
 																{
@@ -14927,6 +14932,7 @@
 																	]
 																},
 																"BackgroundTransparency": 1,
+																"ZIndex": 2,
 																"Text": "Night",
 																"FontFace": {
 																	"family": "rbxasset://fonts/families/Roboto.json",
@@ -15386,7 +15392,8 @@
 																		]
 																	]
 																},
-																"BackgroundTransparency": 1
+																"BackgroundTransparency": 1,
+																"ZIndex": 2
 															},
 															"Children": [
 																{
@@ -15435,6 +15442,7 @@
 																	]
 																},
 																"BackgroundTransparency": 1,
+																"ZIndex": 2,
 																"Text": "Moonlight",
 																"FontFace": {
 																	"family": "rbxasset://fonts/families/Roboto.json",
@@ -15895,7 +15903,8 @@
 																		]
 																	]
 																},
-																"BackgroundTransparency": 1
+																"BackgroundTransparency": 1,
+																"ZIndex": 2
 															},
 															"Children": [
 																{
@@ -15944,6 +15953,7 @@
 																	]
 																},
 																"BackgroundTransparency": 1,
+																"ZIndex": 2,
 																"Text": "Overcast",
 																"FontFace": {
 																	"family": "rbxasset://fonts/families/Roboto.json",
