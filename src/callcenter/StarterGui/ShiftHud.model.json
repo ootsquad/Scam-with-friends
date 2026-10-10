@@ -676,7 +676,7 @@
 							"UDim2": [
 								[
 									1,
-									-16
+									-12
 								],
 								[
 									0,
@@ -688,11 +688,11 @@
 							"UDim2": [
 								[
 									0,
-									250
+									180
 								],
 								[
 									0,
-									126
+									92
 								]
 							]
 						},
@@ -715,7 +715,7 @@
 								"CornerRadius": {
 									"UDim": [
 										0,
-										14
+										12
 									]
 								}
 							}
@@ -742,11 +742,11 @@
 									"UDim2": [
 										[
 											0,
-											16
+											12
 										],
 										[
 											0,
-											10
+											8
 										]
 									]
 								},
@@ -754,11 +754,11 @@
 									"UDim2": [
 										[
 											0,
-											218
+											160
 										],
 										[
 											0,
-											26
+											20
 										]
 									]
 								},
@@ -769,7 +769,7 @@
 									"weight": "Bold",
 									"style": "Normal"
 								},
-								"TextSize": 18,
+								"TextSize": 15,
 								"TextColor3": [
 									0.2902,
 									0.8706,
@@ -787,11 +787,11 @@
 									"UDim2": [
 										[
 											0,
-											16
+											12
 										],
 										[
 											0,
-											38
+											28
 										]
 									]
 								},
@@ -799,11 +799,11 @@
 									"UDim2": [
 										[
 											0,
-											218
+											160
 										],
 										[
 											0,
-											22
+											18
 										]
 									]
 								},
@@ -814,7 +814,7 @@
 									"weight": "Bold",
 									"style": "Normal"
 								},
-								"TextSize": 15,
+								"TextSize": 13,
 								"TextColor3": [
 									1.0,
 									0.8353,
@@ -832,11 +832,11 @@
 									"UDim2": [
 										[
 											0,
-											16
+											12
 										],
 										[
 											0,
-											64
+											47
 										]
 									]
 								},
@@ -844,11 +844,11 @@
 									"UDim2": [
 										[
 											0,
-											218
+											160
 										],
 										[
 											0,
-											22
+											18
 										]
 									]
 								},
@@ -859,7 +859,7 @@
 									"weight": "Bold",
 									"style": "Normal"
 								},
-								"TextSize": 15,
+								"TextSize": 13,
 								"TextColor3": [
 									0.9529,
 									0.9569,
@@ -877,11 +877,11 @@
 									"UDim2": [
 										[
 											0,
-											16
+											12
 										],
 										[
 											0,
-											90
+											66
 										]
 									]
 								},
@@ -889,11 +889,11 @@
 									"UDim2": [
 										[
 											0,
-											218
+											160
 										],
 										[
 											0,
-											22
+											18
 										]
 									]
 								},
@@ -904,80 +904,13 @@
 									"weight": "Bold",
 									"style": "Normal"
 								},
-								"TextSize": 15,
+								"TextSize": 13,
 								"TextColor3": [
 									0.2902,
 									0.8706,
 									0.502
 								],
 								"TextXAlignment": "Left"
-							}
-						}
-					]
-				},
-				{
-					"Name": "Boost",
-					"ClassName": "TextLabel",
-					"Properties": {
-						"BorderSizePixel": 0,
-						"Position": {
-							"UDim2": [
-								[
-									1,
-									-16
-								],
-								[
-									0,
-									224
-								]
-							]
-						},
-						"Size": {
-							"UDim2": [
-								[
-									0,
-									250
-								],
-								[
-									0,
-									30
-								]
-							]
-						},
-						"BackgroundColor3": [
-							0.0863,
-							0.6392,
-							0.2902
-						],
-						"AnchorPoint": [
-							1,
-							0
-						],
-						"Visible": false,
-						"Text": "2x CASH · 12:34",
-						"FontFace": {
-							"family": "rbxasset://fonts/families/RobotoCondensed.json",
-							"weight": "Bold",
-							"style": "Normal"
-						},
-						"TextSize": 15,
-						"TextColor3": [
-							1.0,
-							1.0,
-							1.0
-						]
-					},
-					"Children": [
-						{
-							"Name": "Corner",
-							"ClassName": "UICorner",
-							"Properties": {
-								"CornerRadius": {
-									"UDim": [
-										0.5,
-										0
-									]
-								}
 							}
 						}
 					]
@@ -991,11 +924,11 @@
 							"UDim2": [
 								[
 									1,
-									-16
+									-12
 								],
 								[
 									0,
-									260
+									188
 								]
 							]
 						},
@@ -1003,11 +936,11 @@
 							"UDim2": [
 								[
 									0,
-									250
+									180
 								],
 								[
 									0,
-									26
+									22
 								]
 							]
 						},
@@ -1021,13 +954,13 @@
 							0
 						],
 						"Visible": false,
-						"Text": "TEAM LEADER BONUS +10%",
+						"Text": "TEAM LEADER +10%",
 						"FontFace": {
 							"family": "rbxasset://fonts/families/RobotoCondensed.json",
 							"weight": "Bold",
 							"style": "Normal"
 						},
-						"TextSize": 13,
+						"TextSize": 12,
 						"TextColor3": [
 							1.0,
 							1.0,
@@ -1043,91 +976,6 @@
 									"UDim": [
 										0.5,
 										0
-									]
-								}
-							}
-						}
-					]
-				},
-				{
-					"Name": "Hint",
-					"ClassName": "TextLabel",
-					"Properties": {
-						"BorderSizePixel": 0,
-						"Position": {
-							"UDim2": [
-								[
-									0.5,
-									0
-								],
-								[
-									1,
-									-124
-								]
-							]
-						},
-						"Size": {
-							"UDim2": [
-								[
-									0,
-									720
-								],
-								[
-									0,
-									44
-								]
-							]
-						},
-						"BackgroundColor3": [
-							0.0667,
-							0.0745,
-							0.0941
-						],
-						"BackgroundTransparency": 0.15,
-						"AnchorPoint": [
-							0.5,
-							0
-						],
-						"Text": "Find a free computer and use the Sit down prompt to start your shift.",
-						"FontFace": {
-							"family": "rbxasset://fonts/families/Roboto.json",
-							"weight": "Medium",
-							"style": "Normal"
-						},
-						"TextSize": 17,
-						"TextColor3": [
-							0.9529,
-							0.9569,
-							0.9647
-						]
-					},
-					"Children": [
-						{
-							"Name": "Corner",
-							"ClassName": "UICorner",
-							"Properties": {
-								"CornerRadius": {
-									"UDim": [
-										0.5,
-										0
-									]
-								}
-							}
-						},
-						{
-							"Name": "Padding",
-							"ClassName": "UIPadding",
-							"Properties": {
-								"PaddingLeft": {
-									"UDim": [
-										0,
-										18
-									]
-								},
-								"PaddingRight": {
-									"UDim": [
-										0,
-										18
 									]
 								}
 							}

@@ -344,22 +344,20 @@ local function updateTalkBar(state: any)
 	end
 end
 
+-- The mic and caller-voice buttons are light circles with icon images: blue (green while it hears you) when
+-- the mic is on, faded when the caller's voice is off.
+local ICON_BUTTON = Color3.fromHex("#D9DCE2")
+local VOICE_OFF = Color3.fromHex("#8B9099")
+
 local function paintVoiceButtons()
 	local talk = ui.talk
 	local micOn = CallVoice.MicOn
-	talk.MicButton.BackgroundColor3 = if micOn then (if CallVoice.Hearing then Theme.TrustHigh else Theme.Accent) else Theme.PhoneHead
-	for _, piece in talk.VoiceButton:GetChildren() do
-		if piece:IsA("Frame") then
-			local stroke = piece:FindFirstChildOfClass("UIStroke")
-			local color = if CallVoice.VoiceEnabled then Theme.DarkText else Theme.DarkFaint
-			if stroke then
-				stroke.Color = color
-			else
-				piece.BackgroundColor3 = color
-			end
-		end
+	talk.MicButton.BackgroundColor3 = if micOn then (if CallVoice.Hearing then Theme.TrustHigh else Theme.Accent) else ICON_BUTTON
+	talk.VoiceButton.BackgroundColor3 = if CallVoice.VoiceEnabled then ICON_BUTTON else VOICE_OFF
+	local voiceIcon = talk.VoiceButton:FindFirstChild("Icon")
+	if voiceIcon then
+		voiceIcon.ImageTransparency = if CallVoice.VoiceEnabled then 0 else 0.55
 	end
-	talk.VoiceButton.BackgroundColor3 = if CallVoice.VoiceEnabled then Theme.PhoneHead else Theme.LeadBlockedBg
 	updateTalkBar(CallStore.State)
 end
 

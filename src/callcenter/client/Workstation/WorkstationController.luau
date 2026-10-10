@@ -450,7 +450,7 @@ local function updateTray()
 	local day = ReplicatedStorage:GetAttribute("ShiftDay") or 1
 	local floor = ReplicatedStorage:GetAttribute("OfficeFloor") or 1
 	local data = CareerStore.Data
-	stats.Personal.Text = `PERSONAL {Format.money(personal)}{if ShopStore.Boosted() then " · 2x" else ""}`
+	stats.Personal.Text = `PERSONAL {Format.money(personal)}`
 	stats.Team.Text = `TEAM {Format.money(team)} / {Format.money(quota)}`
 	stats.Team.TextColor3 = if quota > 0 and team >= quota then Theme.GreenText else Theme.White
 	stats.Floor.Text = `FLOOR {floor}`

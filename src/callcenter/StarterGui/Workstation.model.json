@@ -10921,9 +10921,9 @@
 																					]
 																				},
 																				"BackgroundColor3": [
-																					0.1569,
-																					0.1725,
-																					0.2078
+																					0.851,
+																					0.8627,
+																					0.8863
 																				],
 																				"AnchorPoint": [
 																					0.5,
@@ -10957,249 +10957,38 @@
 																					}
 																				},
 																				{
-																					"Name": "Stroke",
-																					"ClassName": "UIStroke",
+																					"Name": "Icon",
+																					"ClassName": "ImageLabel",
 																					"Properties": {
-																						"Color": [
-																							0.2078,
-																							0.2275,
-																							0.2706
-																						],
-																						"Thickness": 1,
-																						"ApplyStrokeMode": "Border"
+																						"BorderSizePixel": 0,
+																						"Position": {
+																							"UDim2": [
+																								[
+																									0,
+																									6
+																								],
+																								[
+																									0,
+																									6
+																								]
+																							]
+																						},
+																						"Size": {
+																							"UDim2": [
+																								[
+																									0,
+																									31
+																								],
+																								[
+																									0,
+																									31
+																								]
+																							]
+																						},
+																						"BackgroundTransparency": 1,
+																						"Image": "rbxassetid://92528344895982",
+																						"ScaleType": "Fit"
 																					}
-																				},
-																				{
-																					"Name": "Capsule",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									17
-																								],
-																								[
-																									0,
-																									8
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									11
-																								],
-																								[
-																									0,
-																									17
-																								]
-																							]
-																						},
-																						"BackgroundColor3": [
-																							0.9294,
-																							0.9373,
-																							0.949
-																						]
-																					},
-																					"Children": [
-																						{
-																							"Name": "Corner",
-																							"ClassName": "UICorner",
-																							"Properties": {
-																								"CornerRadius": {
-																									"UDim": [
-																										0.5,
-																										0
-																									]
-																								}
-																							}
-																						}
-																					]
-																				},
-																				{
-																					"Name": "Cup",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									13
-																								],
-																								[
-																									0,
-																									16
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									18
-																								],
-																								[
-																									0,
-																									14
-																								]
-																							]
-																						},
-																						"BackgroundTransparency": 1
-																					},
-																					"Children": [
-																						{
-																							"Name": "Corner",
-																							"ClassName": "UICorner",
-																							"Properties": {
-																								"CornerRadius": {
-																									"UDim": [
-																										0.5,
-																										0
-																									]
-																								}
-																							}
-																						},
-																						{
-																							"Name": "Stroke",
-																							"ClassName": "UIStroke",
-																							"Properties": {
-																								"Color": [
-																									0.9294,
-																									0.9373,
-																									0.949
-																								],
-																								"Thickness": 2,
-																								"ApplyStrokeMode": "Border"
-																							}
-																						}
-																					]
-																				},
-																				{
-																					"Name": "Mask",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									12
-																								],
-																								[
-																									0,
-																									13
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									20
-																								],
-																								[
-																									0,
-																									8
-																								]
-																							]
-																						},
-																						"BackgroundColor3": [
-																							0.0,
-																							0.0,
-																							0.0
-																						],
-																						"BackgroundTransparency": 1
-																					}
-																				},
-																				{
-																					"Name": "Stand",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									21
-																								],
-																								[
-																									0,
-																									30
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									2
-																								],
-																								[
-																									0,
-																									5
-																								]
-																							]
-																						},
-																						"BackgroundColor3": [
-																							0.9294,
-																							0.9373,
-																							0.949
-																						]
-																					}
-																				},
-																				{
-																					"Name": "Base",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									16
-																								],
-																								[
-																									0,
-																									35
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									12
-																								],
-																								[
-																									0,
-																									2
-																								]
-																							]
-																						},
-																						"BackgroundColor3": [
-																							0.9294,
-																							0.9373,
-																							0.949
-																						]
-																					},
-																					"Children": [
-																						{
-																							"Name": "Corner",
-																							"ClassName": "UICorner",
-																							"Properties": {
-																								"CornerRadius": {
-																									"UDim": [
-																										0.5,
-																										0
-																									]
-																								}
-																							}
-																						}
-																					]
 																				}
 																			]
 																		},
@@ -11543,9 +11332,9 @@
 																					]
 																				},
 																				"BackgroundColor3": [
-																					0.1569,
-																					0.1725,
-																					0.2078
+																					0.851,
+																					0.8627,
+																					0.8863
 																				],
 																				"AnchorPoint": [
 																					0.5,
@@ -11579,36 +11368,11 @@
 																					}
 																				},
 																				{
-																					"Name": "Stroke",
-																					"ClassName": "UIStroke",
-																					"Properties": {
-																						"Color": [
-																							0.2078,
-																							0.2275,
-																							0.2706
-																						],
-																						"Thickness": 1,
-																						"ApplyStrokeMode": "Border"
-																					}
-																				},
-																				{
-																					"Name": "Box",
-																					"ClassName": "Frame",
+																					"Name": "Icon",
+																					"ClassName": "ImageLabel",
 																					"Properties": {
 																						"BorderSizePixel": 0,
 																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									10
-																								],
-																								[
-																									0,
-																									18
-																								]
-																							]
-																						},
-																						"Size": {
 																							"UDim2": [
 																								[
 																									0,
@@ -11616,170 +11380,26 @@
 																								],
 																								[
 																									0,
-																									9
+																									6
 																								]
 																							]
 																						},
-																						"BackgroundColor3": [
-																							0.9294,
-																							0.9373,
-																							0.949
-																						]
+																						"Size": {
+																							"UDim2": [
+																								[
+																									0,
+																									31
+																								],
+																								[
+																									0,
+																									31
+																								]
+																							]
+																						},
+																						"BackgroundTransparency": 1,
+																						"Image": "rbxassetid://118149099731429",
+																						"ScaleType": "Fit"
 																					}
-																				},
-																				{
-																					"Name": "Cone",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									13
-																								],
-																								[
-																									0,
-																									16
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									9
-																								],
-																								[
-																									0,
-																									12
-																								]
-																							]
-																						},
-																						"BackgroundColor3": [
-																							0.9294,
-																							0.9373,
-																							0.949
-																						]
-																					}
-																				},
-																				{
-																					"Name": "Wave1",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									25
-																								],
-																								[
-																									0,
-																									17
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									4
-																								],
-																								[
-																									0,
-																									11
-																								]
-																							]
-																						},
-																						"BackgroundTransparency": 1
-																					},
-																					"Children": [
-																						{
-																							"Name": "Corner",
-																							"ClassName": "UICorner",
-																							"Properties": {
-																								"CornerRadius": {
-																									"UDim": [
-																										0.5,
-																										0
-																									]
-																								}
-																							}
-																						},
-																						{
-																							"Name": "Stroke",
-																							"ClassName": "UIStroke",
-																							"Properties": {
-																								"Color": [
-																									0.9294,
-																									0.9373,
-																									0.949
-																								],
-																								"Thickness": 2,
-																								"ApplyStrokeMode": "Border"
-																							}
-																						}
-																					]
-																				},
-																				{
-																					"Name": "Wave2",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									30
-																								],
-																								[
-																									0,
-																									13
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									4
-																								],
-																								[
-																									0,
-																									18
-																								]
-																							]
-																						},
-																						"BackgroundTransparency": 1
-																					},
-																					"Children": [
-																						{
-																							"Name": "Corner",
-																							"ClassName": "UICorner",
-																							"Properties": {
-																								"CornerRadius": {
-																									"UDim": [
-																										0.5,
-																										0
-																									]
-																								}
-																							}
-																						},
-																						{
-																							"Name": "Stroke",
-																							"ClassName": "UIStroke",
-																							"Properties": {
-																								"Color": [
-																									0.9294,
-																									0.9373,
-																									0.949
-																								],
-																								"Thickness": 2,
-																								"ApplyStrokeMode": "Border"
-																							}
-																						}
-																					]
 																				}
 																			]
 																		}
