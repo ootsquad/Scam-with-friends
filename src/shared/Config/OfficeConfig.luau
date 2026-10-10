@@ -89,7 +89,8 @@ local OfficeConfig = {
 
 	-- Equipment store, run by a vendor in a store room. Tag the vendor (a Model with a Humanoid, or any
 	-- Part such as a counter) "StoreVendor"; its "Shop" prompt opens the store. Floors without a vendor get
-	-- a stand-in vendor next to the floor's spawn. You always use the best tier you own.
+	-- a stand-in vendor next to the floor's spawn. You always use the best tier you own. Gear lasts one shift
+	-- (it isn't saved with the career), so prices are per shift.
 	VendorTag = "StoreVendor",
 	ShopRange = 16, -- studs from a vendor where buying works (the store closes if you walk further)
 	EquipmentOrder = { "Headset", "Computer", "Router" },
@@ -99,9 +100,9 @@ local OfficeConfig = {
 			Effect = "more trust from every good line",
 			Tiers = {
 				{ Name = "Tangled Earbuds", Price = 0, Floor = 1, Value = 0, Blurb = "One side works. Mostly." },
-				{ Name = "Office Headset", Price = 400, Floor = 1, Value = 0.1, Blurb = "+10% trust gains" },
-				{ Name = "Noise-Cancel Pro", Price = 1500, Floor = 3, Value = 0.2, Blurb = "+20% trust gains" },
-				{ Name = "Golden Earpiece", Price = 6000, Floor = 5, Value = 0.3, Blurb = "+30% trust gains" },
+				{ Name = "Office Headset", Price = 150, Floor = 1, Value = 0.1, Blurb = "+10% trust gains" },
+				{ Name = "Noise-Cancel Pro", Price = 500, Floor = 3, Value = 0.2, Blurb = "+20% trust gains" },
+				{ Name = "Golden Earpiece", Price = 1200, Floor = 5, Value = 0.3, Blurb = "+30% trust gains" },
 			},
 		},
 		Computer = {
@@ -109,9 +110,9 @@ local OfficeConfig = {
 			Effect = "new leads show up sooner",
 			Tiers = {
 				{ Name = "Beige Tower", Price = 0, Floor = 1, Value = 0, Blurb = "Still runs Solitaire." },
-				{ Name = "Office PC", Price = 500, Floor = 1, Value = 0.25, Blurb = "Leads refresh 25% faster" },
-				{ Name = "Gaming Rig", Price = 1800, Floor = 3, Value = 0.45, Blurb = "Leads refresh 45% faster" },
-				{ Name = "Quantum Workstation", Price = 7000, Floor = 5, Value = 0.65, Blurb = "Leads refresh 65% faster" },
+				{ Name = "Office PC", Price = 200, Floor = 1, Value = 0.25, Blurb = "Leads refresh 25% faster" },
+				{ Name = "Gaming Rig", Price = 600, Floor = 3, Value = 0.45, Blurb = "Leads refresh 45% faster" },
+				{ Name = "Quantum Workstation", Price = 1400, Floor = 5, Value = 0.65, Blurb = "Leads refresh 65% faster" },
 			},
 		},
 		Router = {
@@ -119,9 +120,9 @@ local OfficeConfig = {
 			Effect = "bigger payouts",
 			Tiers = {
 				{ Name = "Dusty Router", Price = 0, Floor = 1, Value = 0, Blurb = "Blinks a lot." },
-				{ Name = "Dual-Band Router", Price = 450, Floor = 1, Value = 0.05, Blurb = "Payouts +5%" },
-				{ Name = "Mesh Pro", Price = 1600, Floor = 3, Value = 0.1, Blurb = "Payouts +10%" },
-				{ Name = "Fiber Beast", Price = 6500, Floor = 5, Value = 0.15, Blurb = "Payouts +15%" },
+				{ Name = "Dual-Band Router", Price = 180, Floor = 1, Value = 0.05, Blurb = "Payouts +5%" },
+				{ Name = "Mesh Pro", Price = 550, Floor = 3, Value = 0.1, Blurb = "Payouts +10%" },
+				{ Name = "Fiber Beast", Price = 1300, Floor = 5, Value = 0.15, Blurb = "Payouts +15%" },
 			},
 		},
 	} :: { [string]: Category },

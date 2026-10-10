@@ -123,13 +123,14 @@ Trash, messy desks and smoking computers show up during the day. Walk up and hol
 
 - Everything you earn on a shift is added to your saved **career cash**.
 - Spend it at the **equipment store**: a room in the office with a vendor. Walk up and use the **Shop** prompt.
-  You always use the best gear you own.
+  You always use the best gear you own. Gear lasts one shift: every shift starts with the starter gear, so buy
+  what you need each time.
 
 | Gear | Does | Tiers (price, unlocks at) |
 | --- | --- | --- |
-| Headset | More trust from every good line (+10% / +20% / +30%) | $400, $1,500 (floor 3), $6,000 (floor 5) |
-| Computer | New leads show up sooner (25% / 45% / 65% faster) | $500, $1,800 (floor 3), $7,000 (floor 5) |
-| Router | Bigger payouts (+5% / +10% / +15%) | $450, $1,600 (floor 3), $6,500 (floor 5) |
+| Headset | More trust from every good line (+10% / +20% / +30%) | $150, $500 (floor 3), $1,200 (floor 5) |
+| Computer | New leads show up sooner (25% / 45% / 65% faster) | $200, $600 (floor 3), $1,400 (floor 5) |
+| Router | Bigger payouts (+5% / +10% / +15%) | $180, $550 (floor 3), $1,300 (floor 5) |
 
 The **Career** app shows your title, lifetime stats and the tower.
 

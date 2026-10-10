@@ -3,7 +3,7 @@
 	The equipment store. It isn't an app on the computer: it's a room in the office with a vendor (tagged
 	"StoreVendor"). Using the vendor's Shop prompt opens this screen (ShiftHud.Root.Store): headsets, computers
 	and routers bought with career cash. Each column lists the tiers of one kind of gear; you always use the
-	best one you own, and better gear unlocks once you've reached higher office floors.
+	best one you own, and better gear unlocks once you've reached higher office floors. Gear lasts one shift.
 
 	Each tier row's button shows its state: EQUIPPED (best you own), OWNED, a price (next one you can buy),
 	or FLOOR n (not unlocked yet).
@@ -71,7 +71,7 @@ local function render()
 	body.Cash.Value.Text = Format.money(cash)
 	body.Note.Text = if data and not data.Persistent
 		then "Purchases aren't saved in Studio test sessions. Walk away or press Esc to close."
-		else "Everything you earn on shifts goes to your career cash. Walk away or press Esc to close."
+		else "Gear lasts until the shift ends. Everything you earn goes to your career cash. Walk away or press Esc to close."
 
 	for _, kind in OfficeConfig.EquipmentOrder do
 		local column = body.Equipment:FindFirstChild(kind)
