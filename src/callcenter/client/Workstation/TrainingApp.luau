@@ -85,7 +85,7 @@ local LESSONS: { { title: string, text: string } } = {
 			.. "• A line that's mostly hidden isn't sent and doesn't use a line. Three <b>Ideas</b> pop up: "
 			.. "ready-made lines that fit the call. Tap one to say it.\n"
 			.. "• A few hidden words reach the caller as static. That line is free and never costs you trust.\n"
-			.. "• Stuck? Press <b>IDEAS</b> any time, and <b>Refresh</b> for new ones.\n"
+			.. "• Stuck? Press the <b>lightbulb</b> for Ideas any time, and <b>Refresh</b> for new ones.\n"
 			.. "• Give your company a made-up name with words, not numbers.",
 	},
 	{

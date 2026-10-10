@@ -6,8 +6,10 @@
 	is used as it is.
 
 	The GUI generator marks image slots with an ImageKey attribute (an ImageConfig.Lookup key). A slot can name
-	a sibling in its ImageFallback attribute (the old drawn icon, or a text symbol): that one shows instead while
-	the picture can't be loaded (for example while Roblox is still reviewing a new upload), and hides once it has.
+	a sibling in its ImageFallback attribute (a drawn icon or a text label). The fallback stays hidden, and only
+	shows if Roblox can't load the picture (for example while it's still reviewing a new upload, or after it
+	rejected one). Whether a picture loads is asked once per picture (ContentProvider:PreloadAsync), so a slot
+	never shows its picture and its fallback at the same time.
 
 	Images.content(key) -> string            "rbxassetid://..." ("" for a key that isn't in ImageConfig)
 	Images.set(label, key, fallback?)        shows the picture on an ImageLabel or ImageButton and keeps it current
@@ -15,20 +17,24 @@
 	                                         now and for slots added later
 ]]
 
+local ContentProvider = game:GetService("ContentProvider")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ImageConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"):WaitForChild("ImageConfig"))
 
 local FOLDER_NAME = "ImageIds"
-local FALLBACK_DELAY = 1.5 -- seconds a picture gets to load before its fallback shows
+local FOLDER_WAIT = 30 -- seconds to wait for the server's image ids before using the config's ids as they are
 
 local Images = {}
 
 local lookup = ImageConfig.Lookup()
 local folder: Instance? = nil
+local gaveUp = false -- the server's image ids never arrived
 local watching = false
 local slots: { [Instance]: string } = setmetatable({}, { __mode = "k" }) :: any
-local fallbackTokens: { [Instance]: {} } = setmetatable({}, { __mode = "k" }) :: any
+local fallbacks: { [Instance]: GuiObject } = setmetatable({}, { __mode = "k" }) :: any
+local loaded: { [string]: boolean } = {} -- picture -> whether Roblox could load it
+local checking: { [string]: boolean } = {}
 
 function Images.content(key: string): string
 	local resolved = if folder then folder:GetAttribute(key) else nil
@@ -39,13 +45,61 @@ function Images.content(key: string): string
 	return if id then `rbxassetid://{id}` else ""
 end
 
+-- The server has said which picture this key is (or isn't going to).
+local function settled(key: string): boolean
+	return gaveUp or (folder ~= nil and (folder:GetAttribute(key) ~= nil or folder:GetAttribute("Ready") == true))
+end
+
+local function showFallback(label: any)
+	local fallback = fallbacks[label]
+	if fallback then
+		fallback.Visible = loaded[label.Image] == false
+	end
+end
+
+local function check(content: string, key: string)
+	if content == "" or loaded[content] ~= nil or checking[content] then
+		return
+	end
+	checking[content] = true
+	task.spawn(function()
+		local ok = false
+		pcall(function()
+			ContentProvider:PreloadAsync({ content }, function(_, status: Enum.AssetFetchStatus)
+				ok = status == Enum.AssetFetchStatus.Success
+			end)
+		end)
+		checking[content] = nil
+		loaded[content] = ok
+		if not ok then
+			warn(`[Images] couldn't load {key} ({content}); showing its stand-in. Is it still waiting for Roblox's review?`)
+		end
+		for label in fallbacks do
+			if (label :: any).Image == content then
+				showFallback(label)
+			end
+		end
+	end)
+end
+
 local function paint(label: any)
 	local key = slots[label]
-	if key then
-		local content = Images.content(key)
-		if label.Image ~= content then
-			label.Image = content
-		end
+	if not key then
+		return
+	end
+	local content = Images.content(key)
+	if label.Image ~= content then
+		label.Image = content
+	end
+	showFallback(label)
+	if fallbacks[label] and settled(key) then
+		check(content, key)
+	end
+end
+
+local function paintAll()
+	for label in slots do
+		paint(label)
 	end
 end
 
@@ -56,43 +110,26 @@ local function watch()
 	end
 	watching = true
 	task.spawn(function()
-		local found = ReplicatedStorage:FindFirstChild(FOLDER_NAME) or ReplicatedStorage:WaitForChild(FOLDER_NAME, 30)
+		local found = ReplicatedStorage:FindFirstChild(FOLDER_NAME) or ReplicatedStorage:WaitForChild(FOLDER_NAME, FOLDER_WAIT)
 		if not found then
+			gaveUp = true
+			paintAll()
 			return
 		end
 		folder = found
-		for label in slots do
-			paint(label)
-		end
 		found.AttributeChanged:Connect(function(name: string)
+			if name == "Ready" then
+				paintAll()
+				return
+			end
 			for label, key in slots do
 				if key == name then
 					paint(label)
 				end
 			end
 		end)
+		paintAll()
 	end)
-end
-
--- The fallback shows only while the picture hasn't loaded, and only after it's had a moment to.
-local function followLoading(label: any, fallback: GuiObject)
-	local function check()
-		if label.IsLoaded then
-			fallbackTokens[label] = nil
-			fallback.Visible = false
-			return
-		end
-		local token = {}
-		fallbackTokens[label] = token
-		task.delay(FALLBACK_DELAY, function()
-			if fallbackTokens[label] == token and not label.IsLoaded and label.Parent then
-				fallback.Visible = true
-			end
-		end)
-	end
-	fallback.Visible = false
-	label:GetPropertyChangedSignal("IsLoaded"):Connect(check)
-	check()
 end
 
 function Images.set(label: ImageLabel | ImageButton, key: string, fallback: GuiObject?)
@@ -101,11 +138,11 @@ function Images.set(label: ImageLabel | ImageButton, key: string, fallback: GuiO
 		return
 	end
 	slots[label] = key
+	if fallback then
+		fallbacks[label] = fallback
+	end
 	watch()
 	paint(label)
-	if fallback then
-		followLoading(label, fallback)
-	end
 end
 
 local function bindOne(instance: Instance)

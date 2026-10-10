@@ -11605,6 +11605,273 @@
 																					}
 																				},
 																				{
+																					"Name": "Glyph",
+																					"ClassName": "Frame",
+																					"Properties": {
+																						"BorderSizePixel": 0,
+																						"Position": {
+																							"UDim2": [
+																								[
+																									0,
+																									0
+																								],
+																								[
+																									0,
+																									0
+																								]
+																							]
+																						},
+																						"Size": {
+																							"UDim2": [
+																								[
+																									0,
+																									44
+																								],
+																								[
+																									0,
+																									44
+																								]
+																							]
+																						},
+																						"BackgroundTransparency": 1,
+																						"Visible": false
+																					},
+																					"Children": [
+																						{
+																							"Name": "Capsule",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											17
+																										],
+																										[
+																											0,
+																											8
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											11
+																										],
+																										[
+																											0,
+																											17
+																										]
+																									]
+																								},
+																								"BackgroundColor3": [
+																									1.0,
+																									1.0,
+																									1.0
+																								]
+																							},
+																							"Children": [
+																								{
+																									"Name": "Corner",
+																									"ClassName": "UICorner",
+																									"Properties": {
+																										"CornerRadius": {
+																											"UDim": [
+																												0.5,
+																												0
+																											]
+																										}
+																									}
+																								}
+																							]
+																						},
+																						{
+																							"Name": "Cup",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											13
+																										],
+																										[
+																											0,
+																											16
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											18
+																										],
+																										[
+																											0,
+																											14
+																										]
+																									]
+																								},
+																								"BackgroundTransparency": 1
+																							},
+																							"Children": [
+																								{
+																									"Name": "Corner",
+																									"ClassName": "UICorner",
+																									"Properties": {
+																										"CornerRadius": {
+																											"UDim": [
+																												0.5,
+																												0
+																											]
+																										}
+																									}
+																								},
+																								{
+																									"Name": "Stroke",
+																									"ClassName": "UIStroke",
+																									"Properties": {
+																										"Color": [
+																											1.0,
+																											1.0,
+																											1.0
+																										],
+																										"Thickness": 2,
+																										"ApplyStrokeMode": "Border"
+																									}
+																								}
+																							]
+																						},
+																						{
+																							"Name": "Mask",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											12
+																										],
+																										[
+																											0,
+																											13
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											20
+																										],
+																										[
+																											0,
+																											8
+																										]
+																									]
+																								},
+																								"BackgroundColor3": [
+																									0.0,
+																									0.0,
+																									0.0
+																								],
+																								"BackgroundTransparency": 1
+																							}
+																						},
+																						{
+																							"Name": "Stand",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											21
+																										],
+																										[
+																											0,
+																											30
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											2
+																										],
+																										[
+																											0,
+																											5
+																										]
+																									]
+																								},
+																								"BackgroundColor3": [
+																									1.0,
+																									1.0,
+																									1.0
+																								]
+																							}
+																						},
+																						{
+																							"Name": "Base",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											16
+																										],
+																										[
+																											0,
+																											35
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											12
+																										],
+																										[
+																											0,
+																											2
+																										]
+																									]
+																								},
+																								"BackgroundColor3": [
+																									1.0,
+																									1.0,
+																									1.0
+																								]
+																							},
+																							"Children": [
+																								{
+																									"Name": "Corner",
+																									"ClassName": "UICorner",
+																									"Properties": {
+																										"CornerRadius": {
+																											"UDim": [
+																												0.5,
+																												0
+																											]
+																										}
+																									}
+																								}
+																							]
+																						}
+																					]
+																				},
+																				{
 																					"Name": "Icon",
 																					"ClassName": "ImageLabel",
 																					"Properties": {
@@ -11640,6 +11907,9 @@
 																							"Attributes": {
 																								"ImageKey": {
 																									"String": "Microphone"
+																								},
+																								"ImageFallback": {
+																									"String": "Glyph"
 																								}
 																							}
 																						}
@@ -11668,7 +11938,7 @@
 																					"UDim2": [
 																						[
 																							0,
-																							182
+																							204
 																						],
 																						[
 																							0,
@@ -11757,7 +12027,7 @@
 																					"UDim2": [
 																						[
 																							0,
-																							271
+																							282
 																						],
 																						[
 																							0,
@@ -11769,7 +12039,7 @@
 																					"UDim2": [
 																						[
 																							0,
-																							66
+																							44
 																						],
 																						[
 																							0,
@@ -11787,17 +12057,17 @@
 																					0.5
 																				],
 																				"AutoButtonColor": false,
-																				"Text": "IDEAS",
+																				"Text": "",
 																				"FontFace": {
 																					"family": "rbxasset://fonts/families/RobotoCondensed.json",
 																					"weight": "Bold",
 																					"style": "Normal"
 																				},
-																				"TextSize": 11,
+																				"TextSize": 14,
 																				"TextColor3": [
 																					1.0,
-																					0.8353,
-																					0.2902
+																					1.0,
+																					1.0
 																				]
 																			},
 																			"Children": [
@@ -11827,15 +12097,48 @@
 																					}
 																				},
 																				{
-																					"Name": "Padding",
-																					"ClassName": "UIPadding",
+																					"Name": "Fallback",
+																					"ClassName": "TextLabel",
 																					"Properties": {
-																						"PaddingLeft": {
-																							"UDim": [
-																								0,
-																								22
+																						"BorderSizePixel": 0,
+																						"Position": {
+																							"UDim2": [
+																								[
+																									0,
+																									0
+																								],
+																								[
+																									0,
+																									0
+																								]
 																							]
-																						}
+																						},
+																						"Size": {
+																							"UDim2": [
+																								[
+																									0,
+																									44
+																								],
+																								[
+																									0,
+																									44
+																								]
+																							]
+																						},
+																						"BackgroundTransparency": 1,
+																						"Visible": false,
+																						"Text": "IDEAS",
+																						"FontFace": {
+																							"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																							"weight": "Bold",
+																							"style": "Normal"
+																						},
+																						"TextSize": 11,
+																						"TextColor3": [
+																							1.0,
+																							0.8353,
+																							0.2902
+																						]
 																					}
 																				},
 																				{
@@ -11847,11 +12150,11 @@
 																							"UDim2": [
 																								[
 																									0,
-																									8
+																									9
 																								],
 																								[
 																									0,
-																									12
+																									9
 																								]
 																							]
 																						},
@@ -11859,11 +12162,11 @@
 																							"UDim2": [
 																								[
 																									0,
-																									20
+																									26
 																								],
 																								[
 																									0,
-																									20
+																									26
 																								]
 																							]
 																						},
@@ -11879,6 +12182,9 @@
 																							"Attributes": {
 																								"ImageKey": {
 																									"String": "Ideas"
+																								},
+																								"ImageFallback": {
+																									"String": "Fallback"
 																								}
 																							}
 																						}
@@ -11893,7 +12199,7 @@
 																							"UDim2": [
 																								[
 																									0,
-																									50
+																									28
 																								],
 																								[
 																									0,
@@ -12014,6 +12320,51 @@
 																					}
 																				},
 																				{
+																					"Name": "Fallback",
+																					"ClassName": "TextLabel",
+																					"Properties": {
+																						"BorderSizePixel": 0,
+																						"Position": {
+																							"UDim2": [
+																								[
+																									0,
+																									0
+																								],
+																								[
+																									0,
+																									0
+																								]
+																							]
+																						},
+																						"Size": {
+																							"UDim2": [
+																								[
+																									0,
+																									44
+																								],
+																								[
+																									0,
+																									44
+																								]
+																							]
+																						},
+																						"BackgroundTransparency": 1,
+																						"Visible": false,
+																						"Text": "SEND",
+																						"FontFace": {
+																							"family": "rbxasset://fonts/families/RobotoCondensed.json",
+																							"weight": "Bold",
+																							"style": "Normal"
+																						},
+																						"TextSize": 11,
+																						"TextColor3": [
+																							1.0,
+																							1.0,
+																							1.0
+																						]
+																					}
+																				},
+																				{
 																					"Name": "Icon",
 																					"ClassName": "ImageLabel",
 																					"Properties": {
@@ -12049,6 +12400,9 @@
 																							"Attributes": {
 																								"ImageKey": {
 																									"String": "Send"
+																								},
+																								"ImageFallback": {
+																									"String": "Fallback"
 																								}
 																							}
 																						}
@@ -12122,6 +12476,231 @@
 																					}
 																				},
 																				{
+																					"Name": "Glyph",
+																					"ClassName": "Frame",
+																					"Properties": {
+																						"BorderSizePixel": 0,
+																						"Position": {
+																							"UDim2": [
+																								[
+																									0,
+																									0
+																								],
+																								[
+																									0,
+																									0
+																								]
+																							]
+																						},
+																						"Size": {
+																							"UDim2": [
+																								[
+																									0,
+																									44
+																								],
+																								[
+																									0,
+																									44
+																								]
+																							]
+																						},
+																						"BackgroundTransparency": 1,
+																						"Visible": false
+																					},
+																					"Children": [
+																						{
+																							"Name": "Box",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											10
+																										],
+																										[
+																											0,
+																											18
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											6
+																										],
+																										[
+																											0,
+																											9
+																										]
+																									]
+																								},
+																								"BackgroundColor3": [
+																									1.0,
+																									1.0,
+																									1.0
+																								]
+																							}
+																						},
+																						{
+																							"Name": "Cone",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											13
+																										],
+																										[
+																											0,
+																											16
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											9
+																										],
+																										[
+																											0,
+																											12
+																										]
+																									]
+																								},
+																								"BackgroundColor3": [
+																									1.0,
+																									1.0,
+																									1.0
+																								]
+																							}
+																						},
+																						{
+																							"Name": "Wave1",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											25
+																										],
+																										[
+																											0,
+																											17
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											4
+																										],
+																										[
+																											0,
+																											11
+																										]
+																									]
+																								},
+																								"BackgroundTransparency": 1
+																							},
+																							"Children": [
+																								{
+																									"Name": "Corner",
+																									"ClassName": "UICorner",
+																									"Properties": {
+																										"CornerRadius": {
+																											"UDim": [
+																												0.5,
+																												0
+																											]
+																										}
+																									}
+																								},
+																								{
+																									"Name": "Stroke",
+																									"ClassName": "UIStroke",
+																									"Properties": {
+																										"Color": [
+																											1.0,
+																											1.0,
+																											1.0
+																										],
+																										"Thickness": 2,
+																										"ApplyStrokeMode": "Border"
+																									}
+																								}
+																							]
+																						},
+																						{
+																							"Name": "Wave2",
+																							"ClassName": "Frame",
+																							"Properties": {
+																								"BorderSizePixel": 0,
+																								"Position": {
+																									"UDim2": [
+																										[
+																											0,
+																											30
+																										],
+																										[
+																											0,
+																											13
+																										]
+																									]
+																								},
+																								"Size": {
+																									"UDim2": [
+																										[
+																											0,
+																											4
+																										],
+																										[
+																											0,
+																											18
+																										]
+																									]
+																								},
+																								"BackgroundTransparency": 1
+																							},
+																							"Children": [
+																								{
+																									"Name": "Corner",
+																									"ClassName": "UICorner",
+																									"Properties": {
+																										"CornerRadius": {
+																											"UDim": [
+																												0.5,
+																												0
+																											]
+																										}
+																									}
+																								},
+																								{
+																									"Name": "Stroke",
+																									"ClassName": "UIStroke",
+																									"Properties": {
+																										"Color": [
+																											1.0,
+																											1.0,
+																											1.0
+																										],
+																										"Thickness": 2,
+																										"ApplyStrokeMode": "Border"
+																									}
+																								}
+																							]
+																						}
+																					]
+																				},
+																				{
 																					"Name": "Icon",
 																					"ClassName": "ImageLabel",
 																					"Properties": {
@@ -12157,6 +12736,9 @@
 																							"Attributes": {
 																								"ImageKey": {
 																									"String": "Voice"
+																								},
+																								"ImageFallback": {
+																									"String": "Glyph"
 																								}
 																							}
 																						}

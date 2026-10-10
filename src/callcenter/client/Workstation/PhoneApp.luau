@@ -5,7 +5,7 @@
 
 	What the mic hears goes in the text box first (Settings: "Check mic lines"), so you can fix it before the
 	caller hears it; press Send or Enter. Lines Roblox hides aren't sent and don't use a line, and three
-	ready-made lines (Ideas) pop up so the call can go on. Ideas also work any time from the IDEAS button, and
+	ready-made lines (Ideas) pop up so the call can go on. Ideas also work any time from the lightbulb (Ideas) button, and
 	change with what the caller just said. Asking uses an on-call tip (the number on the button): 3 free per
 	shift, then Extra Tips (Robux). Out of tips, the button offers Extra Tips.
 
@@ -384,7 +384,7 @@ local function askIdeas()
 	CallStore.AskIdeas()
 end
 
--- The number of tips left, on the IDEAS button.
+-- The number of tips left, on the lightbulb (Ideas) button.
 local function renderTips()
 	local count = ui.talk.IdeasButton:FindFirstChild("Count")
 	if not count then

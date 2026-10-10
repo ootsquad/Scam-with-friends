@@ -32,7 +32,7 @@ everyone gets fired.
 - Talk by typing, with Roblox chat, or with your mic (needs Roblox voice chat).
 - What your mic hears waits in the text box so you can fix it, then press **Send** or Enter. You can turn this
   off in Settings to send mic lines straight away.
-- Stuck? Press **IDEAS** for three ready-made lines that fit the call. Tap one to say it, or **Refresh** for new
+- Stuck? Press the **lightbulb** (Ideas) for three ready-made lines that fit the call. Tap one to say it, or **Refresh** for new
   ones. They change with what the caller just said.
 - The caller answers in text and out loud. Only you can hear your caller.
 - Everyone in the crew can be on a different call at the same time.
@@ -158,7 +158,7 @@ The equipment store also sells Robux items. Find them on the **ROBUX ITEMS** and
 | Office Chaos | Alarms flash, trash and messy desks pile up, broken equipment, and every computer gets the virus. Chores pay double for 2 minutes. |
 | 2x Cash | Double earnings for 15 minutes of work-day time. Extra time is saved for later shifts. |
 | Save My Call | After a caller hangs up on you (or the line drops), they call straight back where you left off, with their trust from before it went wrong. |
-| Extra Tips | 5 more uses of the IDEAS button. Everyone gets 3 free per shift, and unused tips are saved. |
+| Extra Tips | 5 more uses of the lightbulb (Ideas) button. Everyone gets 3 free per shift, and unused tips are saved. |
 | Boss Meltdown, Police Raid | Coming soon |
 
 **Game passes** are bought once and kept:
