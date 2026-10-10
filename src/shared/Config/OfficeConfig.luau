@@ -101,8 +101,12 @@ local OfficeConfig = {
 			Tiers = {
 				{ Name = "Tangled Earbuds", Price = 0, Floor = 1, Value = 0, Blurb = "One side works. Mostly." },
 				{ Name = "Office Headset", Price = 150, Floor = 1, Value = 0.1, Blurb = "+10% trust gains" },
+				{ Name = "Call Center Classic", Price = 300, Floor = 2, Value = 0.15, Blurb = "+15% trust gains" },
 				{ Name = "Noise-Cancel Pro", Price = 500, Floor = 3, Value = 0.2, Blurb = "+20% trust gains" },
+				{ Name = "Studio Cans", Price = 700, Floor = 3, Value = 0.24, Blurb = "+24% trust gains" },
+				{ Name = "Executive Earpiece", Price = 900, Floor = 4, Value = 0.27, Blurb = "+27% trust gains" },
 				{ Name = "Golden Earpiece", Price = 1200, Floor = 5, Value = 0.3, Blurb = "+30% trust gains" },
+				{ Name = "Diamond Headset", Price = 1600, Floor = 6, Value = 0.35, Blurb = "+35% trust gains" },
 			},
 		},
 		Computer = {
@@ -126,6 +130,57 @@ local OfficeConfig = {
 			},
 		},
 	} :: { [string]: Category },
+
+	-- The Tech Store: a room with a dealer (a Model tagged DealerTag) and three shelves. Talking to the dealer
+	-- flies the camera around the shelves (see TechStoreApp). Cameras and item slots are Parts under
+	-- workspace.<Folder>.Cameras and workspace.<Folder>.Items; names are relative to those folders. Each shelf
+	-- lists its slots top to bottom (the starter item first, the best last), in the order of the gear's Tiers.
+	TechStore = {
+		Folder = "TechStore",
+		DealerTag = "TechStoreDealer",
+		Overview = "StoreOverview",
+		Shelves = {
+			Router = {
+				Label = "ROUTERS",
+				Overview = "LeftCameras/LeftShelfOverview",
+				Slots = {
+					{ Camera = "LeftCameras/LeftTopShelf", Item = "LeftSide/TopLeftShelfItem" },
+					{ Camera = "LeftCameras/Left2ndShelf", Item = "LeftSide/2ndLeftShelfItem" },
+					{ Camera = "LeftCameras/Left3rdShelf", Item = "LeftSide/3rdLeftShelfItem" },
+					{ Camera = "LeftCameras/LeftBottomShelf", Item = "LeftSide/BottomLeftShelfItem" },
+				},
+			},
+			Headset = {
+				Label = "HEADSETS",
+				Overview = "MiddleCameras/MiddleOverview",
+				Slots = {
+					{ Camera = "MiddleCameras/TopLeftShelf", Item = "Headphones/TopLeftShelf" },
+					{ Camera = "MiddleCameras/TopRightShelf", Item = "Headphones/TopRightShelf" },
+					{ Camera = "MiddleCameras/2ndShelfLeft", Item = "Headphones/2ndShelfLeft" },
+					{ Camera = "MiddleCameras/2ndShelfRight", Item = "Headphones/2ndShelfRight" },
+					{ Camera = "MiddleCameras/3rdShelfLeft", Item = "Headphones/3rdShelfLeft" },
+					{ Camera = "MiddleCameras/3rdShelfRight", Item = "Headphones/3rdShelfRight" },
+					{ Camera = "MiddleCameras/BottomLeftShelf", Item = "Headphones/BottomLeftShelf" },
+					{ Camera = "MiddleCameras/BottomRightShelf", Item = "Headphones/BottomRightShelf" },
+				},
+			},
+			Computer = {
+				Label = "PC UPGRADES",
+				Overview = "RightCameras/RightShelfOverview",
+				Slots = {
+					{ Camera = "RightCameras/RightTopShelf", Item = "RightSide/TopRightShelfItem" },
+					{ Camera = "RightCameras/Right2ndShelf", Item = "RightSide/2ndRightShelfItem" },
+					{ Camera = "RightCameras/Right3rdShelf", Item = "RightSide/3rdRightShelfItem" },
+					{ Camera = "RightCameras/RightBottomShelf", Item = "RightSide/BottomRightShelfItem" },
+				},
+			},
+		} :: { [string]: { Label: string, Overview: string, Slots: { { Camera: string, Item: string } } } },
+		FlyTime = 0.6, -- seconds a camera move takes
+		OverviewFov = 60,
+		ItemFov = 45,
+		DriftYaw = 2, -- degrees the camera drifts toward the mouse
+		DriftPitch = 1.5,
+	},
 
 	-- Office chores: trash, messy desks and broken equipment show up while the day clock runs. Anyone can
 	-- do them (hold the prompt) for a small bonus that counts toward the quota.

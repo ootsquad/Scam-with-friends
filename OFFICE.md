@@ -64,6 +64,32 @@ The store is a room in the office with a vendor players walk up to. It isn't an 
 - Until you've tagged a vendor, a stand-in store counter shows up next to where the crew arrives, so the store
   still works while you build.
 
+## The Tech Store (camera-driven)
+
+A second way to buy gear: a store room with a dealer and three shelves. Talking to the dealer freezes you where
+you stand and flies the camera around the shelves; clicking an item shows its price on a small card.
+
+1. Build the room with three shelves: ROUTERS (left), HEADSETS (middle, 2 columns × 4 rows), PC UPGRADES
+   (right). Items get better going **down** each shelf.
+2. Tag the dealer (a Model with a Humanoid) `TechStoreDealer`. It gets a **Talk** prompt.
+3. Put the camera and item marker Parts under `workspace.TechStore` with these exact names (the game hides the
+   camera parts):
+   - `Cameras/StoreOverview`
+   - `Cameras/LeftCameras/`: `LeftShelfOverview`, `LeftTopShelf`, `Left2ndShelf`, `Left3rdShelf`, `LeftBottomShelf`
+   - `Cameras/MiddleCameras/`: `MiddleOverview`, `TopLeftShelf`, `TopRightShelf`, `2ndShelfLeft`, `2ndShelfRight`,
+     `3rdShelfLeft`, `3rdShelfRight`, `BottomLeftShelf`, `BottomRightShelf`
+   - `Cameras/RightCameras/`: `RightShelfOverview`, `RightTopShelf`, `Right2ndShelf`, `Right3rdShelf`, `RightBottomShelf`
+   - `Items/LeftSide/`: `TopLeftShelfItem`, `2ndLeftShelfItem`, `3rdLeftShelfItem`, `BottomLeftShelfItem` (routers)
+   - `Items/Headphones/`: `TopLeftShelf`, `TopRightShelf`, `2ndShelfLeft`, `2ndShelfRight`, `3rdShelfLeft`, `3rdShelfRight`,
+     `BottomLeftShelf`, `BottomRightShelf` (the 8 headsets, left to right then down)
+   - `Items/RightSide/`: `TopRightShelfItem`, `2ndRightShelfItem`, `3rdRightShelfItem`, `BottomRightShelfItem` (computers)
+4. Put each item's model inside its marker Part, or leave it empty: the game shows a box with the item's
+   picture there. Every item gets a floating EQUIPPED / OWNED / FLOOR n tag.
+
+The names and the order are in `OfficeConfig.TechStore`. A missing camera or marker is reported in the Output
+and the game falls back to the shelf overview. The old `StoreVendor` counter still works (and is where the
+Robux items are for now).
+
 ## Images
 
 Every icon, store picture and wallpaper is listed by name in `src/shared/Config/ImageConfig.luau`. To change
@@ -89,6 +115,6 @@ All three tags are optional; chores still show up without them.
 
 - [ ] Desks tagged `Computer`, a few per floor (crews are up to 4 players).
 - [ ] Floors 1–6, each tagged `OfficeFloor`, with a `Floor` number attribute and a `FloorSpawn` part.
-- [ ] A store room with a vendor tagged `StoreVendor`.
+- [ ] A store room with a vendor tagged `StoreVendor`, or the Tech Store room with a dealer tagged `TechStoreDealer`.
 - [ ] Optional: `FloorSign`, `TrashSpot`, `TrashBin`, `Equipment`.
 - [ ] Game Settings > Avatar > **R15**, so players look like their own avatars.
