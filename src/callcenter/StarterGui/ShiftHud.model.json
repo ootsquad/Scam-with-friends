@@ -3727,321 +3727,6 @@
 																	}
 																},
 																{
-																	"Name": "Glyph",
-																	"ClassName": "Frame",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					40
-																				],
-																				[
-																					0,
-																					40
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false
-																	},
-																	"Children": [
-																		{
-																			"Name": "BandClip",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							6
-																						],
-																						[
-																							0,
-																							5
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							27
-																						],
-																						[
-																							0,
-																							14
-																						]
-																					]
-																				},
-																				"BackgroundTransparency": 1,
-																				"ClipsDescendants": true
-																			},
-																			"Children": [
-																				{
-																					"Name": "Band",
-																					"ClassName": "Frame",
-																					"Properties": {
-																						"BorderSizePixel": 0,
-																						"Position": {
-																							"UDim2": [
-																								[
-																									0,
-																									3
-																								],
-																								[
-																									0,
-																									3
-																								]
-																							]
-																						},
-																						"Size": {
-																							"UDim2": [
-																								[
-																									0,
-																									21
-																								],
-																								[
-																									0,
-																									21
-																								]
-																							]
-																						},
-																						"BackgroundTransparency": 1
-																					},
-																					"Children": [
-																						{
-																							"Name": "Corner",
-																							"ClassName": "UICorner",
-																							"Properties": {
-																								"CornerRadius": {
-																									"UDim": [
-																										0.5,
-																										0
-																									]
-																								}
-																							}
-																						},
-																						{
-																							"Name": "Stroke",
-																							"ClassName": "UIStroke",
-																							"Properties": {
-																								"Color": [
-																									1.0,
-																									1.0,
-																									1.0
-																								],
-																								"Thickness": 3,
-																								"ApplyStrokeMode": "Border"
-																							}
-																						}
-																					]
-																				}
-																			]
-																		},
-																		{
-																			"Name": "CupL",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							5
-																						],
-																						[
-																							0,
-																							16
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							7
-																						],
-																						[
-																							0,
-																							11
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0,
-																								2
-																							]
-																						}
-																					}
-																				}
-																			]
-																		},
-																		{
-																			"Name": "CupR",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							28
-																						],
-																						[
-																							0,
-																							16
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							7
-																						],
-																						[
-																							0,
-																							11
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0,
-																								2
-																							]
-																						}
-																					}
-																				}
-																			]
-																		},
-																		{
-																			"Name": "Boom",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							20
-																						],
-																						[
-																							0,
-																							29
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							11
-																						],
-																						[
-																							0,
-																							2
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			}
-																		},
-																		{
-																			"Name": "Mic",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							16
-																						],
-																						[
-																							0,
-																							28
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							5
-																						],
-																						[
-																							0,
-																							5
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0.5,
-																								0
-																							]
-																						}
-																					}
-																				}
-																			]
-																		}
-																	]
-																},
-																{
 																	"Name": "Image",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -4077,9 +3762,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Headset"
-																				},
-																				"ImageFallback": {
-																					"String": "Glyph"
 																				}
 																			}
 																		}
@@ -5127,186 +4809,6 @@
 																	}
 																},
 																{
-																	"Name": "Glyph",
-																	"ClassName": "Frame",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					40
-																				],
-																				[
-																					0,
-																					40
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false
-																	},
-																	"Children": [
-																		{
-																			"Name": "Screen",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							7
-																						],
-																						[
-																							0,
-																							8
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							26
-																						],
-																						[
-																							0,
-																							17
-																						]
-																					]
-																				},
-																				"BackgroundTransparency": 1
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0,
-																								2
-																							]
-																						}
-																					}
-																				},
-																				{
-																					"Name": "Stroke",
-																					"ClassName": "UIStroke",
-																					"Properties": {
-																						"Color": [
-																							1.0,
-																							1.0,
-																							1.0
-																						],
-																						"Thickness": 2,
-																						"ApplyStrokeMode": "Border"
-																					}
-																				}
-																			]
-																		},
-																		{
-																			"Name": "Neck",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							18
-																						],
-																						[
-																							0,
-																							25
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							3
-																						],
-																						[
-																							0,
-																							5
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			}
-																		},
-																		{
-																			"Name": "Stand",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							14
-																						],
-																						[
-																							0,
-																							30
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							13
-																						],
-																						[
-																							0,
-																							2
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0.5,
-																								0
-																							]
-																						}
-																					}
-																				}
-																			]
-																		}
-																	]
-																},
-																{
 																	"Name": "Image",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -5342,9 +4844,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Computer"
-																				},
-																				"ImageFallback": {
-																					"String": "Glyph"
 																				}
 																			}
 																		}
@@ -6392,191 +5891,6 @@
 																	}
 																},
 																{
-																	"Name": "Glyph",
-																	"ClassName": "Frame",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					40
-																				],
-																				[
-																					0,
-																					40
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false
-																	},
-																	"Children": [
-																		{
-																			"Name": "Box",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							7
-																						],
-																						[
-																							0,
-																							21
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							26
-																						],
-																						[
-																							0,
-																							10
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0,
-																								2
-																							]
-																						}
-																					}
-																				}
-																			]
-																		},
-																		{
-																			"Name": "AntennaL",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							12
-																						],
-																						[
-																							0,
-																							8
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							2
-																						],
-																						[
-																							0,
-																							13
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0.5,
-																								0
-																							]
-																						}
-																					}
-																				}
-																			]
-																		},
-																		{
-																			"Name": "AntennaR",
-																			"ClassName": "Frame",
-																			"Properties": {
-																				"BorderSizePixel": 0,
-																				"Position": {
-																					"UDim2": [
-																						[
-																							0,
-																							26
-																						],
-																						[
-																							0,
-																							8
-																						]
-																					]
-																				},
-																				"Size": {
-																					"UDim2": [
-																						[
-																							0,
-																							2
-																						],
-																						[
-																							0,
-																							13
-																						]
-																					]
-																				},
-																				"BackgroundColor3": [
-																					1.0,
-																					1.0,
-																					1.0
-																				]
-																			},
-																			"Children": [
-																				{
-																					"Name": "Corner",
-																					"ClassName": "UICorner",
-																					"Properties": {
-																						"CornerRadius": {
-																							"UDim": [
-																								0.5,
-																								0
-																							]
-																						}
-																					}
-																				}
-																			]
-																		}
-																	]
-																},
-																{
 																	"Name": "Image",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -6612,9 +5926,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Router"
-																				},
-																				"ImageFallback": {
-																					"String": "Glyph"
 																				}
 																			}
 																		}
@@ -7697,51 +7008,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "HA!",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			0.102,
-																			0.102,
-																			0.102
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -7777,9 +7043,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_PrankCall"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -8119,51 +7382,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "BOSS",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 13,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -8199,9 +7417,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_BossMeltdown"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -8541,51 +7756,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "X_X",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -8621,9 +7791,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_VirusAttack"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -8963,51 +8130,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "COPS",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 13,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -9043,9 +8165,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_PoliceRaid"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -9385,51 +8504,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "2x",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -9465,9 +8539,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_DoubleCash"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -9807,51 +8878,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "SOS",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -9887,9 +8913,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_SaveMyCall"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -10229,51 +9252,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "!!!",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -10309,9 +9287,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_OfficeChaos"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -10651,51 +9626,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "+5",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			0.102,
-																			0.102,
-																			0.102
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -10731,9 +9661,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_ExtraTips"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -11108,51 +10035,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "2x",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -11188,9 +10070,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_Cash15"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -11530,51 +10409,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "2x",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -11610,9 +10444,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_Cash60"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -11952,51 +10783,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "2x",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -12032,9 +10818,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_CashForever"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -12374,51 +11157,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "+10%",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 13,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -12454,9 +11192,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_TeamLeader"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}
@@ -12796,51 +11531,6 @@
 																	}
 																},
 																{
-																	"Name": "Symbol",
-																	"ClassName": "TextLabel",
-																	"Properties": {
-																		"BorderSizePixel": 0,
-																		"Position": {
-																			"UDim2": [
-																				[
-																					0,
-																					0
-																				],
-																				[
-																					0,
-																					0
-																				]
-																			]
-																		},
-																		"Size": {
-																			"UDim2": [
-																				[
-																					0,
-																					48
-																				],
-																				[
-																					0,
-																					48
-																				]
-																			]
-																		},
-																		"BackgroundTransparency": 1,
-																		"Visible": false,
-																		"Text": "VIP",
-																		"FontFace": {
-																			"family": "rbxasset://fonts/families/RobotoCondensed.json",
-																			"weight": "Bold",
-																			"style": "Normal"
-																		},
-																		"TextSize": 17,
-																		"TextColor3": [
-																			1.0,
-																			1.0,
-																			1.0
-																		]
-																	}
-																},
-																{
 																	"Name": "Icon",
 																	"ClassName": "ImageLabel",
 																	"Properties": {
@@ -12876,9 +11566,6 @@
 																			"Attributes": {
 																				"ImageKey": {
 																					"String": "Shop_VIP"
-																				},
-																				"ImageFallback": {
-																					"String": "Symbol"
 																				}
 																			}
 																		}

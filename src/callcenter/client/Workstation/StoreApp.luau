@@ -119,7 +119,6 @@ local function fillCard(card: any, item: ShopConfig.Item)
 	card.ItemName.Text = item.Name
 	card.Blurb.Text = item.Blurb
 	card.Tile.BackgroundColor3 = Color3.fromHex(item.Color)
-	card.Tile.Symbol.Text = item.Symbol
 end
 
 local function productState(item: ShopConfig.Item): (string, boolean, string?)

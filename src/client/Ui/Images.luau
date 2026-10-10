@@ -5,12 +5,9 @@
 	ids and shares them in ReplicatedStorage.ImageIds (ImageService); until that arrives, the id from the config
 	is used as it is.
 
-	The GUI generator marks image slots with an ImageKey attribute (an ImageConfig.Lookup key). A slot can name
-	a sibling in its ImageFallback attribute (a drawn icon or a text label). The fallback stays hidden, and only
-	shows while Roblox can't load the picture (for example while it's still reviewing a new upload, or after it
-	rejected one): when ContentProvider:PreloadAsync says the picture failed, or when the label still isn't
-	IsLoaded a couple of seconds after getting its picture. Slots are checked every second, so a picture that
-	arrives late hides its fallback again, and the two are never meant to show together.
+	The GUI generator marks image slots with an ImageKey attribute (an ImageConfig.Lookup key). A slot may name
+	a sibling in its ImageFallback attribute: it's shown only while Roblox can't load the picture (none of the
+	game's slots use one right now; a picture that can't load leaves its tile plain and is named in the Output).
 
 	Images.content(key) -> string            "rbxassetid://..." ("" for a key that isn't in ImageConfig)
 	Images.set(label, key, fallback?)        shows the picture on an ImageLabel or ImageButton and keeps it current
