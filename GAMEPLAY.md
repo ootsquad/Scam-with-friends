@@ -183,7 +183,7 @@ The equipment store also sells Robux items. Find them on the **ROBUX ITEMS** and
 | Wallet | Your payouts and the team's progress |
 | Training | Short lessons on all of the above |
 | Career | Your title, stats and the office tower |
-| Settings | Volumes (master, caller voices, sound effects), wallpaper, interface size, clock, motion, checking mic lines before they're sent |
+| Settings | Volumes (master, caller voices, sound effects), wallpaper (five photos), interface size, clock, motion, checking mic lines before they're sent |
 
 > Call Center Chaos is a comedy game. In real life, companies never ask for gift cards or card numbers over the
 > phone. If a caller does, hang up.

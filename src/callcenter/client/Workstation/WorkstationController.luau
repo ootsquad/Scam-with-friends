@@ -31,6 +31,7 @@ local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
 local Avatar = require(Ui.Avatar)
 local ButtonFx = require(Ui.ButtonFx)
+local Images = require(Ui.Images)
 local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
 local Theme = require(Ui.Theme)
@@ -513,6 +514,7 @@ function WorkstationController.Start()
 	desktop = root:WaitForChild("Desktop") :: Frame
 	login = root:WaitForChild("LoginScreen") :: Frame
 	UiScale.virtual(gui, root)
+	Images.bind(root)
 	root.Active = true -- clicks on the desktop never fall through to the 3D world behind it
 
 	local windows = desktop.Windows

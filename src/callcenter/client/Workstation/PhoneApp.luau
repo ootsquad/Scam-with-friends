@@ -324,7 +324,10 @@ local function updateTalkBar(state: any)
 	talk.InputBox.TextEditable = connected
 	talk.InputBox.PlaceholderText = if connected then "Say something..." else "Waiting for the call..."
 	talk.SendButton.BackgroundColor3 = if connected then Theme.Accent else Theme.PhoneHead
-	talk.SendButton.TextColor3 = if connected then Theme.White else Theme.DarkFaint
+	local sendIcon = talk.SendButton:FindFirstChild("Icon")
+	if sendIcon then
+		sendIcon.ImageTransparency = if connected then 0 else 0.6
+	end
 
 	local thinking = ui.thinking
 	local drafting = connected and micDraft ~= nil and talk.InputBox.Text ~= ""
@@ -344,19 +347,18 @@ local function updateTalkBar(state: any)
 	end
 end
 
--- The mic and caller-voice buttons are light circles with icon images: blue (green while it hears you) when
--- the mic is on, faded when the caller's voice is off.
-local ICON_BUTTON = Color3.fromHex("#D9DCE2")
-local VOICE_OFF = Color3.fromHex("#8B9099")
+-- The mic and caller-voice buttons are grey circles with white icons (ImageConfig): the mic turns blue when
+-- it's on (green while it hears you); the caller-voice button goes dark with a faded icon when voices are off.
+local ICON_BUTTON = Color3.fromHex("#3A404C")
 
 local function paintVoiceButtons()
 	local talk = ui.talk
 	local micOn = CallVoice.MicOn
 	talk.MicButton.BackgroundColor3 = if micOn then (if CallVoice.Hearing then Theme.TrustHigh else Theme.Accent) else ICON_BUTTON
-	talk.VoiceButton.BackgroundColor3 = if CallVoice.VoiceEnabled then ICON_BUTTON else VOICE_OFF
+	talk.VoiceButton.BackgroundColor3 = if CallVoice.VoiceEnabled then ICON_BUTTON else Theme.PhoneHead
 	local voiceIcon = talk.VoiceButton:FindFirstChild("Icon")
 	if voiceIcon then
-		voiceIcon.ImageTransparency = if CallVoice.VoiceEnabled then 0 else 0.55
+		voiceIcon.ImageTransparency = if CallVoice.VoiceEnabled then 0 else 0.6
 	end
 	updateTalkBar(CallStore.State)
 end

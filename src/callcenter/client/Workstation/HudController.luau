@@ -28,6 +28,7 @@ local Network = require(Shared:WaitForChild("Network"))
 
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
+local Images = require(Ui.Images)
 local Theme = require(Ui.Theme)
 local UiScale = require(Ui.UiScale)
 local CallStore = require(script.Parent.CallStore)
@@ -254,6 +255,7 @@ function HudController.Start()
 	gui = player:WaitForChild("PlayerGui"):WaitForChild("ShiftHud") :: ScreenGui
 	root = gui:WaitForChild("Root") :: Frame
 	UiScale.virtual(gui, root)
+	Images.bind(root)
 	root.Elevator.Visible = false
 	root.Flash.Visible = false
 	root.Review.Visible = false

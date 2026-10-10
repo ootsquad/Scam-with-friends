@@ -12,10 +12,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Network"))
 
 local Services = script:WaitForChild("Services")
+local ImageService = require(Services.ImageService)
 local LobbyService = require(Services.LobbyService)
 local SettingsService = require(Services.SettingsService)
 local ShiftLauncher = require(Services.ShiftLauncher)
 
+ImageService.Start()
 SettingsService.Start()
 ShiftLauncher.Start()
 LobbyService.Start()

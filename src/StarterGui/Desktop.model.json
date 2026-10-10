@@ -79,6 +79,48 @@
 					},
 					"Children": [
 						{
+							"Name": "Photo",
+							"ClassName": "ImageLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											0
+										],
+										[
+											0,
+											0
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											1,
+											0
+										],
+										[
+											1,
+											0
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"ZIndex": 9,
+								"Image": "rbxthumb://type=Asset&id=125809759926045&w=420&h=420",
+								"ScaleType": "Crop",
+								"Attributes": {
+									"Attributes": {
+										"ImageKey": {
+											"String": "Wallpaper_Dusk"
+										}
+									}
+								}
+							}
+						},
+						{
 							"Name": "Sky",
 							"ClassName": "Frame",
 							"Properties": {
@@ -1990,7 +2032,7 @@
 									},
 									"Children": [
 										{
-											"Name": "Line1",
+											"Name": "Glyph",
 											"ClassName": "Frame",
 											"Properties": {
 												"BorderSizePixel": 0,
@@ -1998,11 +2040,11 @@
 													"UDim2": [
 														[
 															0,
-															11
+															0
 														],
 														[
 															0,
-															15
+															0
 														]
 													]
 												},
@@ -2010,85 +2052,292 @@
 													"UDim2": [
 														[
 															0,
-															34
+															56
 														],
 														[
 															0,
-															3
+															56
 														]
 													]
 												},
-												"BackgroundColor3": [
-													1.0,
-													1.0,
-													1.0
-												]
-											}
-										},
-										{
-											"Name": "Knob1",
-											"ClassName": "Frame",
-											"Properties": {
-												"BorderSizePixel": 0,
-												"Position": {
-													"UDim2": [
-														[
-															0,
-															14
-														],
-														[
-															0,
-															12
-														]
-													]
-												},
-												"Size": {
-													"UDim2": [
-														[
-															0,
-															10
-														],
-														[
-															0,
-															10
-														]
-													]
-												},
-												"BackgroundColor3": [
-													1.0,
-													1.0,
-													1.0
-												]
+												"BackgroundTransparency": 1,
+												"Visible": false
 											},
 											"Children": [
 												{
-													"Name": "Corner",
-													"ClassName": "UICorner",
+													"Name": "Line1",
+													"ClassName": "Frame",
 													"Properties": {
-														"CornerRadius": {
-															"UDim": [
-																0.5,
-																0
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	11
+																],
+																[
+																	0,
+																	15
+																]
 															]
-														}
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	34
+																],
+																[
+																	0,
+																	3
+																]
+															]
+														},
+														"BackgroundColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
 													}
+												},
+												{
+													"Name": "Knob1",
+													"ClassName": "Frame",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	14
+																],
+																[
+																	0,
+																	12
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	10
+																],
+																[
+																	0,
+																	10
+																]
+															]
+														},
+														"BackgroundColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													},
+													"Children": [
+														{
+															"Name": "Corner",
+															"ClassName": "UICorner",
+															"Properties": {
+																"CornerRadius": {
+																	"UDim": [
+																		0.5,
+																		0
+																	]
+																}
+															}
+														}
+													]
+												},
+												{
+													"Name": "Line2",
+													"ClassName": "Frame",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	11
+																],
+																[
+																	0,
+																	26
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	34
+																],
+																[
+																	0,
+																	3
+																]
+															]
+														},
+														"BackgroundColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													}
+												},
+												{
+													"Name": "Knob2",
+													"ClassName": "Frame",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	30
+																],
+																[
+																	0,
+																	23
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	10
+																],
+																[
+																	0,
+																	10
+																]
+															]
+														},
+														"BackgroundColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													},
+													"Children": [
+														{
+															"Name": "Corner",
+															"ClassName": "UICorner",
+															"Properties": {
+																"CornerRadius": {
+																	"UDim": [
+																		0.5,
+																		0
+																	]
+																}
+															}
+														}
+													]
+												},
+												{
+													"Name": "Line3",
+													"ClassName": "Frame",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	11
+																],
+																[
+																	0,
+																	38
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	34
+																],
+																[
+																	0,
+																	3
+																]
+															]
+														},
+														"BackgroundColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													}
+												},
+												{
+													"Name": "Knob3",
+													"ClassName": "Frame",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	20
+																],
+																[
+																	0,
+																	34
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	10
+																],
+																[
+																	0,
+																	10
+																]
+															]
+														},
+														"BackgroundColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													},
+													"Children": [
+														{
+															"Name": "Corner",
+															"ClassName": "UICorner",
+															"Properties": {
+																"CornerRadius": {
+																	"UDim": [
+																		0.5,
+																		0
+																	]
+																}
+															}
+														}
+													]
 												}
 											]
 										},
 										{
-											"Name": "Line2",
-											"ClassName": "Frame",
+											"Name": "Icon",
+											"ClassName": "ImageLabel",
 											"Properties": {
 												"BorderSizePixel": 0,
 												"Position": {
 													"UDim2": [
 														[
 															0,
-															11
+															5
 														],
 														[
 															0,
-															26
+															5
 														]
 													]
 												},
@@ -2096,156 +2345,28 @@
 													"UDim2": [
 														[
 															0,
-															34
+															45
 														],
 														[
 															0,
-															3
+															45
 														]
 													]
 												},
-												"BackgroundColor3": [
-													1.0,
-													1.0,
-													1.0
-												]
-											}
-										},
-										{
-											"Name": "Knob2",
-											"ClassName": "Frame",
-											"Properties": {
-												"BorderSizePixel": 0,
-												"Position": {
-													"UDim2": [
-														[
-															0,
-															30
-														],
-														[
-															0,
-															23
-														]
-													]
-												},
-												"Size": {
-													"UDim2": [
-														[
-															0,
-															10
-														],
-														[
-															0,
-															10
-														]
-													]
-												},
-												"BackgroundColor3": [
-													1.0,
-													1.0,
-													1.0
-												]
-											},
-											"Children": [
-												{
-													"Name": "Corner",
-													"ClassName": "UICorner",
-													"Properties": {
-														"CornerRadius": {
-															"UDim": [
-																0.5,
-																0
-															]
+												"BackgroundTransparency": 1,
+												"Image": "rbxthumb://type=Asset&id=129568295036420&w=420&h=420",
+												"ScaleType": "Fit",
+												"Attributes": {
+													"Attributes": {
+														"ImageKey": {
+															"String": "Settings"
+														},
+														"ImageFallback": {
+															"String": "Glyph"
 														}
 													}
 												}
-											]
-										},
-										{
-											"Name": "Line3",
-											"ClassName": "Frame",
-											"Properties": {
-												"BorderSizePixel": 0,
-												"Position": {
-													"UDim2": [
-														[
-															0,
-															11
-														],
-														[
-															0,
-															38
-														]
-													]
-												},
-												"Size": {
-													"UDim2": [
-														[
-															0,
-															34
-														],
-														[
-															0,
-															3
-														]
-													]
-												},
-												"BackgroundColor3": [
-													1.0,
-													1.0,
-													1.0
-												]
 											}
-										},
-										{
-											"Name": "Knob3",
-											"ClassName": "Frame",
-											"Properties": {
-												"BorderSizePixel": 0,
-												"Position": {
-													"UDim2": [
-														[
-															0,
-															20
-														],
-														[
-															0,
-															34
-														]
-													]
-												},
-												"Size": {
-													"UDim2": [
-														[
-															0,
-															10
-														],
-														[
-															0,
-															10
-														]
-													]
-												},
-												"BackgroundColor3": [
-													1.0,
-													1.0,
-													1.0
-												]
-											},
-											"Children": [
-												{
-													"Name": "Corner",
-													"ClassName": "UICorner",
-													"Properties": {
-														"CornerRadius": {
-															"UDim": [
-																0.5,
-																0
-															]
-														}
-													}
-												}
-											]
 										}
 									]
 								},
@@ -11937,7 +12058,7 @@
 											},
 											"Children": [
 												{
-													"Name": "Line1",
+													"Name": "Glyph",
 													"ClassName": "Frame",
 													"Properties": {
 														"BorderSizePixel": 0,
@@ -11945,11 +12066,11 @@
 															"UDim2": [
 																[
 																	0,
-																	4
+																	0
 																],
 																[
 																	0,
-																	5
+																	0
 																]
 															]
 														},
@@ -11957,7 +12078,288 @@
 															"UDim2": [
 																[
 																	0,
-																	12
+																	20
+																],
+																[
+																	0,
+																	20
+																]
+															]
+														},
+														"BackgroundTransparency": 1,
+														"Visible": false
+													},
+													"Children": [
+														{
+															"Name": "Line1",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			4
+																		],
+																		[
+																			0,
+																			5
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			12
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob1",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			5
+																		],
+																		[
+																			0,
+																			4
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			3
+																		],
+																		[
+																			0,
+																			3
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			4
+																		],
+																		[
+																			0,
+																			9
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			12
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			11
+																		],
+																		[
+																			0,
+																			8
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			3
+																		],
+																		[
+																			0,
+																			3
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			4
+																		],
+																		[
+																			0,
+																			13
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			12
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			12
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			3
+																		],
+																		[
+																			0,
+																			3
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														}
+													]
+												},
+												{
+													"Name": "Icon",
+													"ClassName": "ImageLabel",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	2
 																],
 																[
 																	0,
@@ -11965,234 +12367,32 @@
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob1",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	5
-																],
-																[
-																	0,
-																	4
-																]
-															]
-														},
 														"Size": {
 															"UDim2": [
 																[
 																	0,
-																	3
+																	16
 																],
 																[
 																	0,
-																	3
+																	16
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
+														"BackgroundTransparency": 1,
+														"Image": "rbxthumb://type=Asset&id=129568295036420&w=420&h=420",
+														"ScaleType": "Fit",
+														"Attributes": {
+															"Attributes": {
+																"ImageKey": {
+																	"String": "Settings"
+																},
+																"ImageFallback": {
+																	"String": "Glyph"
 																}
 															}
 														}
-													]
-												},
-												{
-													"Name": "Line2",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	4
-																],
-																[
-																	0,
-																	9
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	12
-																],
-																[
-																	0,
-																	2
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
 													}
-												},
-												{
-													"Name": "Knob2",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	11
-																],
-																[
-																	0,
-																	8
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	3
-																],
-																[
-																	0,
-																	3
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
-																}
-															}
-														}
-													]
-												},
-												{
-													"Name": "Line3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	4
-																],
-																[
-																	0,
-																	13
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	12
-																],
-																[
-																	0,
-																	2
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	7
-																],
-																[
-																	0,
-																	12
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	3
-																],
-																[
-																	0,
-																	3
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
-																}
-															}
-														}
-													]
 												}
 											]
 										},
@@ -12678,7 +12878,7 @@
 											},
 											"Children": [
 												{
-													"Name": "Line1",
+													"Name": "Glyph",
 													"ClassName": "Frame",
 													"Properties": {
 														"BorderSizePixel": 0,
@@ -12686,11 +12886,11 @@
 															"UDim2": [
 																[
 																	0,
-																	10
+																	0
 																],
 																[
 																	0,
-																	13
+																	0
 																]
 															]
 														},
@@ -12698,85 +12898,292 @@
 															"UDim2": [
 																[
 																	0,
-																	29
+																	48
 																],
 																[
 																	0,
-																	3
+																	48
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob1",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	12
-																],
-																[
-																	0,
-																	10
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	8
-																],
-																[
-																	0,
-																	8
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
+														"BackgroundTransparency": 1,
+														"Visible": false
 													},
 													"Children": [
 														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
+															"Name": "Line1",
+															"ClassName": "Frame",
 															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			10
+																		],
+																		[
+																			0,
+																			13
+																		]
 																	]
-																}
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			29
+																		],
+																		[
+																			0,
+																			3
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
 															}
+														},
+														{
+															"Name": "Knob1",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			12
+																		],
+																		[
+																			0,
+																			10
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			8
+																		],
+																		[
+																			0,
+																			8
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			10
+																		],
+																		[
+																			0,
+																			22
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			29
+																		],
+																		[
+																			0,
+																			3
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			26
+																		],
+																		[
+																			0,
+																			20
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			8
+																		],
+																		[
+																			0,
+																			8
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			10
+																		],
+																		[
+																			0,
+																			32
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			29
+																		],
+																		[
+																			0,
+																			3
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			17
+																		],
+																		[
+																			0,
+																			30
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			8
+																		],
+																		[
+																			0,
+																			8
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
 														}
 													]
 												},
 												{
-													"Name": "Line2",
-													"ClassName": "Frame",
+													"Name": "Icon",
+													"ClassName": "ImageLabel",
 													"Properties": {
 														"BorderSizePixel": 0,
 														"Position": {
 															"UDim2": [
 																[
 																	0,
-																	10
+																	5
 																],
 																[
 																	0,
-																	22
+																	5
 																]
 															]
 														},
@@ -12784,156 +13191,28 @@
 															"UDim2": [
 																[
 																	0,
-																	29
+																	38
 																],
 																[
 																	0,
-																	3
+																	38
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob2",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	26
-																],
-																[
-																	0,
-																	20
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	8
-																],
-																[
-																	0,
-																	8
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
+														"BackgroundTransparency": 1,
+														"Image": "rbxthumb://type=Asset&id=129568295036420&w=420&h=420",
+														"ScaleType": "Fit",
+														"Attributes": {
+															"Attributes": {
+																"ImageKey": {
+																	"String": "Settings"
+																},
+																"ImageFallback": {
+																	"String": "Glyph"
 																}
 															}
 														}
-													]
-												},
-												{
-													"Name": "Line3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	10
-																],
-																[
-																	0,
-																	32
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	29
-																],
-																[
-																	0,
-																	3
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
 													}
-												},
-												{
-													"Name": "Knob3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	17
-																],
-																[
-																	0,
-																	30
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	8
-																],
-																[
-																	0,
-																	8
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
-																}
-															}
-														}
-													]
 												}
 											]
 										},
@@ -13149,11 +13428,11 @@
 															"UDim2": [
 																[
 																	0,
-																	78
+																	46
 																],
 																[
 																	0,
-																	50
+																	39
 																]
 															]
 														},
@@ -13161,11 +13440,11 @@
 															"UDim2": [
 																[
 																	0,
-																	156
+																	92
 																],
 																[
 																	0,
-																	100
+																	78
 																]
 															]
 														},
@@ -13210,11 +13489,11 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
-																			76
+																			56
 																		]
 																	]
 																},
@@ -13260,11 +13539,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					156
+																					92
 																				],
 																				[
 																					0,
-																					48
+																					35
 																				]
 																			]
 																		},
@@ -13324,11 +13603,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					104
+																					61
 																				],
 																				[
 																					0,
-																					24
+																					12
 																				]
 																			]
 																		},
@@ -13336,11 +13615,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					12
+																					10
 																				],
 																				[
 																					0,
-																					12
+																					10
 																				]
 																			]
 																		},
@@ -13375,11 +13654,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					26
+																					15
 																				],
 																				[
 																					0,
-																					40
+																					28
 																				]
 																			]
 																		},
@@ -13387,11 +13666,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					30
+																					18
 																				],
 																				[
 																					0,
-																					30
+																					18
 																				]
 																			]
 																		},
@@ -13413,11 +13692,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					64
+																					38
 																				],
 																				[
 																					0,
-																					44
+																					31
 																				]
 																			]
 																		},
@@ -13425,11 +13704,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					26
+																					15
 																				],
 																				[
 																					0,
-																					26
+																					15
 																				]
 																			]
 																		},
@@ -13455,7 +13734,7 @@
 																				],
 																				[
 																					0,
-																					48
+																					35
 																				]
 																			]
 																		},
@@ -13463,11 +13742,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					156
+																					92
 																				],
 																				[
 																					0,
-																					28
+																					21
 																				]
 																			]
 																		},
@@ -13509,6 +13788,48 @@
 																			}
 																		}
 																	]
+																},
+																{
+																	"Name": "Photo",
+																	"ClassName": "ImageLabel",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					0
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					56
+																				]
+																			]
+																		},
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 6,
+																		"Image": "rbxthumb://type=Asset&id=125809759926045&w=420&h=420",
+																		"ScaleType": "Crop",
+																		"Attributes": {
+																			"Attributes": {
+																				"ImageKey": {
+																					"String": "Wallpaper_Dusk"
+																				}
+																			}
+																		}
+																	}
 																}
 															]
 														},
@@ -13533,11 +13854,11 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
-																			76
+																			56
 																		]
 																	]
 																},
@@ -13572,7 +13893,7 @@
 																		],
 																		[
 																			0,
-																			80
+																			60
 																		]
 																	]
 																},
@@ -13580,7 +13901,7 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
@@ -13606,7 +13927,7 @@
 													]
 												},
 												{
-													"Name": "Overcast",
+													"Name": "Sunset",
 													"ClassName": "TextButton",
 													"Properties": {
 														"BorderSizePixel": 0,
@@ -13614,11 +13935,11 @@
 															"UDim2": [
 																[
 																	0,
-																	246
+																	146
 																],
 																[
 																	0,
-																	50
+																	39
 																]
 															]
 														},
@@ -13626,11 +13947,11 @@
 															"UDim2": [
 																[
 																	0,
-																	156
+																	92
 																],
 																[
 																	0,
-																	100
+																	78
 																]
 															]
 														},
@@ -13675,11 +13996,11 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
-																			76
+																			56
 																		]
 																	]
 																},
@@ -13725,11 +14046,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					156
+																					92
 																				],
 																				[
 																					0,
-																					48
+																					35
 																				]
 																			]
 																		},
@@ -13751,25 +14072,25 @@
 																							{
 																								"time": 0,
 																								"color": [
-																									0.3373,
-																									0.3843,
-																									0.4314
+																									0.2275,
+																									0.2471,
+																									0.3608
 																								]
 																							},
 																							{
-																								"time": 0.6,
+																								"time": 0.55,
 																								"color": [
-																									0.5294,
-																									0.5765,
-																									0.6275
+																									0.549,
+																									0.4157,
+																									0.4784
 																								]
 																							},
 																							{
 																								"time": 1,
 																								"color": [
-																									0.7176,
-																									0.7529,
-																									0.7843
+																									0.9412,
+																									0.6275,
+																									0.4392
 																								]
 																							}
 																						]
@@ -13789,11 +14110,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					104
+																					61
 																				],
 																				[
 																					0,
-																					24
+																					12
 																				]
 																			]
 																		},
@@ -13801,20 +14122,20 @@
 																			"UDim2": [
 																				[
 																					0,
-																					12
+																					10
 																				],
 																				[
 																					0,
-																					12
+																					10
 																				]
 																			]
 																		},
 																		"BackgroundColor3": [
-																			0.9333,
-																			0.9451,
-																			0.9569
+																			1.0,
+																			0.851,
+																			0.6275
 																		],
-																		"BackgroundTransparency": 0.55,
+																		"BackgroundTransparency": 0.2,
 																		"ZIndex": 2
 																	},
 																	"Children": [
@@ -13841,11 +14162,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					26
+																					15
 																				],
 																				[
 																					0,
-																					40
+																					28
 																				]
 																			]
 																		},
@@ -13853,18 +14174,18 @@
 																			"UDim2": [
 																				[
 																					0,
-																					30
+																					18
 																				],
 																				[
 																					0,
-																					30
+																					18
 																				]
 																			]
 																		},
 																		"BackgroundColor3": [
-																			0.3686,
-																			0.4157,
-																			0.4549
+																			0.2902,
+																			0.2706,
+																			0.3765
 																		],
 																		"ZIndex": 3,
 																		"Rotation": 45
@@ -13879,11 +14200,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					64
+																					38
 																				],
 																				[
 																					0,
-																					44
+																					31
 																				]
 																			]
 																		},
@@ -13891,18 +14212,18 @@
 																			"UDim2": [
 																				[
 																					0,
-																					26
+																					15
 																				],
 																				[
 																					0,
-																					26
+																					15
 																				]
 																			]
 																		},
 																		"BackgroundColor3": [
-																			0.2314,
-																			0.2706,
-																			0.3059
+																			0.149,
+																			0.1451,
+																			0.2118
 																		],
 																		"ZIndex": 4,
 																		"Rotation": 45
@@ -13921,7 +14242,7 @@
 																				],
 																				[
 																					0,
-																					48
+																					35
 																				]
 																			]
 																		},
@@ -13929,11 +14250,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					156
+																					92
 																				],
 																				[
 																					0,
-																					28
+																					21
 																				]
 																			]
 																		},
@@ -13955,17 +14276,17 @@
 																							{
 																								"time": 0,
 																								"color": [
-																									0.3373,
-																									0.3843,
-																									0.4235
+																									0.2902,
+																									0.2588,
+																									0.3451
 																								]
 																							},
 																							{
 																								"time": 1,
 																								"color": [
-																									0.149,
-																									0.1765,
-																									0.2
+																									0.0863,
+																									0.0863,
+																									0.1647
 																								]
 																							}
 																						]
@@ -13975,6 +14296,48 @@
 																			}
 																		}
 																	]
+																},
+																{
+																	"Name": "Photo",
+																	"ClassName": "ImageLabel",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					0
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					56
+																				]
+																			]
+																		},
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 6,
+																		"Image": "rbxthumb://type=Asset&id=78346367906573&w=420&h=420",
+																		"ScaleType": "Crop",
+																		"Attributes": {
+																			"Attributes": {
+																				"ImageKey": {
+																					"String": "Wallpaper_Sunset"
+																				}
+																			}
+																		}
+																	}
 																}
 															]
 														},
@@ -13999,11 +14362,11 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
-																			76
+																			56
 																		]
 																	]
 																},
@@ -14039,7 +14402,7 @@
 																		],
 																		[
 																			0,
-																			80
+																			60
 																		]
 																	]
 																},
@@ -14047,7 +14410,7 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
@@ -14056,7 +14419,7 @@
 																	]
 																},
 																"BackgroundTransparency": 1,
-																"Text": "Overcast",
+																"Text": "Sunset",
 																"FontFace": {
 																	"family": "rbxasset://fonts/families/Roboto.json",
 																	"weight": "Medium",
@@ -14081,11 +14444,11 @@
 															"UDim2": [
 																[
 																	0,
-																	414
+																	246
 																],
 																[
 																	0,
-																	50
+																	39
 																]
 															]
 														},
@@ -14093,11 +14456,11 @@
 															"UDim2": [
 																[
 																	0,
-																	156
+																	92
 																],
 																[
 																	0,
-																	100
+																	78
 																]
 															]
 														},
@@ -14142,11 +14505,11 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
-																			76
+																			56
 																		]
 																	]
 																},
@@ -14192,11 +14555,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					156
+																					92
 																				],
 																				[
 																					0,
-																					48
+																					35
 																				]
 																			]
 																		},
@@ -14256,11 +14619,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					104
+																					61
 																				],
 																				[
 																					0,
-																					24
+																					12
 																				]
 																			]
 																		},
@@ -14268,11 +14631,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					12
+																					10
 																				],
 																				[
 																					0,
-																					12
+																					10
 																				]
 																			]
 																		},
@@ -14307,11 +14670,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					26
+																					15
 																				],
 																				[
 																					0,
-																					40
+																					28
 																				]
 																			]
 																		},
@@ -14319,11 +14682,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					30
+																					18
 																				],
 																				[
 																					0,
-																					30
+																					18
 																				]
 																			]
 																		},
@@ -14345,11 +14708,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					64
+																					38
 																				],
 																				[
 																					0,
-																					44
+																					31
 																				]
 																			]
 																		},
@@ -14357,11 +14720,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					26
+																					15
 																				],
 																				[
 																					0,
-																					26
+																					15
 																				]
 																			]
 																		},
@@ -14387,7 +14750,7 @@
 																				],
 																				[
 																					0,
-																					48
+																					35
 																				]
 																			]
 																		},
@@ -14395,11 +14758,11 @@
 																			"UDim2": [
 																				[
 																					0,
-																					156
+																					92
 																				],
 																				[
 																					0,
-																					28
+																					21
 																				]
 																			]
 																		},
@@ -14441,6 +14804,48 @@
 																			}
 																		}
 																	]
+																},
+																{
+																	"Name": "Photo",
+																	"ClassName": "ImageLabel",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					0
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					56
+																				]
+																			]
+																		},
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 6,
+																		"Image": "rbxthumb://type=Asset&id=89903488650155&w=420&h=420",
+																		"ScaleType": "Crop",
+																		"Attributes": {
+																			"Attributes": {
+																				"ImageKey": {
+																					"String": "Wallpaper_Night"
+																				}
+																			}
+																		}
+																	}
 																}
 															]
 														},
@@ -14465,11 +14870,11 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
-																			76
+																			56
 																		]
 																	]
 																},
@@ -14505,7 +14910,7 @@
 																		],
 																		[
 																			0,
-																			80
+																			60
 																		]
 																	]
 																},
@@ -14513,7 +14918,7 @@
 																	"UDim2": [
 																		[
 																			0,
-																			156
+																			92
 																		],
 																		[
 																			0,
@@ -14523,6 +14928,1023 @@
 																},
 																"BackgroundTransparency": 1,
 																"Text": "Night",
+																"FontFace": {
+																	"family": "rbxasset://fonts/families/Roboto.json",
+																	"weight": "Medium",
+																	"style": "Normal"
+																},
+																"TextSize": 13,
+																"TextColor3": [
+																	0.3725,
+																	0.3882,
+																	0.4078
+																]
+															}
+														}
+													]
+												},
+												{
+													"Name": "Moonlight",
+													"ClassName": "TextButton",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	346
+																],
+																[
+																	0,
+																	39
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	92
+																],
+																[
+																	0,
+																	78
+																]
+															]
+														},
+														"BackgroundTransparency": 1,
+														"AnchorPoint": [
+															0.5,
+															0.5
+														],
+														"AutoButtonColor": false,
+														"Text": "",
+														"FontFace": {
+															"family": "rbxasset://fonts/families/RobotoCondensed.json",
+															"weight": "Bold",
+															"style": "Normal"
+														},
+														"TextSize": 14,
+														"TextColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													},
+													"Children": [
+														{
+															"Name": "Preview",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			0
+																		],
+																		[
+																			0,
+																			0
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			92
+																		],
+																		[
+																			0,
+																			56
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																],
+																"ClipsDescendants": true
+															},
+															"Children": [
+																{
+																	"Name": "Stroke",
+																	"ClassName": "UIStroke",
+																	"Properties": {
+																		"Color": [
+																			0.8157,
+																			0.8157,
+																			0.8157
+																		],
+																		"Thickness": 1,
+																		"ApplyStrokeMode": "Border"
+																	}
+																},
+																{
+																	"Name": "Sky",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					0
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					35
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		],
+																		"ZIndex": 1
+																	},
+																	"Children": [
+																		{
+																			"Name": "Gradient",
+																			"ClassName": "UIGradient",
+																			"Properties": {
+																				"Color": {
+																					"ColorSequence": {
+																						"keypoints": [
+																							{
+																								"time": 0,
+																								"color": [
+																									0.0392,
+																									0.0627,
+																									0.1412
+																								]
+																							},
+																							{
+																								"time": 0.6,
+																								"color": [
+																									0.0941,
+																									0.1373,
+																									0.2902
+																								]
+																							},
+																							{
+																								"time": 1,
+																								"color": [
+																									0.1725,
+																									0.2392,
+																									0.4
+																								]
+																							}
+																						]
+																					}
+																				},
+																				"Rotation": 90
+																			}
+																		}
+																	]
+																},
+																{
+																	"Name": "Sun",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					61
+																				],
+																				[
+																					0,
+																					12
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					10
+																				],
+																				[
+																					0,
+																					10
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.949,
+																			0.9176,
+																			0.8157
+																		],
+																		"ZIndex": 2
+																	},
+																	"Children": [
+																		{
+																			"Name": "Corner",
+																			"ClassName": "UICorner",
+																			"Properties": {
+																				"CornerRadius": {
+																					"UDim": [
+																						0.5,
+																						0
+																					]
+																				}
+																			}
+																		}
+																	]
+																},
+																{
+																	"Name": "PeakA",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					15
+																				],
+																				[
+																					0,
+																					28
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					18
+																				],
+																				[
+																					0,
+																					18
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.1098,
+																			0.149,
+																			0.2588
+																		],
+																		"ZIndex": 3,
+																		"Rotation": 45
+																	}
+																},
+																{
+																	"Name": "PeakB",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					38
+																				],
+																				[
+																					0,
+																					31
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					15
+																				],
+																				[
+																					0,
+																					15
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.0431,
+																			0.0627,
+																			0.1098
+																		],
+																		"ZIndex": 4,
+																		"Rotation": 45
+																	}
+																},
+																{
+																	"Name": "Water",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					35
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					21
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		],
+																		"ZIndex": 5
+																	},
+																	"Children": [
+																		{
+																			"Name": "Gradient",
+																			"ClassName": "UIGradient",
+																			"Properties": {
+																				"Color": {
+																					"ColorSequence": {
+																						"keypoints": [
+																							{
+																								"time": 0,
+																								"color": [
+																									0.0941,
+																									0.1333,
+																									0.2471
+																								]
+																							},
+																							{
+																								"time": 1,
+																								"color": [
+																									0.0235,
+																									0.0392,
+																									0.0784
+																								]
+																							}
+																						]
+																					}
+																				},
+																				"Rotation": 90
+																			}
+																		}
+																	]
+																},
+																{
+																	"Name": "Photo",
+																	"ClassName": "ImageLabel",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					0
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					56
+																				]
+																			]
+																		},
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 6,
+																		"Image": "rbxthumb://type=Asset&id=76993092624288&w=420&h=420",
+																		"ScaleType": "Crop",
+																		"Attributes": {
+																			"Attributes": {
+																				"ImageKey": {
+																					"String": "Wallpaper_Moonlight"
+																				}
+																			}
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Ring",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			0
+																		],
+																		[
+																			0,
+																			0
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			92
+																		],
+																		[
+																			0,
+																			56
+																		]
+																	]
+																},
+																"BackgroundTransparency": 1
+															},
+															"Children": [
+																{
+																	"Name": "Stroke",
+																	"ClassName": "UIStroke",
+																	"Properties": {
+																		"Color": [
+																			0.1843,
+																			0.502,
+																			0.9294
+																		],
+																		"Thickness": 2,
+																		"ApplyStrokeMode": "Border",
+																		"Transparency": 1
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Label",
+															"ClassName": "TextLabel",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			0
+																		],
+																		[
+																			0,
+																			60
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			92
+																		],
+																		[
+																			0,
+																			18
+																		]
+																	]
+																},
+																"BackgroundTransparency": 1,
+																"Text": "Moonlight",
+																"FontFace": {
+																	"family": "rbxasset://fonts/families/Roboto.json",
+																	"weight": "Medium",
+																	"style": "Normal"
+																},
+																"TextSize": 13,
+																"TextColor3": [
+																	0.3725,
+																	0.3882,
+																	0.4078
+																]
+															}
+														}
+													]
+												},
+												{
+													"Name": "Overcast",
+													"ClassName": "TextButton",
+													"Properties": {
+														"BorderSizePixel": 0,
+														"Position": {
+															"UDim2": [
+																[
+																	0,
+																	446
+																],
+																[
+																	0,
+																	39
+																]
+															]
+														},
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	92
+																],
+																[
+																	0,
+																	78
+																]
+															]
+														},
+														"BackgroundTransparency": 1,
+														"AnchorPoint": [
+															0.5,
+															0.5
+														],
+														"AutoButtonColor": false,
+														"Text": "",
+														"FontFace": {
+															"family": "rbxasset://fonts/families/RobotoCondensed.json",
+															"weight": "Bold",
+															"style": "Normal"
+														},
+														"TextSize": 14,
+														"TextColor3": [
+															1.0,
+															1.0,
+															1.0
+														]
+													},
+													"Children": [
+														{
+															"Name": "Preview",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			0
+																		],
+																		[
+																			0,
+																			0
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			92
+																		],
+																		[
+																			0,
+																			56
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																],
+																"ClipsDescendants": true
+															},
+															"Children": [
+																{
+																	"Name": "Stroke",
+																	"ClassName": "UIStroke",
+																	"Properties": {
+																		"Color": [
+																			0.8157,
+																			0.8157,
+																			0.8157
+																		],
+																		"Thickness": 1,
+																		"ApplyStrokeMode": "Border"
+																	}
+																},
+																{
+																	"Name": "Sky",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					0
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					35
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		],
+																		"ZIndex": 1
+																	},
+																	"Children": [
+																		{
+																			"Name": "Gradient",
+																			"ClassName": "UIGradient",
+																			"Properties": {
+																				"Color": {
+																					"ColorSequence": {
+																						"keypoints": [
+																							{
+																								"time": 0,
+																								"color": [
+																									0.3373,
+																									0.3843,
+																									0.4314
+																								]
+																							},
+																							{
+																								"time": 0.6,
+																								"color": [
+																									0.5294,
+																									0.5765,
+																									0.6275
+																								]
+																							},
+																							{
+																								"time": 1,
+																								"color": [
+																									0.7176,
+																									0.7529,
+																									0.7843
+																								]
+																							}
+																						]
+																					}
+																				},
+																				"Rotation": 90
+																			}
+																		}
+																	]
+																},
+																{
+																	"Name": "Sun",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					61
+																				],
+																				[
+																					0,
+																					12
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					10
+																				],
+																				[
+																					0,
+																					10
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.9333,
+																			0.9451,
+																			0.9569
+																		],
+																		"BackgroundTransparency": 0.55,
+																		"ZIndex": 2
+																	},
+																	"Children": [
+																		{
+																			"Name": "Corner",
+																			"ClassName": "UICorner",
+																			"Properties": {
+																				"CornerRadius": {
+																					"UDim": [
+																						0.5,
+																						0
+																					]
+																				}
+																			}
+																		}
+																	]
+																},
+																{
+																	"Name": "PeakA",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					15
+																				],
+																				[
+																					0,
+																					28
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					18
+																				],
+																				[
+																					0,
+																					18
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.3686,
+																			0.4157,
+																			0.4549
+																		],
+																		"ZIndex": 3,
+																		"Rotation": 45
+																	}
+																},
+																{
+																	"Name": "PeakB",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					38
+																				],
+																				[
+																					0,
+																					31
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					15
+																				],
+																				[
+																					0,
+																					15
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			0.2314,
+																			0.2706,
+																			0.3059
+																		],
+																		"ZIndex": 4,
+																		"Rotation": 45
+																	}
+																},
+																{
+																	"Name": "Water",
+																	"ClassName": "Frame",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					35
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					21
+																				]
+																			]
+																		},
+																		"BackgroundColor3": [
+																			1.0,
+																			1.0,
+																			1.0
+																		],
+																		"ZIndex": 5
+																	},
+																	"Children": [
+																		{
+																			"Name": "Gradient",
+																			"ClassName": "UIGradient",
+																			"Properties": {
+																				"Color": {
+																					"ColorSequence": {
+																						"keypoints": [
+																							{
+																								"time": 0,
+																								"color": [
+																									0.3373,
+																									0.3843,
+																									0.4235
+																								]
+																							},
+																							{
+																								"time": 1,
+																								"color": [
+																									0.149,
+																									0.1765,
+																									0.2
+																								]
+																							}
+																						]
+																					}
+																				},
+																				"Rotation": 90
+																			}
+																		}
+																	]
+																},
+																{
+																	"Name": "Photo",
+																	"ClassName": "ImageLabel",
+																	"Properties": {
+																		"BorderSizePixel": 0,
+																		"Position": {
+																			"UDim2": [
+																				[
+																					0,
+																					0
+																				],
+																				[
+																					0,
+																					0
+																				]
+																			]
+																		},
+																		"Size": {
+																			"UDim2": [
+																				[
+																					0,
+																					92
+																				],
+																				[
+																					0,
+																					56
+																				]
+																			]
+																		},
+																		"BackgroundTransparency": 1,
+																		"ZIndex": 6,
+																		"Image": "rbxthumb://type=Asset&id=72238794026245&w=420&h=420",
+																		"ScaleType": "Crop",
+																		"Attributes": {
+																			"Attributes": {
+																				"ImageKey": {
+																					"String": "Wallpaper_Overcast"
+																				}
+																			}
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Ring",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			0
+																		],
+																		[
+																			0,
+																			0
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			92
+																		],
+																		[
+																			0,
+																			56
+																		]
+																	]
+																},
+																"BackgroundTransparency": 1
+															},
+															"Children": [
+																{
+																	"Name": "Stroke",
+																	"ClassName": "UIStroke",
+																	"Properties": {
+																		"Color": [
+																			0.1843,
+																			0.502,
+																			0.9294
+																		],
+																		"Thickness": 2,
+																		"ApplyStrokeMode": "Border",
+																		"Transparency": 1
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Label",
+															"ClassName": "TextLabel",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			0
+																		],
+																		[
+																			0,
+																			60
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			92
+																		],
+																		[
+																			0,
+																			18
+																		]
+																	]
+																},
+																"BackgroundTransparency": 1,
+																"Text": "Overcast",
 																"FontFace": {
 																	"family": "rbxasset://fonts/families/Roboto.json",
 																	"weight": "Medium",
@@ -16691,7 +18113,7 @@
 											},
 											"Children": [
 												{
-													"Name": "Line1",
+													"Name": "Glyph",
 													"ClassName": "Frame",
 													"Properties": {
 														"BorderSizePixel": 0,
@@ -16699,11 +18121,11 @@
 															"UDim2": [
 																[
 																	0,
-																	6
+																	0
 																],
 																[
 																	0,
-																	7
+																	0
 																]
 															]
 														},
@@ -16711,85 +18133,292 @@
 															"UDim2": [
 																[
 																	0,
-																	17
+																	28
 																],
 																[
 																	0,
-																	2
+																	28
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob1",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	7
-																],
-																[
-																	0,
-																	6
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	5
-																],
-																[
-																	0,
-																	5
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
+														"BackgroundTransparency": 1,
+														"Visible": false
 													},
 													"Children": [
 														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
+															"Name": "Line1",
+															"ClassName": "Frame",
 															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			6
+																		],
+																		[
+																			0,
+																			7
+																		]
 																	]
-																}
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			17
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
 															}
+														},
+														{
+															"Name": "Knob1",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			6
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			5
+																		],
+																		[
+																			0,
+																			5
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			6
+																		],
+																		[
+																			0,
+																			13
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			17
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			15
+																		],
+																		[
+																			0,
+																			12
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			5
+																		],
+																		[
+																			0,
+																			5
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			6
+																		],
+																		[
+																			0,
+																			19
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			17
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			10
+																		],
+																		[
+																			0,
+																			17
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			5
+																		],
+																		[
+																			0,
+																			5
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
 														}
 													]
 												},
 												{
-													"Name": "Line2",
-													"ClassName": "Frame",
+													"Name": "Icon",
+													"ClassName": "ImageLabel",
 													"Properties": {
 														"BorderSizePixel": 0,
 														"Position": {
 															"UDim2": [
 																[
 																	0,
-																	6
+																	3
 																],
 																[
 																	0,
-																	13
+																	3
 																]
 															]
 														},
@@ -16797,156 +18426,28 @@
 															"UDim2": [
 																[
 																	0,
-																	17
+																	22
 																],
 																[
 																	0,
-																	2
+																	22
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob2",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	15
-																],
-																[
-																	0,
-																	12
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	5
-																],
-																[
-																	0,
-																	5
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
+														"BackgroundTransparency": 1,
+														"Image": "rbxthumb://type=Asset&id=129568295036420&w=420&h=420",
+														"ScaleType": "Fit",
+														"Attributes": {
+															"Attributes": {
+																"ImageKey": {
+																	"String": "Settings"
+																},
+																"ImageFallback": {
+																	"String": "Glyph"
 																}
 															}
 														}
-													]
-												},
-												{
-													"Name": "Line3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	6
-																],
-																[
-																	0,
-																	19
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	17
-																],
-																[
-																	0,
-																	2
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
 													}
-												},
-												{
-													"Name": "Knob3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	10
-																],
-																[
-																	0,
-																	17
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	5
-																],
-																[
-																	0,
-																	5
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
-																}
-															}
-														}
-													]
 												}
 											]
 										},
@@ -17088,7 +18589,7 @@
 											},
 											"Children": [
 												{
-													"Name": "BarA",
+													"Name": "Glyph",
 													"ClassName": "Frame",
 													"Properties": {
 														"BorderSizePixel": 0,
@@ -17096,11 +18597,11 @@
 															"UDim2": [
 																[
 																	0,
-																	7
+																	0
 																],
 																[
 																	0,
-																	13
+																	0
 																]
 															]
 														},
@@ -17108,36 +18609,108 @@
 															"UDim2": [
 																[
 																	0,
-																	14
+																	28
 																],
 																[
 																	0,
-																	2
+																	28
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														],
-														"Rotation": 45
-													}
+														"BackgroundTransparency": 1,
+														"Visible": false
+													},
+													"Children": [
+														{
+															"Name": "BarA",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			13
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			14
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																],
+																"Rotation": 45
+															}
+														},
+														{
+															"Name": "BarB",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			13
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			14
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																],
+																"Rotation": -45
+															}
+														}
+													]
 												},
 												{
-													"Name": "BarB",
-													"ClassName": "Frame",
+													"Name": "Icon",
+													"ClassName": "ImageLabel",
 													"Properties": {
 														"BorderSizePixel": 0,
 														"Position": {
 															"UDim2": [
 																[
 																	0,
-																	7
+																	3
 																],
 																[
 																	0,
-																	13
+																	3
 																]
 															]
 														},
@@ -17145,20 +18718,27 @@
 															"UDim2": [
 																[
 																	0,
-																	14
+																	22
 																],
 																[
 																	0,
-																	2
+																	22
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														],
-														"Rotation": -45
+														"BackgroundTransparency": 1,
+														"Image": "rbxthumb://type=Asset&id=76595181142314&w=420&h=420",
+														"ScaleType": "Fit",
+														"Attributes": {
+															"Attributes": {
+																"ImageKey": {
+																	"String": "LeaveShift"
+																},
+																"ImageFallback": {
+																	"String": "Glyph"
+																}
+															}
+														}
 													}
 												}
 											]
@@ -17675,7 +19255,7 @@
 											},
 											"Children": [
 												{
-													"Name": "Ring",
+													"Name": "Glyph",
 													"ClassName": "Frame",
 													"Properties": {
 														"BorderSizePixel": 0,
@@ -17683,11 +19263,11 @@
 															"UDim2": [
 																[
 																	0,
-																	9
+																	0
 																],
 																[
 																	0,
-																	10
+																	0
 																]
 															]
 														},
@@ -17695,98 +19275,157 @@
 															"UDim2": [
 																[
 																	0,
-																	18
+																	36
 																],
 																[
 																	0,
-																	18
+																	36
 																]
 															]
 														},
-														"BackgroundTransparency": 1
+														"BackgroundTransparency": 1,
+														"Visible": false
 													},
 													"Children": [
 														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
+															"Name": "Ring",
+															"ClassName": "Frame",
 															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			9
+																		],
+																		[
+																			0,
+																			10
+																		]
 																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			18
+																		],
+																		[
+																			0,
+																			18
+																		]
+																	]
+																},
+																"BackgroundTransparency": 1
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																},
+																{
+																	"Name": "Stroke",
+																	"ClassName": "UIStroke",
+																	"Properties": {
+																		"Color": [
+																			1.0,
+																			1.0,
+																			1.0
+																		],
+																		"Thickness": 3,
+																		"ApplyStrokeMode": "Border"
+																	}
 																}
+															]
+														},
+														{
+															"Name": "Gap",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			14
+																		],
+																		[
+																			0,
+																			6
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			9
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	0.1843,
+																	0.502,
+																	0.9294
+																]
 															}
 														},
 														{
-															"Name": "Stroke",
-															"ClassName": "UIStroke",
+															"Name": "Bar",
+															"ClassName": "Frame",
 															"Properties": {
-																"Color": [
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			16
+																		],
+																		[
+																			0,
+																			6
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			3
+																		],
+																		[
+																			0,
+																			12
+																		]
+																	]
+																},
+																"BackgroundColor3": [
 																	1.0,
 																	1.0,
 																	1.0
-																],
-																"Thickness": 3,
-																"ApplyStrokeMode": "Border"
+																]
 															}
 														}
 													]
 												},
 												{
-													"Name": "Gap",
-													"ClassName": "Frame",
+													"Name": "Icon",
+													"ClassName": "ImageLabel",
 													"Properties": {
 														"BorderSizePixel": 0,
 														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	14
-																],
-																[
-																	0,
-																	6
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	7
-																],
-																[
-																	0,
-																	9
-																]
-															]
-														},
-														"BackgroundColor3": [
-															0.1843,
-															0.502,
-															0.9294
-														]
-													}
-												},
-												{
-													"Name": "Bar",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	16
-																],
-																[
-																	0,
-																	6
-																]
-															]
-														},
-														"Size": {
 															"UDim2": [
 																[
 																	0,
@@ -17794,15 +19433,35 @@
 																],
 																[
 																	0,
-																	12
+																	3
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
+														"Size": {
+															"UDim2": [
+																[
+																	0,
+																	29
+																],
+																[
+																	0,
+																	29
+																]
+															]
+														},
+														"BackgroundTransparency": 1,
+														"Image": "rbxthumb://type=Asset&id=118681225072089&w=420&h=420",
+														"ScaleType": "Fit",
+														"Attributes": {
+															"Attributes": {
+																"ImageKey": {
+																	"String": "Start"
+																},
+																"ImageFallback": {
+																	"String": "Glyph"
+																}
+															}
+														}
 													}
 												}
 											]
@@ -18765,7 +20424,7 @@
 											},
 											"Children": [
 												{
-													"Name": "Line1",
+													"Name": "Glyph",
 													"ClassName": "Frame",
 													"Properties": {
 														"BorderSizePixel": 0,
@@ -18773,11 +20432,11 @@
 															"UDim2": [
 																[
 																	0,
-																	7
+																	0
 																],
 																[
 																	0,
-																	10
+																	0
 																]
 															]
 														},
@@ -18785,85 +20444,292 @@
 															"UDim2": [
 																[
 																	0,
-																	22
+																	36
 																],
 																[
 																	0,
-																	2
+																	36
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob1",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	9
-																],
-																[
-																	0,
-																	8
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	6
-																],
-																[
-																	0,
-																	6
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
+														"BackgroundTransparency": 1,
+														"Visible": false
 													},
 													"Children": [
 														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
+															"Name": "Line1",
+															"ClassName": "Frame",
 															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			10
+																		]
 																	]
-																}
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			22
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
 															}
+														},
+														{
+															"Name": "Knob1",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			9
+																		],
+																		[
+																			0,
+																			8
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			6
+																		],
+																		[
+																			0,
+																			6
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			17
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			22
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob2",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			19
+																		],
+																		[
+																			0,
+																			15
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			6
+																		],
+																		[
+																			0,
+																			6
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
+														},
+														{
+															"Name": "Line3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			7
+																		],
+																		[
+																			0,
+																			24
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			22
+																		],
+																		[
+																			0,
+																			2
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															}
+														},
+														{
+															"Name": "Knob3",
+															"ClassName": "Frame",
+															"Properties": {
+																"BorderSizePixel": 0,
+																"Position": {
+																	"UDim2": [
+																		[
+																			0,
+																			13
+																		],
+																		[
+																			0,
+																			22
+																		]
+																	]
+																},
+																"Size": {
+																	"UDim2": [
+																		[
+																			0,
+																			6
+																		],
+																		[
+																			0,
+																			6
+																		]
+																	]
+																},
+																"BackgroundColor3": [
+																	1.0,
+																	1.0,
+																	1.0
+																]
+															},
+															"Children": [
+																{
+																	"Name": "Corner",
+																	"ClassName": "UICorner",
+																	"Properties": {
+																		"CornerRadius": {
+																			"UDim": [
+																				0.5,
+																				0
+																			]
+																		}
+																	}
+																}
+															]
 														}
 													]
 												},
 												{
-													"Name": "Line2",
-													"ClassName": "Frame",
+													"Name": "Icon",
+													"ClassName": "ImageLabel",
 													"Properties": {
 														"BorderSizePixel": 0,
 														"Position": {
 															"UDim2": [
 																[
 																	0,
-																	7
+																	3
 																],
 																[
 																	0,
-																	17
+																	3
 																]
 															]
 														},
@@ -18871,156 +20737,28 @@
 															"UDim2": [
 																[
 																	0,
-																	22
+																	29
 																],
 																[
 																	0,
-																	2
+																	29
 																]
 															]
 														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													}
-												},
-												{
-													"Name": "Knob2",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	19
-																],
-																[
-																	0,
-																	15
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	6
-																],
-																[
-																	0,
-																	6
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
+														"BackgroundTransparency": 1,
+														"Image": "rbxthumb://type=Asset&id=129568295036420&w=420&h=420",
+														"ScaleType": "Fit",
+														"Attributes": {
+															"Attributes": {
+																"ImageKey": {
+																	"String": "Settings"
+																},
+																"ImageFallback": {
+																	"String": "Glyph"
 																}
 															}
 														}
-													]
-												},
-												{
-													"Name": "Line3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	7
-																],
-																[
-																	0,
-																	24
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	22
-																],
-																[
-																	0,
-																	2
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
 													}
-												},
-												{
-													"Name": "Knob3",
-													"ClassName": "Frame",
-													"Properties": {
-														"BorderSizePixel": 0,
-														"Position": {
-															"UDim2": [
-																[
-																	0,
-																	13
-																],
-																[
-																	0,
-																	22
-																]
-															]
-														},
-														"Size": {
-															"UDim2": [
-																[
-																	0,
-																	6
-																],
-																[
-																	0,
-																	6
-																]
-															]
-														},
-														"BackgroundColor3": [
-															1.0,
-															1.0,
-															1.0
-														]
-													},
-													"Children": [
-														{
-															"Name": "Corner",
-															"ClassName": "UICorner",
-															"Properties": {
-																"CornerRadius": {
-																	"UDim": [
-																		0.5,
-																		0
-																	]
-																}
-															}
-														}
-													]
 												}
 											]
 										},

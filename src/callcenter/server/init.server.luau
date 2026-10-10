@@ -20,6 +20,7 @@
 		DisasterService  Virus Attack and Office Chaos
 		ShopService      Robux developer products (ProcessReceipt)
 		SettingsService  (shared with the lobby) sound and display settings
+		ImageService     (shared with the lobby) the game's images, decal ids turned into image ids
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -47,6 +48,9 @@ local CallService = require(Services.CallService)
 local DisasterService = require(Services.DisasterService)
 local ShopService = require(Services.ShopService)
 local SettingsService = require(ServerScriptService:WaitForChild("Common"):WaitForChild("SettingsService"))
+local ImageService = require(ServerScriptService.Common:WaitForChild("ImageService"))
+
+ImageService.Start() -- first, so the players' screens get their images as soon as possible
 
 ShiftService.Start()
 CareerService.Start()

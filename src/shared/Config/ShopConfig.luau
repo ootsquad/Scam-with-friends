@@ -51,7 +51,7 @@ local ShopConfig = {
 			Price = 59,
 			Symbol = "X_X",
 			Color = "#65A30D",
-			Blurb = "Every computer in the office catches a (fake) virus. Close the pop-ups for cash.",
+			Blurb = "Every computer catches a (fake) virus. Close the pop-ups for cash.",
 		},
 		{
 			Key = "PoliceRaid",

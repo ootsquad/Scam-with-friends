@@ -64,6 +64,17 @@ The store is a room in the office with a vendor players walk up to. It isn't an 
 - Until you've tagged a vendor, a stand-in store counter shows up next to where the crew arrives, so the store
   still works while you build.
 
+## Images
+
+Every icon, store picture and wallpaper is listed by name in `src/shared/Config/ImageConfig.luau`. To change
+one, upload the new picture to the group (S&C Production) and paste its id there. A decal id is fine: the
+server turns it into the image id by itself.
+
+- Icons are white pictures on a see-through background. They sit on the coloured app tiles and buttons.
+- A new upload can take a while to pass Roblox's review. Until then, the game shows the old drawn icons, the
+  store's text symbols, and a drawn wallpaper instead.
+- In Studio, the Output says how many decal ids were turned into image ids.
+
 ## Chores (optional)
 
 All three tags are optional; chores still show up without them.

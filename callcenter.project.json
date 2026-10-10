@@ -28,6 +28,9 @@
         "$className": "Folder",
         "SettingsService": {
           "$path": "src/server/Services/SettingsService.luau"
+        },
+        "ImageService": {
+          "$path": "src/server/Services/ImageService.luau"
         }
       }
     },
