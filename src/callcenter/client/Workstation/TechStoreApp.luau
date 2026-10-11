@@ -8,10 +8,11 @@
 	  shelf overview -> the shelf's items; click one (or hover for its name)
 	  item camera    -> a small card: the item, its effect, and one button (price / EQUIPPED / OWNED / FLOOR n)
 
-	Cameras and item slots are Parts under workspace.TechStore (OfficeConfig.TechStore). An empty slot gets a
-	stand-in box with the item's picture; a slot you've put a model in is used as it is. Every item gets a
-	small floating tag (EQUIPPED / OWNED / FLOOR n). Buying goes through CareerStore.Buy (the same rules as
-	ever). The camera drifts a little toward the mouse so each shot feels alive.
+	Cameras and item markers are Parts under workspace.TechStore (OfficeConfig.TechStore). The items on the
+	shelves are yours: each marker Part (and anything inside it) gets a ClickDetector, nothing is added to the
+	room. The dealer is hidden from you while the store is open so it never blocks a shot; its lines show on
+	screen. Buying goes through CareerStore.Buy (the same rules as ever). The camera drifts a little toward the
+	mouse so each shot feels alive.
 
 	BACK goes up one step; LEAVE, Esc or the gamepad's B puts the camera back and unfreezes you.
 
@@ -35,15 +36,13 @@ local Format = require(Shared.Util.Format)
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
 local ButtonFx = require(Ui.ButtonFx)
-local Images = require(Ui.Images)
 local Theme = require(Ui.Theme)
 local CareerStore = require(script.Parent.CareerStore)
 local Sfx = require(script.Parent.Sfx)
 
 local Config = OfficeConfig.TechStore
 local BIND_NAME = "ChaosTechStoreCamera"
-local TAG_NAME = "StoreTag"
-local STAND_IN_NAME = "StandIn"
+local LEFTOVERS = { "StandIn", "StoreTag" } -- things an older version of this script put in the slots
 local BUBBLE_TIME = 4 -- seconds a dealer reaction stays up before the welcome comes back
 local KINDS = OfficeConfig.EquipmentOrder -- the shelves in button order: Headset, Computer, Router
 
@@ -62,9 +61,8 @@ local baseCFrame: CFrame? = nil
 local returnCFrame: CFrame? = nil
 local returnType: Enum.CameraType? = nil
 local frozen: { walk: number, jump: number, humanoid: Humanoid }? = nil
-local bubble: BillboardGui? = nil
 local bubbleToken = 0
-local tags: { [string]: TextLabel } = {}
+local hiddenDealer: { parts: { [BasePart]: number }, decals: { [Decal]: number }, guis: { BillboardGui } }? = nil
 local highlights: { [BasePart]: Highlight } = {}
 local hovered: { kind: string, tier: number }? = nil
 local warned: { [string]: boolean } = {}
@@ -117,90 +115,19 @@ local function kindIndex(kind: string): number
 	return table.find(KINDS, kind) or 1
 end
 
--- What's on the shelf at a slot: a model someone placed, or a stand-in box with the item's picture.
-local function dressSlot(kind: string, tier: number)
-	local part = slotPart(kind, tier)
-	local info = tierOf(kind, tier)
-	if not part or not info then
-		return
-	end
-	local shown = false
-	for _, child in part:GetChildren() do
-		if child:IsA("BasePart") or child:IsA("Model") then
-			shown = true
-		end
-	end
-	if not shown and not part:FindFirstChild(STAND_IN_NAME) then
-		local box = Instance.new("Part")
-		box.Name = STAND_IN_NAME
-		box.Anchored = true
-		box.CanCollide = false
-		box.CanQuery = true
-		box.Size = Vector3.new(1.6, 1.6, 0.3)
-		box.Color = Color3.fromRGB(38, 42, 52)
-		box.Material = Enum.Material.SmoothPlastic
-		box.CFrame = part.CFrame
-		local picture = Instance.new("Decal")
-		picture.Name = "Picture"
-		picture.Face = Enum.NormalId.Front
-		picture.Texture = Images.content(kind)
-		picture.Parent = box
-		box.Parent = part
-	end
-	if not part:FindFirstChild(TAG_NAME) then
-		local tag = Instance.new("BillboardGui")
-		tag.Name = TAG_NAME
-		tag.Size = UDim2.fromOffset(96, 22)
-		tag.StudsOffset = Vector3.new(0, 1.3, 0)
-		tag.AlwaysOnTop = true
-		tag.MaxDistance = 60
-		local label = Instance.new("TextLabel")
-		label.Name = "Label"
-		label.Size = UDim2.fromScale(1, 1)
-		label.BackgroundColor3 = Theme.Green
-		label.TextColor3 = Theme.White
-		label.Font = Enum.Font.GothamBold
-		label.TextSize = 12
-		label.Text = ""
-		local corner = Instance.new("UICorner")
-		corner.CornerRadius = UDim.new(0.5, 0)
-		corner.Parent = label
-		label.Parent = tag
-		tag.Parent = part
-		tags[`{kind}{tier}`] = label
-	end
-end
-
-local function paintTags()
-	local data = CareerStore.Data
-	local best = if data then data.BestFloor else 1
-	for kind, shelf in Config.Shelves do
-		local owned = CareerStore.Owned(kind)
-		for tier in shelf.Slots do
-			local label = tags[`{kind}{tier}`]
-			local info = tierOf(kind, tier)
-			if label and info then
-				if tier == owned then
-					label.Text, label.BackgroundColor3, label.Visible = "EQUIPPED", Theme.Green, true
-				elseif tier < owned then
-					label.Text, label.BackgroundColor3, label.Visible = "OWNED", Theme.NativeMuted, true
-				elseif best < info.Floor then
-					label.Text, label.BackgroundColor3, label.Visible = `FLOOR {info.Floor}`, Theme.NativeMuted, true
-				else
-					label.Visible = false
-				end
-			end
-		end
-	end
-end
-
--- Clicks and hovers on everything sitting in a slot.
+-- Clicks and hovers on the marker Part itself and everything inside it.
 local function wireSlot(kind: string, tier: number)
 	local part = slotPart(kind, tier)
 	if not part then
 		return
 	end
-	local parts = {}
+	for _, name in LEFTOVERS do
+		local leftover = part:FindFirstChild(name)
+		if leftover then
+			leftover:Destroy()
+		end
+	end
+	local parts = { part }
 	for _, thing in part:GetDescendants() do
 		if thing:IsA("BasePart") then
 			table.insert(parts, thing)
@@ -273,65 +200,72 @@ local function dressRoom()
 	end
 	for kind, shelf in Config.Shelves do
 		for tier in shelf.Slots do
-			dressSlot(kind, tier)
 			wireSlot(kind, tier)
 		end
 	end
-	paintTags()
 end
 
 -- ---------------------------------------------------------------------------
--- The dealer's speech bubble
+-- The dealer
 -- ---------------------------------------------------------------------------
 
-local function dealerPart(): BasePart?
+local function dealers(): { Instance }
+	local found = {}
 	for _, dealer in CollectionService:GetTagged(Config.DealerTag) do
 		if dealer:IsDescendantOf(workspace) then
-			if dealer:IsA("BasePart") then
-				return dealer
-			elseif dealer:IsA("Model") then
-				local head = dealer:FindFirstChild("Head") or dealer.PrimaryPart or dealer:FindFirstChildWhichIsA("BasePart", true)
-				if head and head:IsA("BasePart") then
-					return head
-				end
+			table.insert(found, dealer)
+		end
+	end
+	return found
+end
+
+-- Only you stop seeing the dealer (LocalTransparencyModifier); everyone else still sees it standing there.
+local function hideDealer()
+	if hiddenDealer then
+		return
+	end
+	local hidden = { parts = {}, decals = {}, guis = {} }
+	for _, dealer in dealers() do
+		local things = dealer:GetDescendants()
+		table.insert(things, dealer)
+		for _, thing in things do
+			if thing:IsA("BasePart") then
+				hidden.parts[thing] = thing.LocalTransparencyModifier
+				thing.LocalTransparencyModifier = 1
+			elseif thing:IsA("Decal") then
+				hidden.decals[thing] = thing.Transparency
+				thing.Transparency = 1
+			elseif thing:IsA("BillboardGui") and thing.Enabled then
+				thing.Enabled = false
+				table.insert(hidden.guis, thing)
 			end
 		end
 	end
-	return nil
+	hiddenDealer = hidden
 end
 
-local function makeBubble(): BillboardGui?
-	local head = dealerPart()
-	if not head then
-		return nil
+local function showDealer()
+	local hidden = hiddenDealer
+	if not hidden then
+		return
 	end
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "DealerBubble"
-	billboard.Size = UDim2.fromOffset(320, 72)
-	billboard.StudsOffset = Vector3.new(0, 2.6, 0)
-	billboard.AlwaysOnTop = true
-	billboard.MaxDistance = 100
-	local label = root.BubbleTemplate:Clone()
-	label.Name = "Label"
-	label.Visible = true
-	label.Size = UDim2.fromScale(1, 1)
-	label.Position = UDim2.fromScale(0, 0)
-	label.Parent = billboard
-	billboard.Parent = head
-	return billboard
+	hiddenDealer = nil
+	for part, before in hidden.parts do
+		part.LocalTransparencyModifier = before
+	end
+	for decal, before in hidden.decals do
+		decal.Transparency = before
+	end
+	for _, billboard in hidden.guis do
+		billboard.Enabled = true
+	end
 end
 
 local WELCOME = "Welcome to the Tech Store! What are you after?"
 
+-- The dealer's line, shown at the top of the screen (the dealer itself is hidden while you shop).
 local function say(text: string, holdFor: number?)
-	if not bubble or not bubble.Parent then
-		bubble = makeBubble()
-	end
-	if bubble then
-		bubble.Label.Text = text
-		bubble.Enabled = true
-	end
-	root.Dealer.Text = text -- also on screen, for when the dealer is off camera
+	root.Dealer.Text = text
 	bubbleToken += 1
 	if holdFor then
 		local token = bubbleToken
@@ -529,7 +463,6 @@ local function buy()
 		Sfx.Play("Error")
 		say(result.Message, BUBBLE_TIME)
 	end
-	paintTags()
 	paintCard()
 end
 
@@ -571,6 +504,7 @@ function TechStoreApp.Open()
 	shelfKind = nil
 	selected = nil
 	dressRoom()
+	hideDealer()
 	returnCFrame = cam.CFrame
 	returnType = cam.CameraType
 	freeze()
@@ -596,9 +530,7 @@ function TechStoreApp.Close()
 	pcall(function()
 		RunService:UnbindFromRenderStep(BIND_NAME)
 	end)
-	if bubble then
-		bubble.Enabled = false
-	end
+	showDealer()
 	for _, outline in highlights do
 		outline.Enabled = false
 	end
@@ -626,7 +558,6 @@ function TechStoreApp.Start(screenGui: ScreenGui)
 	gui = screenGui
 	root = gui:WaitForChild("Root")
 	root.Visible = false
-	root.BubbleTemplate.Visible = false
 
 	for _, kind in KINDS do
 		local button = root.Shelves:FindFirstChild(kind .. "Button")
@@ -663,7 +594,6 @@ function TechStoreApp.Start(screenGui: ScreenGui)
 	end)
 	CareerStore.Changed:Connect(function()
 		if open then
-			paintTags()
 			paintCard()
 		end
 	end)

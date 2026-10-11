@@ -83,8 +83,10 @@ you stand and flies the camera around the shelves; clicking an item shows its pr
    - `Items/Headphones/`: `TopLeftShelf`, `TopRightShelf`, `2ndShelfLeft`, `2ndShelfRight`, `3rdShelfLeft`, `3rdShelfRight`,
      `BottomLeftShelf`, `BottomRightShelf` (the 8 headsets, left to right then down)
    - `Items/RightSide/`: `TopRightShelfItem`, `2ndRightShelfItem`, `3rdRightShelfItem`, `BottomRightShelfItem` (computers)
-4. Put each item's model inside its marker Part, or leave it empty: the game shows a box with the item's
-   picture there. Every item gets a floating EQUIPPED / OWNED / FLOOR n tag.
+4. Put each item inside (or make it) its marker Part. The game adds nothing to the shelves: the marker Part and
+   everything inside it become clickable, and the item's EQUIPPED / OWNED / FLOOR n state is on the card that
+   opens when you click it. While you shop, the dealer is hidden from you so it never blocks a camera shot (other
+   players still see it).
 
 The names and the order are in `OfficeConfig.TechStore`. A missing camera or marker is reported in the Output
 and the game falls back to the shelf overview. The old `StoreVendor` counter still works (and is where the
