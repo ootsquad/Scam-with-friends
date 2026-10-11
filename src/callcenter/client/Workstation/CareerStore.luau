@@ -8,6 +8,7 @@
 	CareerStore.Elevator:Connect(function(info) end)     -- { Floor, Promoted }: the crew is moving floors
 	CareerStore.Chore:Connect(function(done) end)        -- { Kind, Reward }: you finished a chore
 	CareerStore.OpenStore:Connect(function() end)         -- you used the store vendor's Shop prompt
+	CareerStore.OpenTechStore:Connect(function() end)     -- you talked to the Tech Store dealer
 	CareerStore.Buy(kindIndex, tier) -> Result            (yields)
 	CareerStore.SetTutorialHidden(hidden)
 	CareerStore.StepDone(index) -> boolean
@@ -28,6 +29,7 @@ local CareerStore = {
 	Elevator = Signal.new(),
 	Chore = Signal.new(),
 	OpenStore = Signal.new(),
+	OpenTechStore = Signal.new(),
 }
 
 local Career: any
@@ -48,6 +50,9 @@ function CareerStore.Start()
 	end)
 	Career.packets.Chore.listen(function(done)
 		CareerStore.Chore:Fire(done)
+	end)
+	Career.packets.OpenTechStore.listen(function()
+		CareerStore.OpenTechStore:Fire()
 	end)
 	Career.packets.OpenStore.listen(function()
 		CareerStore.OpenStore:Fire()

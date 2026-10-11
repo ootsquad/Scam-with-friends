@@ -37,6 +37,7 @@ local Checklist = require(script.Parent.Checklist)
 local Sfx = require(script.Parent.Sfx)
 local ShopStore = require(script.Parent.ShopStore)
 local StoreApp = require(script.Parent.StoreApp)
+local TechStoreApp = require(script.Parent.TechStoreApp)
 
 local CHORE_TEXT = {
 	Trash = "Trash taken out",
@@ -264,6 +265,7 @@ function HudController.Start()
 	root.TeamBonus.Visible = false
 	gui.Enabled = true
 	StoreApp.Start(root.Store)
+	TechStoreApp.Start(player.PlayerGui:WaitForChild("TechStore"))
 	ShopStore.Event:Connect(showBanner)
 	ShopStore.Message:Connect(function(message)
 		if not atDesk() then

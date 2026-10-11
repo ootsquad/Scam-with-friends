@@ -9,6 +9,9 @@
 	Until the office has a working vendor, a stand-in counter shows up next to where the crew arrives so the
 	store can still be used. It disappears as soon as a real vendor is tagged.
 
+	The Tech Store's dealer (a Model tagged OfficeConfig.TechStore.DealerTag) counts as a vendor too: its
+	"Talk" prompt opens the camera-driven Tech Store instead (Career OpenTechStore), and buying works next to it.
+
 	VendorService.Start()
 	VendorService.InRange(player) -> boolean
 ]]
@@ -23,6 +26,7 @@ local CareerService = require(script.Parent.CareerService)
 local OfficeService = require(script.Parent.OfficeService)
 
 local PROMPT_NAME = "ShopPrompt"
+local DEALER_TAG = OfficeConfig.TechStore.DealerTag
 local STAND_IN_NAME = "EquipmentStore (stand-in)"
 local STAND_IN_OFFSET = CFrame.new(10, 0, -4) -- from the arrival point
 local COUNTER_SIZE = Vector3.new(7, 3.5, 2.5)
@@ -66,30 +70,36 @@ function VendorService.InRange(player: Player): boolean
 	if not root or not root:IsA("BasePart") then
 		return false
 	end
-	for _, vendor in CollectionService:GetTagged(OfficeConfig.VendorTag) do
-		local part = partOf(vendor)
-		if
-			part
-			and isWorking(vendor)
-			and (part.Position - root.Position).Magnitude <= OfficeConfig.ShopRange + LAG_MARGIN
-		then
-			return true
+	for _, tag in { OfficeConfig.VendorTag, DEALER_TAG } do
+		for _, vendor in CollectionService:GetTagged(tag) do
+			local part = partOf(vendor)
+			if
+				part
+				and isWorking(vendor)
+				and (part.Position - root.Position).Magnitude <= OfficeConfig.ShopRange + LAG_MARGIN
+			then
+				return true
+			end
 		end
 	end
 	return false
 end
 
-local function onShop(player: Player, vendor: Instance)
+local function onShop(player: Player, vendor: Instance, dealer: boolean)
 	if not isWorking(vendor) or atDesk(player) or not CareerService.IsReady(player) then
 		return
 	end
-	Career.packets.OpenStore.sendTo(nil, player)
+	if dealer then
+		Career.packets.OpenTechStore.sendTo(nil, player)
+	else
+		Career.packets.OpenStore.sendTo(nil, player)
+	end
 end
 
-local function attach(vendor: Instance)
+local function attach(vendor: Instance, dealer: boolean)
 	local part = partOf(vendor)
 	if not part then
-		warn(`[VendorService] {vendor:GetFullName()} is tagged "{OfficeConfig.VendorTag}" but has no part to stand at`)
+		warn(`[VendorService] {vendor:GetFullName()} is tagged "{if dealer then DEALER_TAG else OfficeConfig.VendorTag}" but has no part to stand at`)
 		return
 	end
 	if part:FindFirstChild(PROMPT_NAME) then
@@ -97,15 +107,15 @@ local function attach(vendor: Instance)
 	end
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = PROMPT_NAME
-	prompt.ActionText = "Shop"
-	prompt.ObjectText = "Equipment Store"
+	prompt.ActionText = if dealer then "Talk" else "Shop"
+	prompt.ObjectText = if dealer then "Tech Store" else "Equipment Store"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 10
 	prompt.RequiresLineOfSight = false
 	prompt.Enabled = isWorking(vendor)
 	prompt.Triggered:Connect(function(player)
-		onShop(player, vendor)
+		onShop(player, vendor, dealer)
 	end)
 	prompt.Parent = part
 end
@@ -197,15 +207,17 @@ end
 local function refresh()
 	refreshQueued = false
 	local realOne = false
-	for _, vendor in CollectionService:GetTagged(OfficeConfig.VendorTag) do
-		local working = isWorking(vendor)
-		local part = partOf(vendor)
-		local prompt = part and part:FindFirstChild(PROMPT_NAME)
-		if prompt and prompt:IsA("ProximityPrompt") then
-			prompt.Enabled = working
-		end
-		if working and vendor ~= standIn then
-			realOne = true
+	for _, tag in { OfficeConfig.VendorTag, DEALER_TAG } do
+		for _, vendor in CollectionService:GetTagged(tag) do
+			local working = isWorking(vendor)
+			local part = partOf(vendor)
+			local prompt = part and part:FindFirstChild(PROMPT_NAME)
+			if prompt and prompt:IsA("ProximityPrompt") then
+				prompt.Enabled = working
+			end
+			if working and vendor ~= standIn then
+				realOne = true
+			end
 		end
 	end
 
@@ -242,17 +254,25 @@ end
 function VendorService.Start()
 	CareerService.SetShopCheck(VendorService.InRange)
 	CollectionService:GetInstanceAddedSignal(OfficeConfig.VendorTag):Connect(function(vendor)
-		attach(vendor)
+		attach(vendor, false)
 		queueRefresh()
 	end)
 	CollectionService:GetInstanceRemovedSignal(OfficeConfig.VendorTag):Connect(queueRefresh)
+	CollectionService:GetInstanceAddedSignal(DEALER_TAG):Connect(function(dealer)
+		attach(dealer, true)
+		queueRefresh()
+	end)
+	CollectionService:GetInstanceRemovedSignal(DEALER_TAG):Connect(queueRefresh)
 	CollectionService:GetInstanceAddedSignal(OfficeConfig.FloorTag):Connect(queueRefresh)
 	CollectionService:GetInstanceRemovedSignal(OfficeConfig.FloorTag):Connect(queueRefresh)
 	OfficeService.OnFloorChanged(function()
 		queueRefresh()
 	end)
 	for _, vendor in CollectionService:GetTagged(OfficeConfig.VendorTag) do
-		attach(vendor)
+		attach(vendor, false)
+	end
+	for _, dealer in CollectionService:GetTagged(DEALER_TAG) do
+		attach(dealer, true)
 	end
 	-- Let the place finish loading (and the crew's floor settle) before deciding on a stand-in.
 	task.delay(1, refresh)

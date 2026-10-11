@@ -1,0 +1,852 @@
+{
+	"ClassName": "ScreenGui",
+	"Properties": {
+		"IgnoreGuiInset": true,
+		"ResetOnSpawn": false,
+		"ZIndexBehavior": "Sibling",
+		"DisplayOrder": 12
+	},
+	"Children": [
+		{
+			"Name": "Root",
+			"ClassName": "Frame",
+			"Properties": {
+				"BorderSizePixel": 0,
+				"Position": {
+					"UDim2": [
+						[
+							0,
+							0
+						],
+						[
+							0,
+							0
+						]
+					]
+				},
+				"Size": {
+					"UDim2": [
+						[
+							1,
+							0
+						],
+						[
+							1,
+							0
+						]
+					]
+				},
+				"BackgroundTransparency": 1,
+				"Visible": false
+			},
+			"Children": [
+				{
+					"Name": "AutoScale",
+					"ClassName": "UIScale",
+					"Properties": {
+						"Scale": 1
+					}
+				},
+				{
+					"Name": "Dealer",
+					"ClassName": "TextLabel",
+					"Properties": {
+						"BorderSizePixel": 0,
+						"Position": {
+							"UDim2": [
+								[
+									0.5,
+									0
+								],
+								[
+									0,
+									24
+								]
+							]
+						},
+						"Size": {
+							"UDim2": [
+								[
+									0,
+									720
+								],
+								[
+									0,
+									24
+								]
+							]
+						},
+						"BackgroundTransparency": 1,
+						"AnchorPoint": [
+							0.5,
+							0
+						],
+						"Text": "",
+						"FontFace": {
+							"family": "rbxasset://fonts/families/Roboto.json",
+							"weight": "Medium",
+							"style": "Normal"
+						},
+						"TextSize": 16,
+						"TextColor3": [
+							1.0,
+							1.0,
+							1.0
+						]
+					},
+					"Children": [
+						{
+							"Name": "TextOutline",
+							"ClassName": "UIStroke",
+							"Properties": {
+								"Color": [
+									0.0,
+									0.0,
+									0.0
+								],
+								"Thickness": 1,
+								"ApplyStrokeMode": "Contextual"
+							}
+						}
+					]
+				},
+				{
+					"Name": "Hover",
+					"ClassName": "TextLabel",
+					"Properties": {
+						"BorderSizePixel": 0,
+						"Position": {
+							"UDim2": [
+								[
+									0.5,
+									0
+								],
+								[
+									0,
+									56
+								]
+							]
+						},
+						"Size": {
+							"UDim2": [
+								[
+									0,
+									400
+								],
+								[
+									0,
+									22
+								]
+							]
+						},
+						"BackgroundTransparency": 1,
+						"AnchorPoint": [
+							0.5,
+							0
+						],
+						"Visible": false,
+						"Text": "",
+						"FontFace": {
+							"family": "rbxasset://fonts/families/Roboto.json",
+							"weight": "Bold",
+							"style": "Normal"
+						},
+						"TextSize": 14,
+						"TextColor3": [
+							1.0,
+							1.0,
+							1.0
+						]
+					},
+					"Children": [
+						{
+							"Name": "TextOutline",
+							"ClassName": "UIStroke",
+							"Properties": {
+								"Color": [
+									0.0,
+									0.0,
+									0.0
+								],
+								"Thickness": 1,
+								"ApplyStrokeMode": "Contextual"
+							}
+						}
+					]
+				},
+				{
+					"Name": "Shelves",
+					"ClassName": "Frame",
+					"Properties": {
+						"BorderSizePixel": 0,
+						"Position": {
+							"UDim2": [
+								[
+									0.5,
+									0
+								],
+								[
+									1,
+									-40
+								]
+							]
+						},
+						"Size": {
+							"UDim2": [
+								[
+									0,
+									640
+								],
+								[
+									0,
+									52
+								]
+							]
+						},
+						"BackgroundTransparency": 1,
+						"AnchorPoint": [
+							0.5,
+							1
+						]
+					},
+					"Children": [
+						{
+							"Name": "RouterButton",
+							"ClassName": "TextButton",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											100
+										],
+										[
+											0,
+											26
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											200
+										],
+										[
+											0,
+											52
+										]
+									]
+								},
+								"BackgroundColor3": [
+									0.1216,
+									0.1412,
+									0.1882
+								],
+								"BackgroundTransparency": 0.1,
+								"AnchorPoint": [
+									0.5,
+									0.5
+								],
+								"AutoButtonColor": false,
+								"Text": "ROUTERS",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/RobotoCondensed.json",
+									"weight": "Bold",
+									"style": "Normal"
+								},
+								"TextSize": 16,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								]
+							},
+							"Children": [
+								{
+									"Name": "Corner",
+									"ClassName": "UICorner",
+									"Properties": {
+										"CornerRadius": {
+											"UDim": [
+												0.5,
+												0
+											]
+										}
+									}
+								},
+								{
+									"Name": "Stroke",
+									"ClassName": "UIStroke",
+									"Properties": {
+										"Color": [
+											0.2275,
+											0.2549,
+											0.3137
+										],
+										"Thickness": 1,
+										"ApplyStrokeMode": "Border"
+									}
+								}
+							]
+						},
+						{
+							"Name": "HeadsetButton",
+							"ClassName": "TextButton",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											320
+										],
+										[
+											0,
+											26
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											200
+										],
+										[
+											0,
+											52
+										]
+									]
+								},
+								"BackgroundColor3": [
+									0.1216,
+									0.1412,
+									0.1882
+								],
+								"BackgroundTransparency": 0.1,
+								"AnchorPoint": [
+									0.5,
+									0.5
+								],
+								"AutoButtonColor": false,
+								"Text": "HEADSETS",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/RobotoCondensed.json",
+									"weight": "Bold",
+									"style": "Normal"
+								},
+								"TextSize": 16,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								]
+							},
+							"Children": [
+								{
+									"Name": "Corner",
+									"ClassName": "UICorner",
+									"Properties": {
+										"CornerRadius": {
+											"UDim": [
+												0.5,
+												0
+											]
+										}
+									}
+								},
+								{
+									"Name": "Stroke",
+									"ClassName": "UIStroke",
+									"Properties": {
+										"Color": [
+											0.2275,
+											0.2549,
+											0.3137
+										],
+										"Thickness": 1,
+										"ApplyStrokeMode": "Border"
+									}
+								}
+							]
+						},
+						{
+							"Name": "ComputerButton",
+							"ClassName": "TextButton",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											540
+										],
+										[
+											0,
+											26
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											200
+										],
+										[
+											0,
+											52
+										]
+									]
+								},
+								"BackgroundColor3": [
+									0.1216,
+									0.1412,
+									0.1882
+								],
+								"BackgroundTransparency": 0.1,
+								"AnchorPoint": [
+									0.5,
+									0.5
+								],
+								"AutoButtonColor": false,
+								"Text": "PC UPGRADES",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/RobotoCondensed.json",
+									"weight": "Bold",
+									"style": "Normal"
+								},
+								"TextSize": 16,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								]
+							},
+							"Children": [
+								{
+									"Name": "Corner",
+									"ClassName": "UICorner",
+									"Properties": {
+										"CornerRadius": {
+											"UDim": [
+												0.5,
+												0
+											]
+										}
+									}
+								},
+								{
+									"Name": "Stroke",
+									"ClassName": "UIStroke",
+									"Properties": {
+										"Color": [
+											0.2275,
+											0.2549,
+											0.3137
+										],
+										"Thickness": 1,
+										"ApplyStrokeMode": "Border"
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"Name": "Card",
+					"ClassName": "Frame",
+					"Properties": {
+						"BorderSizePixel": 0,
+						"Position": {
+							"UDim2": [
+								[
+									0.5,
+									0
+								],
+								[
+									1,
+									-40
+								]
+							]
+						},
+						"Size": {
+							"UDim2": [
+								[
+									0,
+									440
+								],
+								[
+									0,
+									108
+								]
+							]
+						},
+						"BackgroundColor3": [
+							0.1216,
+							0.1412,
+							0.1882
+						],
+						"BackgroundTransparency": 0.08,
+						"AnchorPoint": [
+							0.5,
+							1
+						],
+						"Visible": false
+					},
+					"Children": [
+						{
+							"Name": "Corner",
+							"ClassName": "UICorner",
+							"Properties": {
+								"CornerRadius": {
+									"UDim": [
+										0,
+										16
+									]
+								}
+							}
+						},
+						{
+							"Name": "Stroke",
+							"ClassName": "UIStroke",
+							"Properties": {
+								"Color": [
+									0.2275,
+									0.2549,
+									0.3137
+								],
+								"Thickness": 1,
+								"ApplyStrokeMode": "Border"
+							}
+						},
+						{
+							"Name": "ItemName",
+							"ClassName": "TextLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											20
+										],
+										[
+											0,
+											14
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											260
+										],
+										[
+											0,
+											26
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"Text": "",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/Roboto.json",
+									"weight": "Bold",
+									"style": "Normal"
+								},
+								"TextSize": 20,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								],
+								"TextXAlignment": "Left",
+								"TextTruncate": "AtEnd"
+							}
+						},
+						{
+							"Name": "Effect",
+							"ClassName": "TextLabel",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											20
+										],
+										[
+											0,
+											42
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											260
+										],
+										[
+											0,
+											20
+										]
+									]
+								},
+								"BackgroundTransparency": 1,
+								"Text": "",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/Roboto.json",
+									"weight": "Regular",
+									"style": "Normal"
+								},
+								"TextSize": 14,
+								"TextColor3": [
+									0.6039,
+									0.6392,
+									0.6784
+								],
+								"TextXAlignment": "Left",
+								"TextTruncate": "AtEnd"
+							}
+						},
+						{
+							"Name": "BuyButton",
+							"ClassName": "TextButton",
+							"Properties": {
+								"BorderSizePixel": 0,
+								"Position": {
+									"UDim2": [
+										[
+											0,
+											358
+										],
+										[
+											0,
+											52
+										]
+									]
+								},
+								"Size": {
+									"UDim2": [
+										[
+											0,
+											124
+										],
+										[
+											0,
+											44
+										]
+									]
+								},
+								"BackgroundColor3": [
+									0.1843,
+									0.502,
+									0.9294
+								],
+								"AnchorPoint": [
+									0.5,
+									0.5
+								],
+								"AutoButtonColor": false,
+								"Text": "",
+								"FontFace": {
+									"family": "rbxasset://fonts/families/RobotoCondensed.json",
+									"weight": "Bold",
+									"style": "Normal"
+								},
+								"TextSize": 16,
+								"TextColor3": [
+									1.0,
+									1.0,
+									1.0
+								]
+							},
+							"Children": [
+								{
+									"Name": "Corner",
+									"ClassName": "UICorner",
+									"Properties": {
+										"CornerRadius": {
+											"UDim": [
+												0.5,
+												0
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"Name": "BackButton",
+					"ClassName": "TextButton",
+					"Properties": {
+						"BorderSizePixel": 0,
+						"Position": {
+							"UDim2": [
+								[
+									0,
+									24
+								],
+								[
+									1,
+									-40
+								]
+							]
+						},
+						"Size": {
+							"UDim2": [
+								[
+									0,
+									120
+								],
+								[
+									0,
+									44
+								]
+							]
+						},
+						"BackgroundColor3": [
+							0.1216,
+							0.1412,
+							0.1882
+						],
+						"BackgroundTransparency": 0.1,
+						"AnchorPoint": [
+							0,
+							1
+						],
+						"Visible": false,
+						"AutoButtonColor": false,
+						"Text": "BACK",
+						"FontFace": {
+							"family": "rbxasset://fonts/families/RobotoCondensed.json",
+							"weight": "Bold",
+							"style": "Normal"
+						},
+						"TextSize": 14,
+						"TextColor3": [
+							1.0,
+							1.0,
+							1.0
+						]
+					},
+					"Children": [
+						{
+							"Name": "Corner",
+							"ClassName": "UICorner",
+							"Properties": {
+								"CornerRadius": {
+									"UDim": [
+										0.5,
+										0
+									]
+								}
+							}
+						},
+						{
+							"Name": "Stroke",
+							"ClassName": "UIStroke",
+							"Properties": {
+								"Color": [
+									0.2275,
+									0.2549,
+									0.3137
+								],
+								"Thickness": 1,
+								"ApplyStrokeMode": "Border"
+							}
+						}
+					]
+				},
+				{
+					"Name": "LeaveButton",
+					"ClassName": "TextButton",
+					"Properties": {
+						"BorderSizePixel": 0,
+						"Position": {
+							"UDim2": [
+								[
+									1,
+									-24
+								],
+								[
+									1,
+									-40
+								]
+							]
+						},
+						"Size": {
+							"UDim2": [
+								[
+									0,
+									120
+								],
+								[
+									0,
+									44
+								]
+							]
+						},
+						"BackgroundColor3": [
+							0.1216,
+							0.1412,
+							0.1882
+						],
+						"BackgroundTransparency": 0.1,
+						"AnchorPoint": [
+							1,
+							1
+						],
+						"AutoButtonColor": false,
+						"Text": "LEAVE",
+						"FontFace": {
+							"family": "rbxasset://fonts/families/RobotoCondensed.json",
+							"weight": "Bold",
+							"style": "Normal"
+						},
+						"TextSize": 14,
+						"TextColor3": [
+							1.0,
+							1.0,
+							1.0
+						]
+					},
+					"Children": [
+						{
+							"Name": "Corner",
+							"ClassName": "UICorner",
+							"Properties": {
+								"CornerRadius": {
+									"UDim": [
+										0.5,
+										0
+									]
+								}
+							}
+						},
+						{
+							"Name": "Stroke",
+							"ClassName": "UIStroke",
+							"Properties": {
+								"Color": [
+									0.2275,
+									0.2549,
+									0.3137
+								],
+								"Thickness": 1,
+								"ApplyStrokeMode": "Border"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
