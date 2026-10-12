@@ -30,13 +30,14 @@ local CallerPrompt = require(script.Parent.Parent.Data.CallerPrompt)
 
 export type Message = { role: string, content: string }
 
+export type Card = { text: string, tone: string }
+
 export type Reply = {
 	Say: string,
 	TrustChange: number,
-	Pay: { Method: string, Amount: number }?,
-	RepeatPayment: boolean,
 	HangUp: boolean,
-	FreeTurn: boolean, -- their last line was garbled or only asked to repeat something: it doesn't count
+	Cards: { Card }, -- what the player could say next (may be short or empty if the model skipped them)
+	Hint: string,
 }
 
 local RETRY_DELAY = 1.5
@@ -157,17 +158,20 @@ local function parse(body: string): Reply?
 			if type(input.say) ~= "string" then
 				return nil
 			end
-			local pay = nil
-			if type(input.pay) == "table" and type(input.pay.method) == "string" and tonumber(input.pay.amount) then
-				pay = { Method = input.pay.method, Amount = tonumber(input.pay.amount) :: number }
+			local cards = {}
+			if type(input.cards) == "table" then
+				for _, card in input.cards do
+					if type(card) == "table" and type(card.text) == "string" and card.text ~= "" then
+						table.insert(cards, { text = card.text, tone = if type(card.tone) == "string" then card.tone else "Friendly" })
+					end
+				end
 			end
 			return {
 				Say = input.say,
 				TrustChange = tonumber(input.trust_change) or 0,
-				Pay = pay,
-				RepeatPayment = input.repeat_payment == true,
 				HangUp = input.hang_up == true,
-				FreeTurn = input.free_turn == true,
+				Cards = cards,
+				Hint = if type(input.hint) == "string" then input.hint else "",
 			}
 		end
 	end

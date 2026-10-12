@@ -79,9 +79,9 @@ local function render(settings: any)
 	end
 	renderToggle(body.ClockRow.Toggle, settings.Clock24)
 	renderToggle(body.MotionRow.Toggle, settings.ReduceMotion)
-	local micRow = body:FindFirstChild("MicRow")
-	if micRow then
-		renderToggle(micRow.Toggle, settings.MicReview ~= false)
+	local hintsRow = body:FindFirstChild("HintsRow")
+	if hintsRow then
+		renderToggle(hintsRow.Toggle, settings.CallHints ~= false)
 	end
 	body.SaveStatus.Text = if SettingsStore.Persistent
 		then "Saved to your Roblox account (the lobby uses them too)"
@@ -182,10 +182,10 @@ function SettingsApp.Start(window: Frame)
 	body.MotionRow.Toggle.MouseButton1Click:Connect(function()
 		SettingsStore.Set("ReduceMotion", not SettingsStore.Settings.ReduceMotion)
 	end)
-	local micRow = body:FindFirstChild("MicRow")
-	if micRow then
-		micRow.Toggle.MouseButton1Click:Connect(function()
-			SettingsStore.Set("MicReview", SettingsStore.Settings.MicReview == false)
+	local hintsRow = body:FindFirstChild("HintsRow")
+	if hintsRow then
+		hintsRow.Toggle.MouseButton1Click:Connect(function()
+			SettingsStore.Set("CallHints", SettingsStore.Settings.CallHints == false)
 		end)
 	end
 

@@ -4,9 +4,9 @@
 	review ("You asked for money before the caller trusted you...").
 
 	CoachService.Note(player, what, amount?)
-		what: "Calls" (got through), "HungUp" (the caller hung up on you), "Blocked" (Roblox hid your line),
-		      "EarlyAsk" (asked for money below the pay line), "Paid" (a caller paid), "Issued" (a caller read
-		      out a code or card), "Cashed" (you cashed a code or card in), "Chores", "Ideas"
+		what: "Calls" (got through), "HungUp" (the caller hung up on you), "Picks" (cards picked),
+		      "Refreshes", "HookMatched" / "HookLanded" / "HookMissed" (hooks tried), "Paid" (a mini-game
+		      paid out), "Perfect" (a perfect mini-game), "Bought" / "Upgraded" (Scamazon), "Chores"
 	CoachService.Tips(player, passed) -> { string }     up to three, most useful first
 	CoachService.NewDay()
 ]]
@@ -36,36 +36,39 @@ function CoachService.Tips(player: Player, passed: boolean): { string }
 		return day[what] or 0
 	end
 	local tips = {}
-	local unclaimed = get("Issued") - get("Cashed")
-	if unclaimed > 0 then
-		table.insert(tips, `You got {plural(unclaimed, "payment", "payments")} you never cashed in. Redeem gift `
-			.. "cards in Gift Cards and charge cards in Card Terminal right away.")
-	end
-	if get("EarlyAsk") >= 2 then
-		table.insert(tips, `You asked for money {plural(get("EarlyAsk"), "time", "times")} before the caller `
-			.. "trusted you. Wait until their trust passes the white pay line, then ask.")
+	local hooks = get("HookMatched") + get("HookLanded") + get("HookMissed")
+	if get("HookMissed") >= 2 then
+		table.insert(tips, `{plural(get("HookMissed"), "hook", "hooks")} didn't land. Check what the caller is `
+			.. "WEAK TO in their file and pick the hook with the same badge.")
 	end
 	if get("HungUp") >= 2 then
 		table.insert(tips, `{plural(get("HungUp"), "caller", "callers")} hung up on you. Start with small talk and `
-			.. "their soft spot (see FILE), and don't rush to the money.")
+			.. "their soft spot (see FILE), and watch out for the trap card.")
 	end
 	if get("Calls") < 4 then
 		table.insert(tips, `You only reached {plural(get("Calls"), "caller", "callers")}. Call the next lead as soon `
 			.. "as a call ends, and answer incoming calls.")
 	elseif get("Paid") == 0 then
-		table.insert(tips, "Nobody paid you today. Once trust passes the pay line, ask for the payment method "
-			.. "listed in their caller file.")
+		table.insert(tips, if hooks == 0
+			then "Nobody paid you today. Once trust passes the pay line, a gold HOOK card shows up: pick it."
+			else "Nobody paid you today. A hook lands when it matches what the caller is weak to.")
 	end
-	if get("Blocked") >= 3 then
-		table.insert(tips, `Roblox hid {get("Blocked")} of your lines. Skip numbers, names, places and links, or `
-			.. "tap Ideas for a ready-made line.")
+	if get("Bought") + get("Upgraded") == 0 and get("Paid") > 0 then
+		table.insert(tips, "You never shopped in Scamazon. More apps mean a hook for every caller, and upgrades "
+			.. "pay more for the same mini-game.")
+	end
+	if get("Refreshes") >= 6 then
+		table.insert(tips, "You refreshed a lot. Refreshes past the free ones cost a tip, then a pick: trust the "
+			.. "hint under the cards instead.")
 	end
 	if not passed and get("Chores") == 0 then
 		table.insert(tips, "Chores pay a little, and a tidy office makes every caller start a bit warmer.")
 	end
 	if #tips == 0 then
 		table.insert(tips, if passed
-			then "Nice work! Callers get sharper as the team nears quota, so make the easy money early."
+			then (if get("Perfect") > 0
+				then "Nice work! A perfect mini-game pays 20% extra, so keep those runs clean."
+				else "Nice work! Callers get sharper as the team nears quota, so make the easy money early.")
 			else "So close! Split up the leads so everyone is on a call at the same time.")
 	end
 	while #tips > 3 do

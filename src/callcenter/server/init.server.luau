@@ -11,12 +11,12 @@
 		AvatarService    dresses ServerStorage.LeadRig with random catalog items for each fake caller
 		PlayerLookService  players look like their own Roblox avatars
 		LeadService      each player's list of made-up people to call
-		PaymentService   gift card codes, card details and donations, and the apps that cash them in
+		ScamService      the scam apps, the Scamazon store and the money a mini-game takes
 		DeskService      seats tagged "Computer", the "Sit down" prompts and the username login
 		ChoreService     trash, messy desks and broken equipment around the office
 		TextFilter       Roblox text filtering for what players say and what callers say back
 		CoachService     how each player's day went, for the tips in the performance review
-		CallService      phone calls with AI callers (Claude), trust and payouts, ready-made lines (Ideas)
+		CallService      phone calls with AI callers (Claude): choice cards, trust, hooks and mini-games
 		DisasterService  Virus Attack and Office Chaos
 		ShopService      Robux developer products (ProcessReceipt)
 		SettingsService  (shared with the lobby) sound and display settings
@@ -39,7 +39,7 @@ local VendorService = require(Services.VendorService)
 local AvatarService = require(Services.AvatarService)
 local PlayerLookService = require(Services.PlayerLookService)
 local LeadService = require(Services.LeadService)
-local PaymentService = require(Services.PaymentService)
+local ScamService = require(Services.ScamService)
 local DeskService = require(Services.DeskService)
 local ChoreService = require(Services.ChoreService)
 local TextFilter = require(Services.TextFilter)
@@ -61,7 +61,7 @@ VendorService.Start()
 AvatarService.Start()
 PlayerLookService.Start()
 LeadService.Start()
-PaymentService.Start()
+ScamService.Start()
 DeskService.Start()
 ChoreService.Start()
 TextFilter.Start()

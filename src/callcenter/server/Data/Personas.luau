@@ -2,15 +2,13 @@
 	Personas (server only)
 	Makes up the people your crew calls: a Roblox-style display name and @username, a made-up life (job,
 	town, hobbies, pet, family, what they've been up to, how good they are with tech), how they behave on the
-	phone, how they can pay, a voice, and a random blocky avatar.
+	phone, what kind of hook they fall for (Weak), a voice, and a random blocky avatar.
 
 	Personas.new(random) -> Generated
 	Personas.incomingReason(random) -> string
 
 	Everything here is fictional. Callers are always adults.
 ]]
-
-local CallConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").Config.CallConfig)
 
 export type Persona = {
 	Name: string,
@@ -25,7 +23,7 @@ export type Persona = {
 	Tech: string,
 	SoftSpot: string,
 	RedFlag: string,
-	Methods: { string },
+	Weak: string, -- ScamConfig.Weaknesses key: the kind of hook they fall for
 	Budget: number,
 }
 
@@ -107,16 +105,22 @@ local PERSONALITIES = {
 	"lonely and happy anyone called",
 }
 
+-- Each soft spot comes with the weakness it belongs to (ScamConfig.Weaknesses): the hook that plays on it.
 local SOFT_SPOTS = {
-	"worried their computer has a virus",
-	"loves winning prizes and sweepstakes",
-	"nervous about anything wrong with their bank account",
-	"trusts anyone who sounds official and confident",
-	"has been waiting on a refund for something they bought online",
-	"afraid of getting in trouble with the tax office",
-	"excited about getting rich from investments",
-	"just wants someone to be nice to them",
-	"worried about a package that never arrived",
+	{ "worried their computer has a virus", "Fear" },
+	{ "loves winning prizes and sweepstakes", "Greed" },
+	{ "nervous about anything wrong with their bank account", "Fear" },
+	{ "trusts anyone who sounds like they know computers", "Tech" },
+	{ "has been waiting on a refund for something they bought online", "Greed" },
+	{ "afraid of getting in trouble with the tax office", "Fear" },
+	{ "excited about getting rich from investments", "Greed" },
+	{ "just wants someone to be nice to them", "Heart" },
+	{ "worried about a package that never arrived", "Shopping" },
+	{ "loves a bargain and buys everything online", "Shopping" },
+	{ "lonely since the kids moved out", "Heart" },
+	{ "gives to every charity that asks", "Heart" },
+	{ "asks anyone official-sounding to fix their laptop", "Tech" },
+	{ "collects gift cards for the grandkids", "Shopping" },
 }
 
 local RED_FLAGS = {
@@ -258,20 +262,6 @@ local function pickPet(random: Random): string
 	return `a {pick(random, PET_KINDS)} named {pick(random, PET_NAMES)}`
 end
 
-local function pickMethods(random: Random, job: string): { string }
-	local methods = {}
-	for _, method in CallConfig.MethodOrder do
-		local chance = if method == "donation" then (if job == "Grandparent of six" then 0.9 else 0.45) else 0.65
-		if random:NextNumber() < chance then
-			table.insert(methods, method)
-		end
-	end
-	if #methods == 0 then
-		table.insert(methods, pick(random, { "gift_card", "card" }))
-	end
-	return methods
-end
-
 function Personas.new(random: Random): Generated
 	local gender = if random:NextNumber() < 0.5 then "male" else "female"
 	local first = pick(random, FIRST_NAMES[gender])
@@ -279,6 +269,7 @@ function Personas.new(random: Random): Generated
 	local job = pick(random, JOBS)
 	local accent = pickAccent(random)
 	local budget = math.round(random:NextInteger(job.budget[1], job.budget[2]) / 50) * 50
+	local softSpot = pick(random, SOFT_SPOTS)
 
 	local hat = random:NextInteger(0, HAT_STYLES)
 	local look: Look = {
@@ -305,9 +296,9 @@ function Personas.new(random: Random): Generated
 			Family = pick(random, FAMILY),
 			Lately = pick(random, LATELY),
 			Tech = pick(random, TECH),
-			SoftSpot = pick(random, SOFT_SPOTS),
+			SoftSpot = softSpot[1],
 			RedFlag = pick(random, RED_FLAGS),
-			Methods = pickMethods(random, job.tag),
+			Weak = softSpot[2],
 			Budget = budget,
 		},
 		Look = look,

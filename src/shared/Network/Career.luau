@@ -14,6 +14,7 @@
 		Elevator   the crew is moving to another floor (shown as the elevator screen)
 		Chore      you finished a chore ({ Kind, Reward })
 		OpenStore  you used the vendor's Shop prompt: show the equipment store
+		OpenTechStore  you talked to the Tech Store dealer: fly the camera around the shelves
 ]]
 
 local Namespace = require(script.Parent.Namespace)
@@ -90,6 +91,7 @@ return Namespace.define("Career", function()
 			Elevator = ByteNet.definePacket({ value = Elevator }),
 			Chore = ByteNet.definePacket({ value = ChoreDone }),
 			OpenStore = ByteNet.definePacket({ value = ByteNet.nothing }),
+			OpenTechStore = ByteNet.definePacket({ value = ByteNet.nothing }),
 		},
 		queries = {
 			Get = ByteNet.defineQuery({ request = ByteNet.nothing, response = CareerData }),

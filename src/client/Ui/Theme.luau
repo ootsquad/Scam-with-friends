@@ -70,9 +70,12 @@ local Theme = {
 	LeadScammedBg = hex("#3A3320"),
 	LeadBlockedBg = hex("#3F2024"),
 	LeadBlockedText = hex("#FF8A8A"),
-	PaymentGiftCard = hex("#7C3AED"),
-	PaymentCard = hex("#0F766E"),
-	PaymentDonation = hex("#E11D48"),
+	Gold = hex("#F5B301"), -- hook cards
+	ToneFriendly = hex("#1E8E3E"),
+	ToneStory = hex("#2F80ED"),
+	TonePush = hex("#F97316"),
+	ToneSmallTalk = hex("#8B5CF6"),
+	PhoneInput = hex("#262A33"),
 
 	-- Training app
 	Training = hex("#EA580C"),

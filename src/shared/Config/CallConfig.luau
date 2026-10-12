@@ -30,11 +30,7 @@ local CallConfig = {
 	-- Trust (0-100). Every call starts at StartTrust; callers hang up at HangUpTrust or lower.
 	StartTrust = 50,
 	HangUpTrust = 5,
-	MaxTurns = 25, -- your lines per call before the caller has to go
-	-- Lines that never cost one of your 25: lines Roblox's filter hid (they aren't sent), lines with words
-	-- hidden as [static], and lines the caller found garbled or that only asked them to repeat something
-	-- (free_turn). Free lines per call are capped so a call can't go on forever.
-	MaxFreeTurns = 8,
+	MaxTurns = 12, -- cards you can pick per call before the caller has to go (ScamConfig.Picks is the same number)
 
 	-- How sharp callers are. They start out dumber than rocks and get sharper the closer the crew gets to
 	-- today's quota (From = share of the quota already made). Each level sets the trust a caller needs before
@@ -49,24 +45,13 @@ local CallConfig = {
 	} :: { { Name: string, From: number, PayTrust: number, MaxGain: number, MaxLoss: number, Pushover: boolean } },
 	SmartsHeadStart = { -0.15, 0, 0.15 }, -- added to quota progress for Intern, Associate, Senior
 
-	MaxSayLength = 300, -- characters per line you say
 	MaxReplyLength = 280, -- caller lines stay under the 300-character text-to-speech limit
+	MaxCardLength = 160, -- characters per choice card
+	MaxHintLength = 90, -- characters for the hint under the cards
 	-- Roblox's text filter can hide a whole caller line as ####. When at least this share of a line is hidden,
 	-- the caller is asked to say it again in other words; if that's hidden too, they say a safe stock line
 	-- ("Sorry, you're breaking up...") instead. A hidden line never costs you trust.
 	BlockedLineShare = 0.5,
-
-	-- Your mic (speech-to-text). What it hears only becomes a line if it sounds like you really talked, so
-	-- mouse clicks, desk bumps and the caller's voice coming out of your speakers don't put words in your mouth.
-	-- In Studio, the Output window says why each ignored transcript was dropped.
-	Mic = {
-		MinVoiceSeconds = 0.4, -- Roblox has to detect a voice for at least this long
-		MaxWordsPerSecond = 6, -- more words than this per second of voice means the transcriber is guessing
-		ExtraWords = 3, -- slack on top of MaxWordsPerSecond for short lines
-		MinWordsUnchecked = 2, -- on a device that never reports a voice, lines need at least this many words
-		EchoTail = 3, -- seconds after the caller's voice stops that their words still count as echo
-		EchoShare = 0.75, -- share of your words matching the caller's line for it to count as echo
-	},
 
 	-- Leads (the people in your Phone app)
 	LeadsPerPlayer = 6,
@@ -81,18 +66,6 @@ local CallConfig = {
 	DayLength = 15 * 60, -- seconds; the clock starts when the first player logs in
 	ReviewTime = 12, -- seconds the performance review stays up before the next day
 	FiredReturnDelay = 20, -- seconds before a fired crew is sent back to the lobby
-
-	-- How callers can pay. Label is shown in the apps; Max caps one payment.
-	--   gift_card  they buy a gift card and read you the code -> redeem it in the Gift Cards app
-	--   card       they read you their card details           -> charge it in the Card Terminal app
-	--   donation   they donate to your fake fundraiser        -> they need your fundraiser ID first
-	PaymentMethods = {
-		gift_card = { Label = "Gift card", Max = 500 },
-		card = { Label = "Credit card", Max = 2000 },
-		donation = { Label = "Donation", Max = 800 },
-	} :: { [string]: { Label: string, Max: number } },
-	MethodOrder = { "gift_card", "card", "donation" },
-	DeclinesBeforeFreeze = 2, -- declined charges before a card is frozen
 
 	-- Fake caller avatars: a copy of ServerStorage.LeadRig dressed with random catalog items, a random skin tone
 	-- and a random body shape. When the server starts it searches the Roblox catalog (every keyword below) to
@@ -182,16 +155,12 @@ local CallConfig = {
 		LineDown = 7, -- the AI couldn't be reached
 	}),
 
-	-- What happened to a line you said (Call YourLine.Status)
+	-- What happened with the card you picked (Call YourLine.Status)
 	LineStatus = table.freeze({
-		Sent = 1,
-		Hidden = 2, -- Roblox hid it, so it wasn't sent (free)
-		PartlyHidden = 3, -- sent with [static] in place of the hidden words (free)
-		Idea = 4, -- a ready-made line from Ideas
+		Said = 1,
+		HookLanded = 2, -- a hook card the caller went along with: the mini-game is up
+		HookMissed = 3, -- a hook card the caller didn't fall for
 	}),
-
-	-- Why Ideas were sent (Call Ideas.Reason)
-	IdeaReason = table.freeze({ Asked = 1, Blocked = 2 }),
 }
 
 return table.freeze(CallConfig)

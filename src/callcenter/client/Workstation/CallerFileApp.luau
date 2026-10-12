@@ -2,7 +2,7 @@
 	CallerFileApp (client)
 	The Caller file window: who you're talking to. It pops up once per call, when you call someone or answer
 	an incoming call, and the FILE button on the call screen opens it again. It shows the caller's made-up
-	details, their soft spot and red flag, how they can pay, about how much they can spare, and how sharp
+	details, their soft spot and red flag, what they're weak to (the hook to use), about how much they can spare, and how sharp
 	callers are right now (with the trust they need before they'll pay).
 
 	CallerFileApp.Start(window)
@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local ScamConfig = require(Shared.Config.ScamConfig)
 
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
@@ -60,10 +61,14 @@ local function fill(): boolean
 	end
 	body.SoftSpot.Text.Text = file.SoftSpot
 	body.RedFlag.Text.Text = file.RedFlag
-	for _, chip in body.Methods:GetChildren() do
-		if chip:IsA("GuiObject") then
-			chip.Visible = table.find(file.Methods, chip.Name) ~= nil
-		end
+	local weakness = ScamConfig.Weakness(file.Weak)
+	body.Weak.Badge.Visible = weakness ~= nil
+	if weakness then
+		body.Weak.Badge.Text = string.upper(weakness.Label)
+		body.Weak.Badge.BackgroundColor3 = Color3.fromHex(weakness.Color)
+		body.Weak.Blurb.Text = weakness.Blurb
+	else
+		body.Weak.Blurb.Text = if file.PayAt <= 0 then "nothing, it's a prank" else ""
 	end
 	body.Wallet.Text = if file.PayAt <= 0 then "Nothing. Just jokes." else `About {Ledger.money(file.Wallet)}`
 	return true

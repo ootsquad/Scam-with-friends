@@ -2,8 +2,8 @@
 	WorkstationController (client, Call Center Place)
 	The computer at your desk. Nothing shows until you sit in a seat tagged "Computer"; then the ChaOS login
 	screen appears (after your first login of the shift, sitting down logs you straight in). Logged in, you
-	get the desktop: Phone, Gift Cards, Card Terminal, GiveHope, Wallet, Training, Career and Settings,
-	a taskbar with your take / the team against the quota / the floor / your career cash / open leads / the
+	get the desktop: Phone, Scamazon, Wallet, Training, Career, Settings and a tile for every scam app you
+	own (Scamazon), a taskbar with your take / the team against the quota / the floor / your career cash / open leads / the
 	review timer, a Start menu, incoming call pop-ups, the caller file pop-up, the first-shift checklist and
 	the end-of-day performance review (with tips). Stand up (or Log off) and it goes away. The equipment store
 	isn't on the computer: it's a vendor in the office (StoreApp).
@@ -18,7 +18,6 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TextChatService = game:GetService("TextChatService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
@@ -31,6 +30,7 @@ local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
 local Avatar = require(Ui.Avatar)
 local ButtonFx = require(Ui.ButtonFx)
+local Device = require(Ui.Device)
 local Images = require(Ui.Images)
 local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
@@ -46,11 +46,13 @@ local CareerStore = require(script.Parent.CareerStore)
 local Checklist = require(script.Parent.Checklist)
 local DeskInput = require(script.Parent.DeskInput)
 local CallerFileApp = require(script.Parent.CallerFileApp)
-local CallVoice = require(script.Parent.CallVoice)
-local CashApps = require(script.Parent.CashApps)
 local LeadAvatar = require(script.Parent.LeadAvatar)
 local Ledger = require(script.Parent.Ledger)
 local PhoneApp = require(script.Parent.PhoneApp)
+local ScamConfig = require(Shared.Config.ScamConfig)
+local ScamazonApp = require(script.Parent.ScamazonApp)
+local ScamGameApp = require(script.Parent.ScamGameApp)
+local ScamStore = require(script.Parent.ScamStore)
 local SettingsApp = require(script.Parent.SettingsApp)
 local Sfx = require(script.Parent.Sfx)
 local ShopStore = require(script.Parent.ShopStore)
@@ -64,18 +66,11 @@ local TAG = "Computer"
 local APPS = {
 	-- window name, window frame, taskbar slot (false = none), desktop icon, start menu item
 	{ "Phone", "PhoneWindow", "PhoneTask", "PhoneIcon", "Phone" },
-	{ "GiftCards", "GiftCardsWindow", "GiftCardsTask", "GiftCardsIcon", "GiftCards" },
-	{ "Terminal", "TerminalWindow", "TerminalTask", "TerminalIcon", "Terminal" },
-	{ "Donations", "DonationsWindow", "DonationsTask", "DonationsIcon", "Donations" },
+	{ "Scamazon", "ScamazonWindow", "ScamazonTask", "ScamazonIcon", "Scamazon" },
 	{ "Wallet", "WalletWindow", "WalletTask", "WalletIcon", "Wallet" },
 	{ "Training", "TrainingWindow", "TrainingTask", "TrainingIcon", "Training" },
 	{ "Career", "CareerWindow", false, "CareerIcon", "Career" },
 	{ "Settings", "SettingsWindow", false, "SettingsIcon", "Settings" },
-}
-
-local PAID_HINT = {
-	gift_card = { "GiftCards", "Gift card code received. Type it into Gift Cards to redeem it." },
-	card = { "Terminal", "Card details received. Charge the card in Card Terminal." },
 }
 
 local player = Players.LocalPlayer
@@ -160,9 +155,6 @@ local function refresh()
 		end
 	elseif wasLoggedIn and not loggedIn then
 		setMenuOpen(false)
-		if CallVoice.MicOn then
-			CallVoice.SetMic(false)
-		end
 		login.Card.UsernameBox.Text = ""
 		Ledger.setStatus(login.Card.Status, "")
 	end
@@ -490,17 +482,45 @@ local function applySettings(settings: any)
 	updateLockClock()
 end
 
--- Roblox chat typed while on a call is heard by the caller too.
-local function forwardChat()
-	local ok, err = pcall(function()
-		TextChatService.SendingMessage:Connect(function(message: TextChatMessage)
-			if loggedIn and CallStore.IsConnected() then
-				CallStore.Say(message.Text)
+-- A desktop tile for every scam app you own, in the second column (cloned from Icons.Apps.AppTemplate).
+local function renderAppIcons()
+	local holder = desktop.Icons:FindFirstChild("Apps")
+	local template = holder and holder:FindFirstChild("AppTemplate")
+	if not holder or not template then
+		return
+	end
+	template.Visible = false
+	for _, child in holder:GetChildren() do
+		if child ~= template and child:IsA("GuiObject") then
+			child:Destroy()
+		end
+	end
+	local shown = 0
+	for _, app in ScamConfig.Apps do
+		if ScamStore.Tier(app.Key) == 0 then
+			continue
+		end
+		local icon = template:Clone()
+		icon.Name = `{app.Key}Icon`
+		icon.Visible = true
+		icon.Position = UDim2.fromOffset((shown // 6) * 104, (shown % 6) * 100)
+		icon.Label.Text = app.Name
+		icon.Tile.BackgroundColor3 = Color3.fromHex(app.Color)
+		local letter = icon.Tile:FindFirstChild("Letter")
+		if letter then
+			local initials = ""
+			for word in string.gmatch(app.Name, "%S+") do
+				initials ..= string.sub(word, 1, 1)
 			end
+			letter.Text = string.upper(string.sub(initials, 1, 2))
+		end
+		icon.BackgroundColor3 = Theme.White
+		ButtonFx.highlight(icon, 0.8)
+		icon.MouseButton1Click:Connect(function()
+			ScamazonApp.Open(app.Key)
 		end)
-	end)
-	if not ok then
-		warn(`[Workstation] can't forward Roblox chat to calls: {err}`)
+		icon.Parent = holder
+		shown += 1
 	end
 end
 
@@ -520,6 +540,31 @@ function WorkstationController.Start()
 
 	local windows = desktop.Windows
 	local apps = desktop.Taskbar.Apps
+	-- Phone mode: the Phone, Scamazon and mini-game windows have full-width variants with the same children.
+	-- Swap them in under the usual names so every controller works unchanged; the tray's stats go (the
+	-- HUD and the Wallet have them) so the clock and the taskbar apps fit side by side.
+	for _, name in { "PhoneWindow", "ScamazonWindow", "ScamGameWindow" } do
+		local mobile = windows:FindFirstChild(name .. "Mobile")
+		if not mobile then
+			continue
+		end
+		if Device.IsPhone() then
+			local original = windows:FindFirstChild(name)
+			if original then
+				original:Destroy()
+			end
+			mobile.Name = name
+			mobile:SetAttribute("Mobile", true)
+		else
+			mobile:Destroy()
+		end
+	end
+	if Device.IsPhone() then
+		local tray = desktop.Taskbar.Tray
+		tray.Stats.Visible = false
+		tray.Size = UDim2.new(0, 160, 0, 56)
+		tray.Clock.Position = UDim2.fromOffset(14, 4)
+	end
 	WindowManager.init(root, windows)
 	Notify.init(desktop.Notifications)
 	for _, app in APPS do
@@ -532,10 +577,9 @@ function WorkstationController.Start()
 	end
 	WindowManager.register("CallerFile", windows.CallerFileWindow)
 
+	ScamGameApp.Start(windows.ScamGameWindow)
 	PhoneApp.Start(windows.PhoneWindow)
-	CashApps.StartGiftCards(windows.GiftCardsWindow)
-	CashApps.StartTerminal(windows.TerminalWindow)
-	CashApps.StartDonations(windows.DonationsWindow)
+	ScamazonApp.Start(windows.ScamazonWindow)
 	WalletApp.Start(windows.WalletWindow)
 	TrainingApp.Start(windows.TrainingWindow)
 	CareerApp.Start(windows.CareerWindow)
@@ -562,8 +606,9 @@ function WorkstationController.Start()
 	wireLeaveDialog()
 	wireReview()
 	wireIncoming()
-	forwardChat()
 	Checklist.bind(desktop.Checklist)
+	ScamStore.Changed:Connect(renderAppIcons)
+	renderAppIcons()
 
 	-- Robux items: notes for you and office events, as toasts while you're at the desk.
 	ShopStore.Message:Connect(function(message)
@@ -598,13 +643,6 @@ function WorkstationController.Start()
 			Theme.Green
 		)
 		Sfx.Play("Payout")
-	end)
-	CallStore.Line:Connect(function(line)
-		local hint = PAID_HINT[line.Method]
-		if hint then
-			Notify.show("Phone", hint[2], Theme.Green)
-			Sfx.Play("Notify")
-		end
 	end)
 	CareerStore.Chore:Connect(function(done)
 		if loggedIn then

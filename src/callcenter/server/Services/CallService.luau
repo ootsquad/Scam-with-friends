@@ -6,29 +6,30 @@
 	Outgoing: you pick a lead in the Phone app -> it rings -> they pick up (or don't).
 	Incoming: while you're logged in and free, leads call you every so often.
 
-	Once connected, every line you say (typed, spoken or Roblox chat) goes through Roblox's text filter and
-	then to Claude, which answers in character with a trust change. How sharp the caller is depends on how
-	far the crew is into today's quota (CallConfig.Smarts): early on they're dumber than rocks, and they pay
-	at a lower trust. They hang up if trust drops to CallConfig.HangUpTrust.
+	Nobody types. Every turn the caller (Claude) answers in character with a trust change AND writes the
+	three cards the player can pick from next. Picking a card says it. Once trust is past the caller's pay
+	line (CallConfig.Smarts), the cards also include a HOOK for every scam app the player owns
+	(ScamService): a line that gets at the caller's money. A hook lands when it matches what the caller is
+	weak to (or trust is well past the line); then the app's mini-game runs on the player's screen and the
+	score decides the payout (ScamService.Payout). A hook that misses costs a little trust and the call
+	goes on. One hook per call: after the money the caller says goodbye.
 
-	Words the filter hides from your line reach the caller as [static], and static never costs you trust.
-	The caller's lines go through the filter too; if it hides most of a line, Claude is asked once to say it
-	in other words, and if that's hidden as well the caller says a stock line that always gets through
-	("Sorry, you're breaking up...") and doesn't lose trust in you for it.
+	Refresh swaps the cards for new ones (the caller says a tiny filler line): free a couple of times per
+	call, then it uses an on-call tip (PerkService), then it costs a pick.
 
-	When a call starts, the caller's file (job, hobbies, pet, soft spot, red flag, how they pay, how sharp
-	they are) is sent to the player for the pop-up.
+	Everything the caller says, and every card, goes through Roblox's text filter; a line the filter hides
+	is asked for again in other words, and if that's hidden too a stock line that always gets through is
+	used instead (cards: stock cards).
+
+	When a call starts, the caller's file (job, hobbies, pet, soft spot, red flag, what they're weak to,
+	how sharp they are) is sent to the player for the pop-up.
 
 	Robux extras (ShopService / PerkService):
 	  Prank Call     a silly prank caller rings a player (queued until they're at a desk with no call)
 	  Save My Call   a call that failed (they hung up, or the line dropped) can be brought back for a while:
 	                 the caller calls straight back with their trust from before it went wrong. Player
 	                 attribute SaveableCall = the caller's name while there's one to save.
-	  On-call tips   asking for Ideas uses a tip (PerkService); Ideas for a hidden line are always free.
-
-	Paying is handled by PaymentService: for gift cards and credit cards the game makes up the code or card
-	details and adds them to the caller's line, and you cash them in with the Gift Cards / Card Terminal
-	apps. Donations only go through if you told the caller your fundraiser ID during the call.
+	  On-call tips   refreshes past the free ones use a tip.
 
 	CallService.Start()
 	CallService.QueuePrank(target, fromName)
@@ -41,6 +42,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local ScamConfig = require(Shared.Config.ScamConfig)
 local Call = require(Shared:WaitForChild("Network")).Call
 local Shop = require(Shared:WaitForChild("Network")).Shop
 local ShopConfig = require(Shared.Config.ShopConfig)
@@ -48,7 +50,6 @@ local Namespace = require(Shared.Network.Namespace)
 
 local Data = script.Parent.Parent.Data
 local CallerPrompt = require(Data.CallerPrompt)
-local Ideas = require(Data.Ideas)
 local Personas = require(Data.Personas)
 local CareerService = require(script.Parent.CareerService)
 local ChoreService = require(script.Parent.ChoreService)
@@ -58,25 +59,20 @@ local DeskService = require(script.Parent.DeskService)
 local EconomyService = require(script.Parent.EconomyService)
 local LeadService = require(script.Parent.LeadService)
 local OfficeService = require(script.Parent.OfficeService)
-local PaymentService = require(script.Parent.PaymentService)
 local PerkService = require(script.Parent.PerkService)
+local ScamService = require(script.Parent.ScamService)
 local ShiftService = require(script.Parent.ShiftService)
 local TextFilter = require(script.Parent.TextFilter)
 
 local Phase = CallConfig.Phase
 local Outcome = CallConfig.Outcome
 local Status = CallConfig.LeadStatus
+local LineStatus = CallConfig.LineStatus
 
 local ENDED_LINGER = 4 -- seconds the "call ended" screen stays before the phone is free again
-local SAY_COOLDOWN = 0.25
-local MAX_PENDING = 3 -- lines said while the caller is still thinking get sent together
-local STATIC = "[static]" -- what the caller hears in place of words Roblox's filter hid
-local MAX_EARLY_ASKS = 2 -- "asked for money too early" notes per call, for the review tips
--- Words that ask for money (matched as whole words; "donat" also matches donate / donation).
-local PAY_WORDS = { "gift card", "card", "cards", "pay", "money", "donate", "donation", "code", "cash", "dollars", "bucks" }
-
-local LineStatus = CallConfig.LineStatus
-local IdeaReason = CallConfig.IdeaReason
+local PICK_COOLDOWN = 0.25
+local HOOK_HINT = "Trust is over the pay line. Try a hook!"
+local HOOK_NONE_HINT = "Trust is over the pay line, but you have no app for it. Buy one in Scamazon."
 
 local PRANK_NAMES = {
 	"Justin Case", "Al Beback", "Paige Turner", "Anita Sandwich", "Chris P. Bacon", "Ella Vader", "Noah Fence",
@@ -92,6 +88,19 @@ local PRANKSTER: CallerPrompt.Smarts = {
 	Pushover = false,
 }
 
+type Card = { text: string, tone: string, app: string }
+
+type Hook = {
+	app: ScamConfig.App,
+	tier: number,
+	matched: boolean,
+	expect: number, -- what a full score pays, before perks
+	started: number, -- os.clock() when the mini-game was sent
+	seconds: number,
+	seed: number,
+	done: boolean,
+}
+
 type Session = {
 	id: number,
 	player: Player,
@@ -104,27 +113,16 @@ type Session = {
 	smarts: CallerPrompt.Smarts,
 	system: string,
 	messages: { ClaudeClient.Message },
-	turns: number, -- lines that counted (maxTurns)
+	turns: number, -- cards picked (maxTurns)
 	maxTurns: number, -- CallConfig.MaxTurns (ShopConfig.PrankLines for a prank call)
 	prank: string?, -- a prank call: who sent it
 	trustBefore: number, -- trust before the caller's last answer (what Save My Call goes back to)
-	freeTurns: number, -- lines that didn't (CallConfig.MaxFreeTurns)
-	lastFree: boolean, -- the line the caller is answering didn't count
-	spoken: boolean, -- the line the caller is answering came from the mic
 	thinking: boolean,
-	pending: { { text: string, free: boolean, spoken: boolean } },
-	lastCaller: string, -- the caller's last line as the player saw it (for ideas)
-	ideas: { [number]: string }, -- ideas on screen, by id
-	ideasOpen: boolean, -- Ideas are on screen (asked for or popped up), so follow-ups for new caller lines are free
-	oldIdeas: { [number]: string }, -- the set before (a click can cross a refresh on the way)
-	offered: { [string]: boolean }, -- ideas offered this call (refresh offers different ones)
-	nextIdea: number,
-	earlyAsks: number,
-	warnedChat: boolean,
-	heard: string, -- everything you've said this call (for the fundraiser ID check)
-	note: string?, -- added to your next line for the caller (e.g. why their payment failed)
-	staticTurn: boolean, -- your last line had words the filter hid: it can't cost you trust
-	details: string?, -- the code / card details the caller read out, for when you ask them to repeat it
+	cards: { [number]: Card }, -- the cards on screen, by id
+	nextCard: number,
+	freeRefreshes: number,
+	refreshing: boolean, -- the reply being waited for is a refresh (its trust change doesn't count)
+	hook: Hook?, -- a hook landed: the mini-game is up (or just finished)
 	paid: boolean,
 	ended: boolean,
 }
@@ -135,7 +133,7 @@ local sessions: { [Player]: Session } = {}
 local incomingToken: { [Player]: number } = {}
 local pranks: { [Player]: { { from: string, fromUserId: number } } } = {} -- prank calls waiting to ring
 local failed: { [Player]: { session: Session, at: number } } = {} -- the last call that failed (Save My Call)
-local lastSay: { [Player]: number } = {}
+local lastPick: { [Player]: number } = {}
 local nextCallId = 0
 local random = Random.new()
 
@@ -154,6 +152,7 @@ local function notice(player: Player, message: string)
 end
 
 local function stateOf(session: Session)
+	local hook = session.hook
 	return {
 		CallId = session.id,
 		Lead = LeadService.Public(session.lead),
@@ -165,6 +164,7 @@ local function stateOf(session: Session)
 		Paid = session.paid,
 		PayAt = session.smarts.PayTrust,
 		LinesLeft = math.max(0, session.maxTurns - session.turns),
+		Hook = if hook and not hook.done then hook.app.Key else "",
 	}
 end
 
@@ -232,7 +232,7 @@ local function endCall(session: Session, outcome: number)
 	else
 		rememberCall(session)
 		if outcome == Outcome.TheyHungUp and not session.paid and session.turns < session.maxTurns then
-			CoachService.Note(player, "HungUp") -- not when the call just ran out of lines
+			CoachService.Note(player, "HungUp") -- not when the call just ran out of picks
 		end
 		-- A call that went wrong (not one you ended) can be saved for a while.
 		if not session.paid and (outcome == Outcome.TheyHungUp or outcome == Outcome.LineDown) then
@@ -275,64 +275,99 @@ local function endCall(session: Session, outcome: number)
 	end)
 end
 
--- The caller agreed to pay. Returns what the caller reads out (code / card details), if anything.
-local function tryPay(session: Session, pay: { Method: string, Amount: number }): string?
-	local persona = session.lead.Persona
-	local method = CallConfig.PaymentMethods[pay.Method]
-	if session.trust < session.smarts.PayTrust or not method or not table.find(persona.Methods, pay.Method) then
-		return nil
-	end
-	local player, leadName = session.player, session.lead.DisplayName
-	local amount = math.clamp(math.floor(pay.Amount), 1, math.min(persona.Budget, method.Max))
+-- ---------------------------------------------------------------------------
+-- Cards
+-- ---------------------------------------------------------------------------
 
-	if pay.Method == "donation" then
-		if not PaymentService.HeardFundraiser(player, session.heard) then
-			session.note = "(Your donation didn't go through: you don't have their fundraiser ID yet. Ask for it.)"
-			return nil
-		end
-		session.paid = true
-		CareerService.CompleteStep(player, "Paid")
-		CareerService.Count(player, "Scams")
-		CoachService.Note(player, "Paid")
-		PaymentService.Donate(player, leadName, amount)
-		return nil
+-- The hooks the player can try right now: one card per owned app, the ones that fit this caller first.
+local function hookCards(session: Session): { Card }
+	local out = {}
+	if session.prank or session.paid or session.trust < session.smarts.PayTrust then
+		return out
 	end
-
-	session.paid = true
-	CareerService.CompleteStep(player, "Paid")
-	CareerService.Count(player, "Scams")
-	CoachService.Note(player, "Paid")
-	CoachService.Note(player, "Issued")
-	if pay.Method == "gift_card" then
-		return PaymentService.IssueGiftCard(player, leadName, amount)
+	for _, app in ScamService.Hooks(session.player, session.lead.Persona.Weak) do
+		table.insert(out, { text = app.Hook, tone = "Hook", app = app.Key })
 	end
-	-- Their card holds their whole budget; the agreed amount is just what they think you'll take.
-	return PaymentService.IssueCard(player, leadName, math.min(persona.Budget, method.Max))
+	return out
 end
 
--- Sends one of the player's lines to the caller. `free` lines don't use up one of their lines.
-local function addTurn(session: Session, text: string, free: boolean, spoken: boolean)
-	if free and session.freeTurns < CallConfig.MaxFreeTurns then
-		session.freeTurns += 1
-	else
-		free = false
-		session.turns += 1
+-- Puts the cards on the player's screen (the AI's, filtered, plus any hooks) and the hint under them.
+local function sendCards(session: Session, offered: { ClaudeClient.Card }, hint: string)
+	local player = session.player
+	local cards: { Card } = {}
+	local safe = CallerPrompt.safeCards(random)
+	for index = 1, ScamConfig.Cards do
+		local card = offered[index]
+		local text = if card then clean(card.text, CallConfig.MaxCardLength) else ""
+		local tone = if card and table.find(ScamConfig.Tones, card.tone) and card.tone ~= "Hook" then card.tone else "Friendly"
+		if text ~= "" then
+			local shown, share = TextFilter.Caller(player, text)
+			if session.ended then
+				return
+			end
+			if not shown or share >= CallConfig.BlockedLineShare then
+				text = ""
+			end
+		end
+		if text == "" then
+			local stock = safe[index]
+			text, tone = stock.text, stock.tone
+		end
+		table.insert(cards, { text = text, tone = tone, app = "" })
 	end
-	session.lastFree = free
-	session.spoken = spoken
-	session.staticTurn = string.find(text, STATIC, 1, true) ~= nil
-	local note = session.note
-	session.note = nil
-	local smarts = session.smarts
-	local nudge = if smarts.Pushover and not session.paid and session.trust >= smarts.PayTrust
-		then "(Your trust is past your pay line. If they ask you to pay, agree right away and pay.)"
-		else nil
-	table.insert(session.messages, {
-		role = "user",
-		content = CallerPrompt.turn(text, session.trust, session.maxTurns - session.turns, note, spoken, nudge),
-	})
+	local hooks = hookCards(session)
+	if #hooks > 0 then
+		cards[#cards] = nil -- the hook takes the third slot (the client cycles through the rest)
+		for _, hook in hooks do
+			table.insert(cards, hook)
+		end
+		hint = HOOK_HINT
+	elseif not session.prank and not session.paid and session.trust >= session.smarts.PayTrust then
+		hint = HOOK_NONE_HINT
+	end
+
+	session.cards = {}
+	local options = {}
+	for _, card in cards do
+		session.nextCard = session.nextCard % 60000 + 1
+		session.cards[session.nextCard] = card
+		table.insert(options, { Id = session.nextCard, Text = card.text, Tone = card.tone, App = card.app })
+	end
+	if player.Parent then
+		Call.packets.Cards.sendTo({
+			CallId = session.id,
+			Options = options,
+			Hint = clean(hint, CallConfig.MaxHintLength),
+			FreeLeft = session.freeRefreshes,
+		}, player)
+	end
+end
+
+-- ---------------------------------------------------------------------------
+-- The caller's replies
+-- ---------------------------------------------------------------------------
+
+local function startGame(session: Session)
+	local hook = session.hook
+	if not hook or session.ended then
+		return
+	end
+	hook.started = os.clock()
 	pushState(session)
-	requestReply(session)
+	Call.packets.Game.sendTo({
+		CallId = session.id,
+		App = hook.app.Key,
+		Tier = hook.tier,
+		Seconds = hook.seconds,
+		Seed = hook.seed,
+		Expect = hook.expect,
+	}, session.player)
+	-- If the score never comes (closed the window, lost connection), the game still pays its minimum.
+	task.delay(math.min(hook.seconds + 10, ScamConfig.MaxGameSeconds), function()
+		if not session.ended and session.hook == hook and not hook.done then
+			CallService.FinishGame(session.player, 0, false)
+		end
+	end)
 end
 
 local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased: boolean)
@@ -358,25 +393,14 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 		hidden = true
 	end
 
-	-- A line the caller found garbled, or that only asked them to repeat something, doesn't count.
-	if
-		reply.FreeTurn
-		and not session.lastFree
-		and session.turns > 0
-		and session.turns < session.maxTurns -- the last line stays the last line
-		and session.freeTurns < CallConfig.MaxFreeTurns
-	then
-		session.turns -= 1
-		session.freeTurns += 1
-		session.lastFree = true
-	end
-
-	-- The greeting doesn't move trust; after that the caller decides, within their smarts level. A bad line is
-	-- never your fault: if your line had static, was misheard, or theirs got hidden, trust can't go down.
+	-- The greeting, a refresh filler and a hook reply don't move trust (the game already settled the hook);
+	-- after that the caller decides, within their smarts level. A hidden caller line is never your fault.
 	local smarts = session.smarts
-	local greeting = session.turns == 0 and session.freeTurns == 0
-	local delta = if greeting then 0 else math.clamp(math.round(reply.TrustChange), -smarts.MaxLoss, smarts.MaxGain)
-	if hidden or session.staticTurn or session.lastFree then
+	local hook = session.hook
+	local greeting = session.turns == 0 and not session.refreshing
+	local settled = session.refreshing or (hook ~= nil and not hook.done) or session.paid
+	local delta = if greeting or settled then 0 else math.clamp(math.round(reply.TrustChange), -smarts.MaxLoss, smarts.MaxGain)
+	if hidden then
 		delta = math.max(delta, 0)
 	end
 	if delta > 0 and session.gainScale ~= 1 then
@@ -385,60 +409,42 @@ local function applyReply(session: Session, reply: ClaudeClient.Reply, rephrased
 	local before = session.trust
 	session.trustBefore = before
 	session.trust = math.clamp(session.trust + delta, 0, 100)
+	session.refreshing = false
 
-	-- Payment details are made up by the game, so they're added after the filtered line.
-	local wasPaid = session.paid
-	local details = if reply.Pay and not session.paid then tryPay(session, reply.Pay) else nil
-	local repeating = false
-	if details then
-		session.details = details
-	elseif reply.RepeatPayment and session.details then
-		details = session.details
-		repeating = true
-	end
-	local method = if session.paid and not wasPaid and reply.Pay then reply.Pay.Method else ""
 	if hidden then
-		local kind = if repeating then "again" elseif details then "pay" elseif reply.HangUp then "bye" else "talk"
+		local kind = if hook and not hook.done then "yes" elseif reply.HangUp then "bye" else "talk"
 		spoken = CallerPrompt.safeLine(kind, random)
 		shown = spoken
 	end
-	table.insert(session.messages, {
-		role = "assistant",
-		content = if details then `{spoken} {details}` else spoken,
-	})
+	table.insert(session.messages, { role = "assistant", content = spoken })
 
 	session.thinking = false
-	session.lastCaller = shown :: string
 	Call.packets.Line.sendTo({
 		CallId = session.id,
-		Text = if details then `{shown} {details}` else shown,
+		Text = shown :: string,
 		Trust = session.trust,
 		Delta = session.trust - before,
-		Method = method,
 	}, player)
 
-	if reply.HangUp or session.trust <= CallConfig.HangUpTrust or session.turns >= session.maxTurns then
+	-- The caller just agreed to a hook: the mini-game starts; no cards until the money's in.
+	if hook and not hook.done and hook.started == 0 then
+		startGame(session)
+		return
+	end
+
+	if session.paid or reply.HangUp or session.trust <= CallConfig.HangUpTrust or session.turns >= session.maxTurns then
 		endCall(session, Outcome.TheyHungUp)
 		return
 	end
 
 	pushState(session)
-	if #session.pending > 0 then
-		-- Lines said while the caller was thinking go together; they're free only if every one of them was.
-		local texts, free, fromMic = {}, true, false
-		for _, item in session.pending do
-			table.insert(texts, item.text)
-			free = free and item.free
-			fromMic = fromMic or item.spoken
-		end
-		session.pending = {}
-		addTurn(session, table.concat(texts, " "), free, fromMic)
-	end
+	sendCards(session, reply.Cards, reply.Hint)
 end
 
 -- Asks Claude for the caller's next line. With `blockedLine`, asks for that line again in other words.
 requestReply = function(session: Session, blockedLine: string?)
 	session.thinking = true
+	session.cards = {}
 	pushState(session)
 	task.spawn(function()
 		local messages = session.messages
@@ -507,7 +513,7 @@ local function sendFile(session: Session)
 			Tech = "knows exactly one phone trick",
 			SoftSpot = "a good laugh",
 			RedFlag = "nothing, they're just having fun",
-			Methods = {},
+			Weak = "",
 			Wallet = 0,
 			Smarts = session.smarts.Name,
 			PayAt = 0, -- won't pay
@@ -524,7 +530,7 @@ local function sendFile(session: Session)
 		Tech = persona.Tech,
 		SoftSpot = persona.SoftSpot,
 		RedFlag = persona.RedFlag,
-		Methods = table.clone(persona.Methods),
+		Weak = persona.Weak,
 		Wallet = persona.Budget,
 		Smarts = session.smarts.Name,
 		PayAt = session.smarts.PayTrust,
@@ -545,7 +551,7 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		memory = table.clone(lead.Memory or {}),
 	}
 	-- Perks: the floor and a tidy office warm callers up, a messy desk cools them; a better headset (and
-	-- working equipment) makes every good line count for more.
+	-- working equipment) makes every good card count for more.
 	local choreTrust, choreGain = ChoreService.CallModifiers(player)
 	local startTrust = math.clamp(
 		CallConfig.StartTrust + OfficeService.Perks().StartTrust + choreTrust,
@@ -571,23 +577,12 @@ local function startSession(player: Player, lead: LeadService.LeadRecord, incomi
 		maxTurns = if prankFrom then ShopConfig.PrankLines else CallConfig.MaxTurns,
 		prank = prankFrom,
 		trustBefore = startTrust,
-		freeTurns = 0,
-		lastFree = false,
-		spoken = false,
 		thinking = false,
-		pending = {},
-		lastCaller = "",
-		ideas = {},
-		ideasOpen = false,
-		oldIdeas = {},
-		offered = {},
-		nextIdea = 0,
-		earlyAsks = 0,
-		warnedChat = false,
-		heard = "",
-		note = nil,
-		staticTurn = false,
-		details = nil,
+		cards = {},
+		nextCard = 0,
+		freeRefreshes = ScamConfig.FreeRefreshes,
+		refreshing = false,
+		hook = nil,
 		paid = false,
 		ended = false,
 	}
@@ -685,160 +680,151 @@ local function onAnswer(accept: boolean, player: Player)
 	end
 end
 
--- Ready-made lines for this moment in the call (Ideas), replacing the ones on screen.
-local function sendIdeas(session: Session, reason: number)
-	local player = session.player
-	local fundraiser = player:GetAttribute("FundraiserCode")
-	local texts = Ideas.pick({
-		persona = session.lead.Persona,
-		firstName = string.match(session.lead.DisplayName, "^(%S+)") or session.lead.DisplayName,
-		trust = session.trust,
-		payAt = session.smarts.PayTrust,
-		turns = session.turns + session.freeTurns,
-		paid = session.paid,
-		lastCaller = session.lastCaller,
-		blocked = reason == IdeaReason.Blocked,
-		fundraiser = if type(fundraiser) == "string" then fundraiser else nil,
-	}, random, session.offered)
-	session.oldIdeas = session.ideas
-	session.ideas = {}
-	session.ideasOpen = true
-	local options = {}
-	for _, text in texts do
-		session.nextIdea = session.nextIdea % 60000 + 1
-		session.ideas[session.nextIdea] = text
-		session.offered[text] = true
-		table.insert(options, { Id = session.nextIdea, Text = text })
-	end
-	if player.Parent then
-		Call.packets.Ideas.sendTo({ CallId = session.id, Reason = reason, Options = options }, player)
-	end
-end
-
--- Sends a line the player said (already filtered) to the caller, or queues it while they're thinking.
-local function deliver(session: Session, heard: string, free: boolean, spoken: boolean)
-	session.heard = string.sub(session.heard .. " " .. heard, -2000)
-	if session.thinking then
-		if #session.pending < MAX_PENDING then
-			table.insert(session.pending, { text = heard, free = free, spoken = spoken })
-		end
-		return
-	end
-	addTurn(session, heard, free, spoken)
-end
-
--- Asking for money before the caller trusts you is noted for the review tips.
-local function noteEarlyAsk(session: Session, line: string)
-	if session.paid or session.trust >= session.smarts.PayTrust or session.earlyAsks >= MAX_EARLY_ASKS then
-		return
-	end
-	local lower = " " .. string.gsub(string.lower(line), "[^%a]+", " ") .. " "
-	for _, word in PAY_WORDS do
-		if string.find(lower, ` {word} `, 1, true) then
-			session.earlyAsks += 1
-			CoachService.Note(session.player, "EarlyAsk")
-			return
-		end
-	end
-end
-
-local function onSay(request: any, player: Player)
+-- A session that can take a pick or a refresh right now.
+local function talking(player: Player): Session?
 	local session = sessions[player]
-	if not session or session.ended or session.phase ~= Phase.Connected or type(request) ~= "table" then
-		return
+	if not session or session.ended or session.phase ~= Phase.Connected or session.thinking then
+		return nil
 	end
-	local text, spoken = request.Text, request.Spoken == true
-	if type(text) ~= "string" then
-		return
+	if session.hook and not session.hook.done then
+		return nil -- the mini-game is up
 	end
-	-- Lines that come in quick succession (two spoken sentences, chat and phone at once) are spaced out
-	-- rather than dropped; only a flood is turned away.
 	local now = os.clock()
-	local slot = math.max(now, (lastSay[player] or -math.huge) + SAY_COOLDOWN)
-	if slot - now > 1 then
-		notice(player, "Slow down a little. The caller can't keep up.")
-		return
+	if now - (lastPick[player] or -math.huge) < PICK_COOLDOWN then
+		return nil
 	end
-	lastSay[player] = slot
-	if slot > now then
-		task.wait(slot - now)
-		if session.ended or sessions[player] ~= session then
-			return
-		end
-	end
-
-	local line = clean(text, CallConfig.MaxSayLength)
-	line = string.gsub(line, "%[static%]", "static") -- only real static counts as static
-	if line == "" then
-		return
-	end
-	local filtered, share = TextFilter.Player(player, line)
-	if session.ended or not filtered then
-		return
-	end
-
-	-- Mostly hidden: it isn't sent and costs nothing. Ready-made lines pop up so the call can go on.
-	if share >= CallConfig.BlockedLineShare then
-		Call.packets.YourLine.sendTo({ CallId = session.id, Text = filtered, Status = LineStatus.Hidden }, player)
-		CoachService.Note(player, "Blocked")
-		sendIdeas(session, IdeaReason.Blocked)
-		if TextFilter.CanChat(player) == false and not session.warnedChat then
-			session.warnedChat = true
-			notice(player, "Roblox hides everything you type or say because your account can't use chat yet "
-				.. "(Roblox's age check). Use Ideas to keep talking.")
-		end
-		return
-	end
-
-	-- Partly hidden: the caller hears static in place of the hidden words, and it's free.
-	session.ideasOpen = false -- you said your own line, so the Ideas panel closed
-	local partly = share > 0
-	Call.packets.YourLine.sendTo({
-		CallId = session.id,
-		Text = filtered,
-		Status = if partly then LineStatus.PartlyHidden else LineStatus.Sent,
-	}, player)
-	noteEarlyAsk(session, line)
-	local heard = if partly then (string.gsub(filtered, "#+", STATIC)) else filtered
-	deliver(session, heard, partly, spoken)
+	lastPick[player] = now
+	return session
 end
 
--- Asking for Ideas uses an on-call tip (3 free per shift, then Extra Tips). While they're on screen, new ones
--- for the caller's latest line are free.
-local function onAskIdeas(followUp: boolean, player: Player)
-	local session = sessions[player]
-	if not session or session.ended or session.phase ~= Phase.Connected then
-		return
+-- The player tried a hook. Whether it lands is the game's call, not the AI's.
+local function tryHook(session: Session, card: Card)
+	local player = session.player
+	local app = ScamConfig.App(card.app)
+	local tier = ScamService.Tier(player, card.app)
+	local persona = session.lead.Persona
+	local smarts = session.smarts
+	local matched = app ~= nil and app.Weak == persona.Weak
+	local landed = app ~= nil
+		and tier > 0
+		and session.trust >= smarts.PayTrust
+		and (matched or session.trust >= smarts.PayTrust + ScamConfig.HookMargin)
+	if landed and app then
+		local seconds = app.Seconds + (if tier >= 2 then ScamConfig.ExtraSeconds else 0)
+		session.hook = {
+			app = app,
+			tier = tier,
+			matched = matched,
+			expect = ScamService.Expect(app, tier, persona.Budget, matched),
+			started = 0,
+			seconds = seconds,
+			seed = random:NextInteger(1, 2 ^ 31 - 1),
+			done = false,
+		}
+		CoachService.Note(player, if matched then "HookMatched" else "HookLanded")
+		Call.packets.YourLine.sendTo({ CallId = session.id, Text = card.text, Status = LineStatus.HookLanded }, player)
+		table.insert(session.messages, {
+			role = "user",
+			content = CallerPrompt.hook(card.text, session.trust, session.maxTurns - session.turns, app.Name, true),
+		})
+	else
+		session.trust = math.clamp(session.trust + ScamConfig.HookMismatchTrust, 0, 100)
+		CoachService.Note(player, "HookMissed")
+		Call.packets.YourLine.sendTo({ CallId = session.id, Text = card.text, Status = LineStatus.HookMissed }, player)
+		table.insert(session.messages, {
+			role = "user",
+			content = CallerPrompt.hook(card.text, session.trust, session.maxTurns - session.turns,
+				if app then app.Name else "that", false),
+		})
 	end
-	if followUp == true then
-		if session.ideasOpen then
-			sendIdeas(session, IdeaReason.Asked)
-		end
-		return
-	end
-	if not PerkService.UseTip(player) then
-		notice(player, "You're out of tips for this shift. Get Extra Tips at the equipment store (or from the "
-			.. "lightbulb button).")
-		return
-	end
-	sendIdeas(session, IdeaReason.Asked)
+	pushState(session)
+	requestReply(session)
 end
 
-local function onUseIdea(id: number, player: Player)
+local function onPick(id: number, player: Player)
+	local session = talking(player)
+	if not session or type(id) ~= "number" then
+		return
+	end
+	local card = session.cards[id]
+	if not card then
+		return
+	end
+	session.cards = {}
+	session.turns += 1
+	if card.app ~= "" then
+		tryHook(session, card)
+		return
+	end
+	Call.packets.YourLine.sendTo({ CallId = session.id, Text = card.text, Status = LineStatus.Said }, player)
+	CoachService.Note(player, "Picks")
+	table.insert(session.messages, {
+		role = "user",
+		content = CallerPrompt.turn(card.text, session.trust, session.maxTurns - session.turns),
+	})
+	pushState(session)
+	requestReply(session)
+end
+
+-- New cards: the caller says a tiny filler line and the AI writes three different ones. Free a couple of
+-- times per call, then it uses a tip, then it costs a pick.
+local function onRefresh(_: nil, player: Player)
+	local session = talking(player)
+	if not session or session.turns >= session.maxTurns then
+		return
+	end
+	if session.freeRefreshes > 0 then
+		session.freeRefreshes -= 1
+	elseif not PerkService.UseTip(player) then
+		session.turns += 1
+		notice(player, "Out of free refreshes: that one cost a pick.")
+	end
+	session.cards = {}
+	session.refreshing = true
+	CoachService.Note(player, "Refreshes")
+	table.insert(session.messages, {
+		role = "user",
+		content = `[Trust: {session.trust}/100]\n(They went quiet for a moment, thinking. Say a tiny filler line, like `
+			.. "checking they're still there, and write three NEW cards, different from the last ones. trust_change 0.)",
+	})
+	requestReply(session)
+end
+
+-- The mini-game is over: pay out and let the caller say goodbye. raw = 0..1 performance.
+function CallService.FinishGame(player: Player, raw: number, perfect: boolean)
 	local session = sessions[player]
-	if not session or session.ended or session.phase ~= Phase.Connected or type(id) ~= "number" then
+	local hook = session and session.hook
+	if not session or session.ended or not hook or hook.done or hook.started == 0 then
 		return
 	end
-	local text = session.ideas[id] or session.oldIdeas[id]
-	if not text then
+	hook.done = true
+	raw = math.clamp(if type(raw) == "number" and raw == raw then raw else 0, 0, 1)
+	local score = if perfect and raw >= ScamConfig.PerfectAt
+		then ScamConfig.PerfectScore
+		else ScamConfig.MinScore + (1 - ScamConfig.MinScore) * raw
+	local amount = ScamService.Payout(player, hook.app, hook.tier, session.lead.Persona.Budget, hook.matched, score,
+		session.lead.DisplayName)
+	session.paid = true
+	CareerService.CompleteStep(player, "Paid")
+	CareerService.Count(player, "Scams")
+	CoachService.Note(player, "Paid")
+	if score >= ScamConfig.PerfectScore then
+		CoachService.Note(player, "Perfect")
+	end
+	pushState(session)
+	table.insert(session.messages, { role = "user", content = CallerPrompt.scammed(amount, hook.app.Name) })
+	requestReply(session)
+end
+
+local function onGameDone(request: any, player: Player)
+	if type(request) ~= "table" then
 		return
 	end
-	session.ideas = {}
-	session.oldIdeas = {}
-	session.ideasOpen = false
-	Call.packets.YourLine.sendTo({ CallId = session.id, Text = text, Status = LineStatus.Idea }, player)
-	CoachService.Note(player, "Ideas")
-	deliver(session, text, false, false)
+	local session = sessions[player]
+	if not session or request.CallId ~= session.id then
+		return
+	end
+	CallService.FinishGame(player, tonumber(request.Score) or 0, request.Perfect == true)
 end
 
 -- ---------------------------------------------------------------------------
@@ -920,7 +906,7 @@ function CallService.CanSave(player: Player): boolean
 end
 
 -- The caller of the last failed call rings straight back: same conversation, trust from before it went
--- wrong, and at least ShopConfig.SaveMinLines lines to go. Call only once the save is paid for.
+-- wrong, and at least ShopConfig.SaveMinLines picks to go. Call only once the save is paid for.
 function CallService.SaveCall(player: Player): (boolean, string)
 	if not CallService.CanSave(player) then
 		return false, "There's no call to save right now."
@@ -940,11 +926,9 @@ function CallService.SaveCall(player: Player): (boolean, string)
 	session.messages = table.clone(old.messages)
 	session.turns = math.min(old.turns, old.maxTurns - ShopConfig.SaveMinLines)
 	session.thinking = false
-	session.pending = {}
-	session.ideas = {}
-	session.oldIdeas = {}
-	session.note = nil
-	session.staticTurn = false
+	session.cards = {}
+	session.refreshing = false
+	session.hook = nil
 	session.ended = false
 	sessions[player] = session
 	incomingToken[player] = (incomingToken[player] or 0) + 1
@@ -987,9 +971,9 @@ function CallService.Start()
 	task.spawn(ClaudeClient.Check)
 	Namespace.listen(Call.queries.StartCall, onStartCall, Namespace.busy)
 	Call.packets.Answer.listen(onAnswer)
-	Call.packets.Say.listen(onSay)
-	Call.packets.AskIdeas.listen(onAskIdeas)
-	Call.packets.UseIdea.listen(onUseIdea)
+	Call.packets.Pick.listen(onPick)
+	Call.packets.Refresh.listen(onRefresh)
+	Call.packets.GameDone.listen(onGameDone)
 	Call.packets.HangUp.listen(onHangUp)
 	Shop.packets.UseCallSave.listen(onUseCallSave)
 
@@ -1017,7 +1001,7 @@ function CallService.Start()
 		end
 		sessions[player] = nil
 		incomingToken[player] = nil
-		lastSay[player] = nil
+		lastPick[player] = nil
 		failed[player] = nil
 		requeuePranks(player, true)
 	end)
