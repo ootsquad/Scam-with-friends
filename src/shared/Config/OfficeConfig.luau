@@ -212,8 +212,8 @@ local OfficeConfig = {
 		{ Key = "Sit", Text = "Sit down at a free computer" },
 		{ Key = "Login", Text = "Log in with your Roblox username" },
 		{ Key = "Call", Text = "Call a lead from the Phone app" },
-		{ Key = "Paid", Text = "Get a caller to pay you" },
-		{ Key = "CashIn", Text = "Cash it in (Gift Cards, Card Terminal or GiveHope)" },
+		{ Key = "Paid", Text = "Hook a caller and play the mini-game" },
+		{ Key = "Scamazon", Text = "Buy or upgrade an app in Scamazon" },
 		{ Key = "Chore", Text = "Do an office chore (look for prompts)" },
 	} :: { { Key: string, Text: string } },
 	TutorialHiddenBit = 7, -- set when the player hides the checklist

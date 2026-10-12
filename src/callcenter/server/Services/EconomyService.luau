@@ -8,13 +8,18 @@
 	The day clock starts when the first player logs in at a desk. Money made while the review is on screen
 	counts toward the next day.
 
+	Shift cash: what a player has earned this shift (ShiftPersonal) less what they've spent in Scamazon is
+	their balance (ShiftBalance). Spending never takes anything away from the team's total.
+
 	ReplicatedStorage attributes: ShiftDay, ShiftQuota, ShiftTeam, ShiftDayEndsAt (server time, 0 = not
-	running), ShiftReviewing, ShiftFired.  Player attribute: ShiftPersonal.
+	running), ShiftReviewing, ShiftFired.  Player attributes: ShiftPersonal, ShiftBalance.
 
 	EconomyService.Start()
 	EconomyService.StartClock()
 	EconomyService.Award(player, amount) -> number    pays out amount x their perks (2x cash, Team Leader bonus);
 	                                                  returns what they actually got
+	EconomyService.Balance(player) -> number          shift cash they can spend
+	EconomyService.Spend(player, amount) -> boolean   takes it from their balance (false if they can't afford it)
 	EconomyService.IsFired() -> boolean
 	EconomyService.IsRunning() -> boolean          the day clock is ticking (not before login, not in a review)
 	EconomyService.Day() -> number
@@ -39,6 +44,7 @@ local ShiftService = require(script.Parent.ShiftService)
 local EconomyService = {}
 
 local personal: { [Player]: number } = {}
+local spent: { [Player]: number } = {}
 local today: { [Player]: number } = {} -- kept for players who left today, so the review can still credit them
 local team = 0
 local day = 1
@@ -163,9 +169,24 @@ function EconomyService.Award(player: Player, amount: number): number
 	today[player] = (today[player] or 0) + amount
 	team += amount
 	player:SetAttribute("ShiftPersonal", personal[player])
+	player:SetAttribute("ShiftBalance", EconomyService.Balance(player))
 	ReplicatedStorage:SetAttribute("ShiftTeam", team)
 	CareerService.Earned(player, amount)
 	return amount
+end
+
+function EconomyService.Balance(player: Player): number
+	return math.max(0, (personal[player] or 0) - (spent[player] or 0))
+end
+
+function EconomyService.Spend(player: Player, amount: number): boolean
+	amount = math.max(0, math.floor(amount))
+	if amount > EconomyService.Balance(player) then
+		return false
+	end
+	spent[player] = (spent[player] or 0) + amount
+	player:SetAttribute("ShiftBalance", EconomyService.Balance(player))
+	return true
 end
 
 function EconomyService.IsFired(): boolean
@@ -195,6 +216,7 @@ function EconomyService.Start()
 	ReplicatedStorage:SetAttribute("ShiftReviewing", false)
 	local function setup(player: Player)
 		player:SetAttribute("ShiftPersonal", personal[player] or 0)
+		player:SetAttribute("ShiftBalance", EconomyService.Balance(player))
 	end
 	Players.PlayerAdded:Connect(setup)
 	for _, player in Players:GetPlayers() do
@@ -202,6 +224,7 @@ function EconomyService.Start()
 	end
 	Players.PlayerRemoving:Connect(function(player)
 		personal[player] = nil
+		spent[player] = nil
 		-- today[player] stays until the next day so the review can still credit them
 	end)
 end

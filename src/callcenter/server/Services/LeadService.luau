@@ -74,7 +74,7 @@ function LeadService.Temporary(displayName: string, tag: string): LeadRecord
 	lead.Username = string.lower((string.gsub(displayName, "[^%a]", ""))) .. tostring(random:NextInteger(10, 99))
 	lead.Tag = tag
 	lead.Persona.Name = displayName
-	lead.Persona.Methods = {}
+	lead.Persona.Weak = ""
 	lead.Persona.Budget = 0
 	return lead
 end

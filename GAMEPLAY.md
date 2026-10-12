@@ -1,8 +1,8 @@
 # How Call Center Chaos works
 
 You and up to three friends work a shift at a silly fake call center. You call made-up people played by an AI, win
-their trust, and get them to pay. Together, the crew has to hit the day's quota before the clock runs out, or
-everyone gets fired.
+their trust by picking what to say, hook them with a scam app and play a quick mini-game to take their money.
+Together, the crew has to hit the day's quota before the clock runs out, or everyone gets fired.
 
 ## 1. Form a crew
 
@@ -29,11 +29,12 @@ everyone gets fired.
 ## 3. Make calls
 
 - The **Phone** app lists 6 leads. Press **Call**, or wait: leads call you too.
-- Talk by typing, with Roblox chat, or with your mic (needs Roblox voice chat).
-- What your mic hears waits in the text box so you can fix it, then press **Send** or Enter. You can turn this
-  off in Settings to send mic lines straight away.
-- Stuck? Press the **lightbulb** (Ideas) for three ready-made lines that fit the call. Tap one to say it, or **Refresh** for new
-  ones. They change with what the caller just said.
+- You never type. After every caller line, **three cards** show up: things you could say. Click one (or press
+  1, 2, 3) to say it. The tag on a card says what kind of line it is: **Friendly**, **Story**, **Push** or
+  **Small talk**. One card is usually a trap (it touches their red flag, or pushes too hard).
+- A **hint** under the cards says what works on this caller. Turn it off in Settings.
+- **Refresh** (R) swaps the cards for new ones: free twice per call, then it uses an on-call tip, then it costs
+  a pick.
 - The caller answers in text and out loud. Only you can hear your caller.
 - Everyone in the crew can be on a different call at the same time.
 
@@ -43,19 +44,19 @@ When a call starts, the caller's file pops up. Press **FILE** on the call screen
 
 - **Soft spot:** what they care about. Build your story around it.
 - **Red flag:** what makes them nervous. Avoid it.
-- **Pays with:** gift card, credit card or donation.
-- **Can spare:** about how much money they have.
+- **Weak to:** the kind of hook they fall for: Tech, Greed, Fear, Heart or Shopping. Use an app with the same badge.
+- **Can spare:** about how much money they have. A mini-game takes a share of it.
 - **Smarts:** how sharp callers are right now (see below).
 - Their hobbies, pet, family and what they've been up to, for small talk.
 
 ## 5. Win their trust
 
 - Every call starts at **50% trust**, plus any perks (your floor, a tidy office), minus 3 if your desk is messy.
-- Friendly, believable lines raise it. Rude, pushy or confusing lines lower it.
-- Once trust passes the **pay line** (the white mark on the trust bar), ask for the money.
+- Good cards raise it. The trap card lowers it.
+- Once trust passes the **pay line** (the white mark on the trust bar), a gold **HOOK** card shows up (see
+  section 7).
 - At **5% trust** they hang up and won't pick up again for a while.
-- You get **25 lines** per call. The call screen shows how many are left. Lines Roblox hides, and lines the
-  caller didn't catch, don't count.
+- You get **12 picks** per call. The call screen shows how many are left.
 - Callers remember your earlier calls with them.
 
 ## 6. Callers get smarter
@@ -69,20 +70,51 @@ Callers start the day dumb and get sharper as the crew gets closer to the quota.
 | 75% of quota | Getting suspicious | 65% trust |
 | Quota met | Sharp | 72% trust |
 
-Dumb and gullible callers believe almost anything and pay as soon as you ask past the pay line. Suspicious and
-sharp callers need a good story.
+Dumb and gullible callers believe almost anything; sharper callers make the trap card more tempting and need
+more trust before a hook lands.
 
 Intern crews get a head start on this, and Senior crews get a handicap.
 
-## 7. Get paid
+## 7. Get paid: hooks and mini-games
 
-| How they pay | What happens | Where you cash it in |
-| --- | --- | --- |
-| Gift card | They buy one and read you the code. | **Gift Cards**: type the code. |
-| Credit card | They read the number, expiry and security code. | **Card Terminal**: charge up to what they have. Two declines freeze the card. |
-| Donation | They donate once you've told them your fundraiser ID. | **GiveHope**: shows your ID and what you've raised. |
+Past the pay line, the third card is a gold **HOOK**: one for every scam app you own. The › button on it cycles
+through them.
 
-Missed a code? Ask them to repeat it. Every payout shows up in the **Wallet** app.
+- A hook that **matches** what the caller is weak to always lands, and pays **25% extra**. One that doesn't
+  needs trust well past the line (10 points), or it costs 8 trust and the call goes on.
+- When it lands, the app's **mini-game** opens over the call. Each one is a sentence long and takes about 15
+  seconds, mouse or finger only. You can't lose: a mini-game always pays at least **40%** of what it could, and
+  a perfect run pays **20% extra**. Esc, B or QUIT ends it early and keeps the score so far.
+- The money lands in your **Wallet** straight away and counts for the quota. The caller says goodbye, none the
+  wiser. One hook per call.
+
+`payout = can spare × score × tier bonus × match bonus × floor perk × router perk`
+
+### The apps
+
+Every app comes from **Scamazon** on your desktop, bought with the cash you've made this shift. Apps reset every
+shift; everyone starts with Card Swiper and WalletDrop.
+
+| App | Weak to | Price | The mini-game |
+| --- | --- | --- | --- |
+| Card Swiper | Shopping | free | Slide the card through the slot, smooth and straight |
+| WalletDrop | Shopping | free | Drag the card into the wallet three times (it moves) |
+| ScratchIt | Shopping | $60 | Scratch the silver off the gift card |
+| GiveHope | Heart | $70 | Tap the hearts before they float away |
+| ParcelPal | Shopping | $80 | Swipe parcels into the truck of the same colour |
+| PopUp Palace | Fear | $90 | Close the fake virus pop-ups |
+| RefundMe | Greed | $100 | Click when the stamp is over the box |
+| TechSupport Pro | Tech | $110 | Drag each cable to the port of the same colour |
+| PrizeWheelz | Greed | $120 | Hold to charge, release to spin the wheel |
+| Worm | Tech | $140 | Snake: eat the coins, walls just slow you down |
+| LoveLetter | Heart | $160 | Match the pairs of hearts |
+| RemoteDesk | Tech | $180 | Click the cash icons popping up on their desktop |
+| BankOfNowhere | Fear | $220 | Click the padlocks in the order they lit up |
+| CryptoCoinz | Greed | $250 | Click SELL as close to the top of the price as you can |
+
+Each app has three tiers: **Basic**, **Pro** (×2 the price: +20% payout, a little longer and easier) and
+**Elite** (×4: +50% payout and a helper that plays along). **TRY IT** on an app's page is practice, no money.
+Spending never takes anything away from the team's total.
 
 ## 8. Hit the quota
 
@@ -91,8 +123,8 @@ Missed a code? Ask them to repeat it. Every payout shows up in the **Wallet** ap
 - When the clock runs out there's a performance review.
 - **Quota met:** the crew is promoted one floor up and a new day starts with a bigger quota.
 - **Quota missed:** the whole crew is fired and sent back to the lobby.
-- Either way, the review gives each player up to three tips based on how their day went (asking for money too
-  early, callers hanging up, payments never cashed in, and so on).
+- Either way, the review gives each player up to three tips based on how their day went (hooks that didn't
+  match, callers hanging up, never shopping in Scamazon, and so on).
 
 ## 9. Climb the tower
 
@@ -137,15 +169,12 @@ The **Career** app shows your title, lifetime stats and the tower.
 
 ## 12. The chat filter
 
-Roblox hides anything that looks like personal info: numbers, phone numbers, addresses, last names and links.
+Everything the caller says, and every card, goes through Roblox's text filter.
 
-- A line that's mostly hidden isn't sent and doesn't use one of your lines. Your bubble says **Not sent**, and
-  three **Ideas** pop up so the call can keep going. They're written by the game, never a reworded version of
-  what was hidden.
-- A few hidden words reach the caller as static. That line is free and never costs you trust.
-- If Roblox hides everything you say, your account may not be able to use chat yet (Roblox's age check). The
-  game tells you when that's the case; Ideas still work.
-- If the caller's line gets hidden, they say a short stand-in line instead.
+- If a caller's line gets hidden, they're asked to say it again in other words; if that's hidden too, they say
+  a short stand-in line instead. A hidden line never costs you trust.
+- A card the filter hides is swapped for a stock one.
+- Your own lines are cards, so nothing you pick is ever hidden.
 
 ## 13. Robux items
 
@@ -160,7 +189,7 @@ The equipment store also sells Robux items. Find them on the **ROBUX ITEMS** and
 | Office Chaos | Alarms flash, trash and messy desks pile up, broken equipment, and every computer gets the virus. Chores pay double for 2 minutes. |
 | 2x Cash | Double earnings for 15 minutes of work-day time. Extra time is saved for later shifts. |
 | Save My Call | After a caller hangs up on you (or the line drops), they call straight back where you left off, with their trust from before it went wrong. |
-| Extra Tips | 5 more uses of the lightbulb (Ideas) button. Everyone gets 3 free per shift, and unused tips are saved. |
+| Extra Tips | 5 more card refreshes past the free ones. Everyone gets 3 free per shift, and unused tips are saved. |
 | Boss Meltdown, Police Raid | Coming soon |
 
 **Game passes** are bought once and kept:
@@ -179,13 +208,12 @@ The equipment store also sells Robux items. Find them on the **ROBUX ITEMS** and
 | App | What it's for |
 | --- | --- |
 | Phone | Your leads and your calls |
-| Gift Cards | Redeem gift card codes |
-| Card Terminal | Charge credit cards |
-| GiveHope | Your fundraiser ID and donations |
-| Wallet | Your payouts and the team's progress |
+| Scamazon | Buy and upgrade scam apps with shift cash |
+| Scam apps | One tile per app you own: opens its page (TRY IT to practice) |
+| Wallet | Your payouts, what's left to spend, and the team's progress |
 | Training | Short lessons on all of the above |
 | Career | Your title, stats and the office tower |
-| Settings | Volumes (master, caller voices, sound effects), wallpaper (five photos), interface size, clock, motion, checking mic lines before they're sent |
+| Settings | Volumes (master, caller voices, sound effects), wallpaper (five photos), interface size, clock, motion, hints on calls |
 
-> Call Center Chaos is a comedy game. In real life, companies never ask for gift cards or card numbers over the
-> phone. If a caller does, hang up.
+> Call Center Chaos is a comedy game. In real life, companies never ask you to swipe a card, install an update
+> or pay a fee over the phone. If a caller does, hang up.

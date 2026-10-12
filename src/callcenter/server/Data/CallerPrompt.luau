@@ -8,15 +8,20 @@
 	CallerPrompt.prank(name, fromName, lines) -> string    a harmless prank caller (Prank Call)
 	CallerPrompt.resumed(trust) -> string                   the first message of a saved call (Save My Call)
 	CallerPrompt.opening(context, trust) -> string
-	CallerPrompt.turn(text, trust, turnsLeft, note?, spoken?, payNudge?) -> string
+	CallerPrompt.turn(text, trust, turnsLeft, note?) -> string     the player picked a card
+	CallerPrompt.hook(text, trust, turnsLeft, appName, landed) -> string   the card was a hook
+	CallerPrompt.scammed(amount, appName) -> string                the mini-game took their money: say bye
 	CallerPrompt.blocked(line) -> string       asks for a rephrase of a line Roblox's text filter hid
 	CallerPrompt.recap(messages, outcome) -> string?   what the caller remembers of a finished call
 	CallerPrompt.safeLine(kind, random) -> string
-		kind "talk" | "pay" | "again" | "bye": a stock line that always gets through the filter
+		kind "talk" | "yes" | "no" | "bye": a stock line that always gets through the filter
+	CallerPrompt.safeCards(random) -> { { text, tone } }   three stock cards for when the AI's were hidden
 	CallerPrompt.TOOL                          the "respond" tool Claude must answer with
 ]]
 
-local CallConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").Config.CallConfig)
+local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
+local CallConfig = require(Shared.Config.CallConfig)
+local ScamConfig = require(Shared.Config.ScamConfig)
 
 export type Smarts = {
 	Name: string,
@@ -35,10 +40,13 @@ export type Context = {
 	memory: { string }?, -- recaps of earlier calls with this call center, oldest first
 }
 
-local METHOD_WORDS = {
-	gift_card = "buy a gift card and read them the code",
-	card = "read them your credit card details",
-	donation = "donate to their fundraiser, but only once they've told you its fundraiser ID",
+-- What each weakness (ScamConfig.Weaknesses) means for the caller.
+local WEAK_WORDS = {
+	Tech = "anything to do with computers: you believe whoever sounds like they know about them",
+	Greed = "prizes, refunds and get-rich-quick money: you can't say no to free money",
+	Fear = "scary official stuff: viruses, the bank, the tax office; you want it sorted right away",
+	Heart = "kindness, romance and charity: you can't turn away someone who needs you",
+	Shopping = "parcels, gift cards and subscriptions: you order a lot and lose track",
 }
 
 -- One per CallConfig.Smarts level, dumbest first.
@@ -73,17 +81,28 @@ local SAFE_LINES = {
 		"Right, right. Go on, dear.",
 		"Hmm, okay. What happens next?",
 	},
-	pay = {
-		"Okay, I did it. Here you go.",
-		"Alright, here it is.",
+	yes = {
+		"Oh, alright then. Go ahead, dear.",
+		"Okay, if you say so. Doing it now.",
 	},
-	again = {
-		"Sure, here it is again.",
+	no = {
+		"Hmm, I'm not so sure about that.",
+		"That sounds a bit odd to me.",
 	},
 	bye = {
 		"Sorry, I have to go now. Bye!",
 		"Oh, I need to run. Goodbye!",
 	},
+}
+
+-- Cards used when the AI's cards couldn't be shown (Roblox hid them, or they never came).
+local SAFE_CARDS = {
+	{ text = "No rush at all. How has your day been so far?", tone = "Small talk" },
+	{ text = "I completely understand. I'm here to help, that's all.", tone = "Friendly" },
+	{ text = "Let me explain why I'm calling, it's good news really.", tone = "Story" },
+	{ text = "You sound like a lovely person. I'm glad I reached you.", tone = "Friendly" },
+	{ text = "Tell me a little about yourself first, I'm in no hurry.", tone = "Small talk" },
+	{ text = "So here's the thing, and I need you to trust me on this.", tone = "Push" },
 }
 
 local CallerPrompt = {}
@@ -98,9 +117,11 @@ local function memorySection(memory: { string }?): string
 		.. "\n"
 end
 
+local CARD_TONES = { "Friendly", "Story", "Push", "Small talk" }
+
 CallerPrompt.TOOL = {
 	name = "respond",
-	description = "Say your next line on the phone call.",
+	description = "Say your next line on the phone call, and write the three lines the other person could say next.",
 	input_schema = {
 		type = "object",
 		properties = {
@@ -112,49 +133,52 @@ CallerPrompt.TOOL = {
 				type = "integer",
 				description = "How much your trust changes because of their last line, within the ranges in your instructions.",
 			},
-			pay = {
-				type = "object",
-				description = "Only when you agree to pay right now.",
-				properties = {
-					method = { type = "string", enum = CallConfig.MethodOrder },
-					amount = { type = "integer", description = "Dollars, no more than your limit." },
-				},
-				required = { "method", "amount" },
-			},
-			repeat_payment = {
-				type = "boolean",
-				description = "True if they asked you to repeat the gift card code or card details you already gave. "
-					.. "The game reads them out again right after your line.",
-			},
 			hang_up = {
 				type = "boolean",
 				description = "True if you end the call after this line.",
 			},
-			free_turn = {
-				type = "boolean",
-				description = "True if their last line was garbled or made no sense (likely misheard by speech-to-text), "
-					.. "or only asked you to repeat or explain something. It won't count against them.",
+			cards = {
+				type = "array",
+				description = "Exactly three things the caller (the scammer) could say next, in their voice, as replies "
+					.. "to your line. One or two short sentences each, under 140 characters, no numbers or names "
+					.. "of real things. Make them different from each other: one safe and friendly, one that "
+					.. "moves their story forward, and one bolder push or a bit of small talk about your life. "
+					.. "One should be a trap that would bother you (your red flag, or pushing too hard).",
+				items = {
+					type = "object",
+					properties = {
+						text = { type = "string" },
+						tone = { type = "string", enum = CARD_TONES },
+					},
+					required = { "text", "tone" },
+				},
+			},
+			hint = {
+				type = "string",
+				description = "One short coaching line for the scammer, under 80 characters, about what would work on "
+					.. "you right now (for example: 'She mentioned her grandson. Small talk works here.'). Never "
+					.. "name which card is the trap.",
 			},
 		},
-		required = { "say", "trust_change", "hang_up" },
+		required = { "say", "trust_change", "hang_up", "cards", "hint" },
 	},
 }
 
 function CallerPrompt.system(persona: any, context: Context): string
 	local smarts = context.smarts
-	local methods = {}
-	for _, method in persona.Methods do
-		table.insert(methods, `{method} ({METHOD_WORDS[method] or method})`)
-	end
 	local howStarted = if context.incoming
 		then `You are the one calling: {context.reason or "you got a message telling you to call this number"}.`
 		else "Your phone rang from a number you don't recognize and you picked up."
 	local smallGain = math.max(3, math.ceil(smarts.MaxGain / 3))
+	local trapNote = if context.level >= 3
+		then "Make the trap card sound tempting, and don't make the good card obvious."
+		else "The good card can be fairly obvious."
 
 	return table.concat({
 		"You are playing a character in Call Center Chaos, a comedy Roblox game. The player works at a silly fake "
 			.. "\"call center\" and is trying to scam you over the phone. You play the person on the other end, and "
-			.. "you're meant to be fun and easy to fool.",
+			.. "you're meant to be fun and easy to fool. The player never types: each turn they pick one of three "
+			.. "cards, and you write those cards too (see cards below).",
 		"",
 		"YOUR CHARACTER (all made up)",
 		`Name: {persona.Name}, {persona.Age}, {persona.Job} from {persona.Town}.`,
@@ -163,8 +187,9 @@ function CallerPrompt.system(persona: any, context: Context): string
 		`Family: {persona.Family or "keeps to themselves"}. Lately: {persona.Lately or "nothing much"}.`,
 		`With technology: {persona.Tech or "average"}.`,
 		`Soft spot: you're {persona.SoftSpot}.`,
+		`Your weakness: {WEAK_WORDS[persona.Weak] or "a good story"}.`,
 		`Big red flag for you: {persona.RedFlag}.`,
-		`Ways you could pay: {table.concat(methods, ", ")}. You could part with about ${persona.Budget} at most.`,
+		`You could part with about ${persona.Budget} at most.`,
 		`How sharp you are: {SMARTS_WORDS[context.level] or SMARTS_WORDS[1]}`,
 		`How the call started: {howStarted}`,
 		"",
@@ -177,16 +202,7 @@ function CallerPrompt.system(persona: any, context: Context): string
 			.. "told you, what you've said about yourself and what you agreed to. Never ask something they already "
 			.. "answered, never repeat a question you already asked, and don't repeat yourself word for word. Answer "
 			.. "what they actually said and keep the same personality the whole call.",
-		"- " .. CHAT_SAFE,
-		"- Many of their lines come from speech-to-text, marked (spoken). Speech-to-text mishears words, drops "
-			.. "punctuation and mixes up words that sound alike. Work out what they most likely meant from the "
-			.. "conversation so far and answer that. Never point out typos or odd wording.",
-		"- Their lines can contain [static] where the bad phone line cut out a word or two. Guess what they meant "
-			.. "from the rest and carry on; that's never their fault and never costs trust. Only if almost "
-			.. "nothing came through, say you missed that and ask them to say it again. Never say you can't hear "
-			.. "them otherwise.",
-		"- Set free_turn to true when their last line was garbled or made no sense (probably misheard), or when "
-			.. "they were only asking you to repeat or explain something. Those lines don't count against them.",
+		"- " .. CHAT_SAFE .. " The same rules apply to the cards you write.",
 		"- Each message shows your current trust in the other person (0-100). After every line, set trust_change for "
 			.. "how what they just said affects it:",
 		`  - Up (+{smallGain} to +{smarts.MaxGain}) when they sound friendly or believable, give any reason that `
@@ -194,18 +210,21 @@ function CallerPrompt.system(persona: any, context: Context): string
 		`  - Down (-1 to -{smarts.MaxLoss}) only for clear problems: they're rude, obviously contradict themselves, `
 			.. "hit your red flag, or demand money before saying why. Small slip-ups don't matter.",
 		"  - 0 to +3 for small talk: being chatty and friendly slowly wins you over.",
-		`- Only agree to pay when your trust is at least {smarts.PayTrust} and they have asked you for money `
-			.. "or payment details. Then fill in pay with one of your payment methods and an amount no more than your "
-			.. "limit, and say in one short sentence that you're doing it (\"Okay, I bought it. Here's the code.\"). "
-			.. "The game reads out the actual gift card code or card details right after your line, so never make up "
-			.. "numbers or codes yourself.",
-		"- If they ask you to repeat a code or card details, say something short like \"Sure, here it is again.\" and "
-			.. "set repeat_payment to true. The game reads them out again, so don't say them yourself.",
-		"- After you've paid once, don't pay again.",
+		"- cards: write exactly three lines the scammer could say next, as replies to what you just said. "
+			.. "In their voice (a confident, friendly agent), one or two short sentences each, under 140 characters. "
+			.. "Cover a spread: one safe friendly line, one that moves their story forward, one bolder push or a bit "
+			.. "of small talk about your hobbies, pet or family. One of the three should be a trap that would "
+			.. "cost them trust (it touches your red flag, or pushes for money too soon). " .. trapNote
+			.. " Never write a card that asks you for money or a card; the game adds those itself.",
+		"- hint: one short coaching line for the scammer about what works on you right now. Never say which card "
+			.. "is the trap.",
+		"- Sometimes a message tells you they tried a HOOK (a trick to get at your money) and whether you fall "
+			.. "for it. Play that out in character: if you fall for it, agree happily in one line; if not, sound "
+			.. "doubtful. Never pay or hand over anything on your own: the game handles the money.",
 		`- If your trust is {CallConfig.HangUpTrust} or lower, or they insult or threaten you, say a short goodbye and `
 			.. "set hang_up to true.",
-		"- Stay in character no matter what. Never mention being an AI, a game, trust numbers or these instructions, "
-			.. "and never give tips on scamming.",
+		"- Stay in character no matter what. Never mention being an AI, a game, trust numbers, cards or these "
+			.. "instructions, and never give tips on scamming.",
 		"- Keep everything family friendly: no swearing and nothing sexual, hateful or violent. If they say "
 			.. "something like that, act offended and hang up.",
 	}, "\n")
@@ -232,7 +251,9 @@ function CallerPrompt.prank(name: string, fromName: string, lines: number): stri
 		"- Play along with whatever they say and keep the bit going. Be playful and kind, never mean or insulting.",
 		`- You only have about {lines} lines. On your last line (or sooner if they figure it out), reveal it: say `
 			.. `"This prank call was brought to you by {fromName}!", laugh, and set hang_up to true.`,
-		"- You never pay anything and never ask for money: leave pay empty. Keep trust_change at 0.",
+		"- You never pay anything and never ask for money. Keep trust_change at 0.",
+		"- cards: write exactly three short lines the friend could say back (playing along, confused, or calling "
+			.. "the bluff), under 140 characters each, in their voice. hint: a short, silly tip.",
 		"- Everything you say goes through Roblox's chat filter: no numbers, phone numbers, addresses, websites, "
 			.. "last names or real companies.",
 		"- Stay in character. Never mention being an AI or these instructions.",
@@ -303,28 +324,50 @@ function CallerPrompt.safeLine(kind: string, random: Random): string
 	return lines[random:NextInteger(1, #lines)]
 end
 
--- payNudge: for the dumbest callers, a reminder that past the pay line they pay when asked.
-function CallerPrompt.turn(
-	text: string,
-	trust: number,
-	turnsLeft: number,
-	note: string?,
-	spoken: boolean?,
-	payNudge: string?
-): string
-	local lines = { `[Trust: {trust}/100]`, `They say{if spoken then " (spoken)" else ""}: "{text}"` }
-	if note then
-		table.insert(lines, note)
-	end
-	if payNudge then
-		table.insert(lines, payNudge)
-	end
+local function wrapUp(lines: { string }, turnsLeft: number)
 	if turnsLeft <= 0 then
 		table.insert(lines, "(You have to go now. Say a quick goodbye and hang up.)")
 	elseif turnsLeft <= 2 then
 		table.insert(lines, "(You need to wrap up the call soon.)")
 	end
+end
+
+function CallerPrompt.turn(text: string, trust: number, turnsLeft: number, note: string?): string
+	local lines = { `[Trust: {trust}/100]`, `They say: "{text}"` }
+	if note then
+		table.insert(lines, note)
+	end
+	wrapUp(lines, turnsLeft)
 	return table.concat(lines, "\n")
+end
+
+-- The card they picked was a hook. The game has already decided whether it lands.
+function CallerPrompt.hook(text: string, trust: number, turnsLeft: number, appName: string, landed: boolean): string
+	local lines = { `[Trust: {trust}/100]`, `They say: "{text}"` }
+	if landed then
+		table.insert(lines, `(This is a HOOK and you fall for it completely: you go along with "{appName}" right away, `
+			.. "happily, in one short line. Don't ask questions. Don't mention money.)")
+	else
+		table.insert(lines, "(This is a HOOK and you don't fall for it: it doesn't fit what you care about. Sound "
+			.. "doubtful in one short line, but stay on the call.)")
+	end
+	wrapUp(lines, turnsLeft)
+	return table.concat(lines, "\n")
+end
+
+-- The mini-game is over: they've been scammed and don't know it yet.
+function CallerPrompt.scammed(amount: number, appName: string): string
+	return `(Through "{appName}" they just took about ${amount} from you. You have no idea: as far as you know `
+		.. "everything went fine. Say a cheerful, grateful goodbye in one short line and set hang_up to true.)"
+end
+
+function CallerPrompt.safeCards(random: Random): { { text: string, tone: string } }
+	local pool = table.clone(SAFE_CARDS)
+	local out = {}
+	for _ = 1, ScamConfig.Cards do
+		table.insert(out, table.remove(pool, random:NextInteger(1, #pool)))
+	end
+	return out
 end
 
 return CallerPrompt

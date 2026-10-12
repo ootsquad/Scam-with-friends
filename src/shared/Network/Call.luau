@@ -8,22 +8,19 @@
 		Call.queries.GetLeads.invoke()             -> { Lead }
 		Call.queries.StartCall.invoke(leadId)      -> Result
 		Call.packets.Answer.send(true/false)       -- pick up / decline an incoming call
-		Call.packets.Say.send({ Text = "text", Spoken = false })   -- typed, spoken (speech-to-text) or Roblox chat
-		Call.packets.AskIdeas.send(followUp)       -- three ready-made lines to say ("Ideas"). followUp = true:
-		                                           -- fresh ones for the caller's new line while Ideas are open
-		                                           -- (free); false = you asked (uses an on-call tip)
-		Call.packets.UseIdea.send(id)              -- say one of them
+		Call.packets.Pick.send(cardId)             -- say one of the cards on screen
+		Call.packets.Refresh.send()                -- three new cards (free twice, then a tip, then a pick)
+		Call.packets.GameDone.send({ CallId, Score, Perfect })   -- the mini-game is over (Score 0-1)
 		Call.packets.HangUp.send()
-		Call.queries.RedeemGiftCard.invoke("K7Q2-9XMB-4RTA")              -> Result
-		Call.queries.ChargeCard.invoke({ Number, Exp, Cvv, Amount })     -> Result
 
 	Server -> client (only ever sent to the player on the call)
-		State     the current call (nil = no call)
+		State     the current call (nil = no call). Hook = the app whose mini-game is up ("" if none)
 		File      the caller's file, sent when a call starts (shown in a pop-up)
 		Line      something the caller said, with their new trust
-		YourLine  what you said, after Roblox's text filter (Status: 1 sent, 2 hidden so not sent, 3 partly
-		          hidden, 4 a ready-made idea)
-		Ideas     three ready-made lines (Reason: 1 you asked, 2 your line was hidden)
+		YourLine  the card you picked (Status: 1 said, 2 a hook that landed, 3 a hook that didn't)
+		Cards     the three cards to pick from (Tone: ScamConfig.Tones; App: the hook's app, "" otherwise),
+		          the hint under them, and how many free refreshes are left
+		Game      a hook landed: play this app's mini-game (Seed for the layout, Expect = a full score's payout)
 		Payout    the caller paid
 		Leads     your lead list changed
 		Notice    a message for the desktop
@@ -59,7 +56,8 @@ export type CallState = {
 	Thinking: boolean, -- the caller is working out what to say
 	Paid: boolean,
 	PayAt: number, -- trust this caller needs before they'll pay
-	LinesLeft: number, -- your lines left before the caller has to go
+	LinesLeft: number, -- your picks left before the caller has to go
+	Hook: string, -- the app whose mini-game is up, "" if none
 }
 
 export type CallerFile = {
@@ -72,7 +70,7 @@ export type CallerFile = {
 	Tech: string,
 	SoftSpot: string,
 	RedFlag: string,
-	Methods: { string }, -- "gift_card" | "card" | "donation"
+	Weak: string, -- ScamConfig.Weaknesses key
 	Wallet: number, -- about how much they could part with
 	Smarts: string, -- CallConfig.Smarts name
 	PayAt: number,
@@ -83,7 +81,6 @@ export type Line = {
 	Text: string,
 	Trust: number,
 	Delta: number,
-	Method: string, -- payment handed over in this line ("gift_card" | "card" | "donation"), "" if none
 }
 
 export type YourLine = {
@@ -92,17 +89,29 @@ export type YourLine = {
 	Status: number,
 }
 
-export type Idea = { Id: number, Text: string }
+export type Card = { Id: number, Text: string, Tone: string, App: string }
 
-export type Ideas = {
+export type Cards = {
 	CallId: number,
-	Reason: number,
-	Options: { Idea },
+	Options: { Card },
+	Hint: string,
+	FreeLeft: number, -- free refreshes left this call
 }
 
+export type Game = {
+	CallId: number,
+	App: string,
+	Tier: number,
+	Seconds: number,
+	Seed: number,
+	Expect: number, -- what a full (1.0) score pays, before perks
+}
+
+export type GameDone = { CallId: number, Score: number, Perfect: boolean }
+
 export type Payout = {
-	Method: string,
-	Label: string,
+	App: string, -- ScamConfig app key
+	Label: string, -- the app's name
 	Detail: string,
 	Amount: number, -- what you got, bonus included
 	Bonus: number, -- floor and router bonus included in Amount
@@ -143,6 +152,7 @@ return Namespace.define("Call", function()
 		Paid = ByteNet.bool,
 		PayAt = ByteNet.uint8,
 		LinesLeft = ByteNet.uint8,
+		Hook = ByteNet.string,
 	})
 
 	local CallerFile = ByteNet.struct({
@@ -155,7 +165,7 @@ return Namespace.define("Call", function()
 		Tech = ByteNet.string,
 		SoftSpot = ByteNet.string,
 		RedFlag = ByteNet.string,
-		Methods = ByteNet.array(ByteNet.string),
+		Weak = ByteNet.string,
 		Wallet = ByteNet.uint32,
 		Smarts = ByteNet.string,
 		PayAt = ByteNet.uint8,
@@ -166,7 +176,6 @@ return Namespace.define("Call", function()
 		Text = ByteNet.string,
 		Trust = ByteNet.uint8,
 		Delta = ByteNet.int8,
-		Method = ByteNet.string,
 	})
 
 	local YourLine = ByteNet.struct({
@@ -175,24 +184,37 @@ return Namespace.define("Call", function()
 		Status = ByteNet.uint8,
 	})
 
-	local Idea = ByteNet.struct({
+	local Card = ByteNet.struct({
 		Id = ByteNet.uint16,
 		Text = ByteNet.string,
+		Tone = ByteNet.string,
+		App = ByteNet.string,
 	})
 
-	local Ideas = ByteNet.struct({
+	local Cards = ByteNet.struct({
 		CallId = ByteNet.uint32,
-		Reason = ByteNet.uint8,
-		Options = ByteNet.array(Idea),
+		Options = ByteNet.array(Card),
+		Hint = ByteNet.string,
+		FreeLeft = ByteNet.uint8,
 	})
 
-	local Say = ByteNet.struct({
-		Text = ByteNet.string,
-		Spoken = ByteNet.bool,
+	local Game = ByteNet.struct({
+		CallId = ByteNet.uint32,
+		App = ByteNet.string,
+		Tier = ByteNet.uint8,
+		Seconds = ByteNet.uint8,
+		Seed = ByteNet.uint32,
+		Expect = ByteNet.uint32,
+	})
+
+	local GameDone = ByteNet.struct({
+		CallId = ByteNet.uint32,
+		Score = ByteNet.float32,
+		Perfect = ByteNet.bool,
 	})
 
 	local Payout = ByteNet.struct({
-		Method = ByteNet.string,
+		App = ByteNet.string,
 		Label = ByteNet.string,
 		Detail = ByteNet.string,
 		Amount = ByteNet.uint32,
@@ -205,21 +227,14 @@ return Namespace.define("Call", function()
 		Message = ByteNet.string,
 	})
 
-	local Charge = ByteNet.struct({
-		Number = ByteNet.string,
-		Exp = ByteNet.string,
-		Cvv = ByteNet.string,
-		Amount = ByteNet.uint32,
-	})
-
 	return {
 		packets = {
 			-- client -> server
 			Logoff = ByteNet.definePacket({ value = ByteNet.nothing }),
 			Answer = ByteNet.definePacket({ value = ByteNet.bool }),
-			Say = ByteNet.definePacket({ value = Say }),
-			AskIdeas = ByteNet.definePacket({ value = ByteNet.bool }),
-			UseIdea = ByteNet.definePacket({ value = ByteNet.uint16 }),
+			Pick = ByteNet.definePacket({ value = ByteNet.uint16 }),
+			Refresh = ByteNet.definePacket({ value = ByteNet.nothing }),
+			GameDone = ByteNet.definePacket({ value = GameDone }),
 			HangUp = ByteNet.definePacket({ value = ByteNet.nothing }),
 
 			-- server -> client
@@ -227,7 +242,8 @@ return Namespace.define("Call", function()
 			File = ByteNet.definePacket({ value = CallerFile }),
 			Line = ByteNet.definePacket({ value = Line }),
 			YourLine = ByteNet.definePacket({ value = YourLine }),
-			Ideas = ByteNet.definePacket({ value = Ideas }),
+			Cards = ByteNet.definePacket({ value = Cards }),
+			Game = ByteNet.definePacket({ value = Game }),
 			Payout = ByteNet.definePacket({ value = Payout }),
 			Leads = ByteNet.definePacket({ value = ByteNet.array(Lead) }),
 			Notice = ByteNet.definePacket({ value = ByteNet.string }),
@@ -236,8 +252,6 @@ return Namespace.define("Call", function()
 			Login = ByteNet.defineQuery({ request = ByteNet.string, response = Result }),
 			GetLeads = ByteNet.defineQuery({ request = ByteNet.nothing, response = ByteNet.array(Lead) }),
 			StartCall = ByteNet.defineQuery({ request = ByteNet.uint16, response = Result }),
-			RedeemGiftCard = ByteNet.defineQuery({ request = ByteNet.string, response = Result }),
-			ChargeCard = ByteNet.defineQuery({ request = Charge, response = Result }),
 		},
 	}
 end)

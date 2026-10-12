@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local ScamConfig = require(Shared.Config.ScamConfig)
 
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
@@ -30,63 +31,69 @@ local LESSONS: { { title: string, text: string } } = {
 			.. "• Sit at a desk and log in with your Roblox username.\n"
 			.. "• Open <b>Phone</b> to see your leads: made-up people you can call. Press <b>Call</b>, or wait, "
 			.. "because leads call you too.\n"
+			.. "• You never type. Every turn you pick one of <b>three cards</b>: things you could say.\n"
 			.. "• Every dollar you make counts for you and for the team.\n"
 			.. `• Each day lasts {math.round(CallConfig.DayLength / 60)} minutes. The team has to hit the `
 			.. "<b>quota</b> before the day clock runs out. Miss it and the whole crew is fired.",
 	},
 	{
+		title = "Pick a card",
+		text = "The caller talks, then three cards show up. <b>Click one to say it</b> (or press 1, 2, 3).\n\n"
+			.. "• The tag on each card says what kind of line it is: <b>Friendly</b>, <b>Story</b>, <b>Push</b> or "
+			.. "<b>Small talk</b>. Friendly and small talk are safe; a story about their soft spot wins big; a push "
+			.. "too early loses trust.\n"
+			.. "• One card is usually a <b>trap</b>: it touches their red flag or pushes too hard.\n"
+			.. "• The <b>hint</b> under the cards tells you what works on this caller (Settings turns it off).\n"
+			.. `• <b>Refresh</b> (R) swaps the cards. Free {ScamConfig.FreeRefreshes} times per call, then it uses `
+			.. "a tip, then it costs a pick.\n"
+			.. `• You get {CallConfig.MaxTurns} picks per call.`,
+	},
+	{
 		title = "The trust meter",
 		text = `<b>Every call starts at {CallConfig.StartTrust}% trust.</b>\n\n`
-			.. "• Friendly, believable lines push it up. Rude, pushy or confusing ones push it down.\n"
-			.. "• The white mark on the bar is the <b>pay line</b>. Once trust is past it, ask and they'll pay.\n"
+			.. "• Good cards push it up. The trap card pushes it down.\n"
+			.. "• The white mark on the bar is the <b>pay line</b>. Once trust is past it, a gold <b>HOOK</b> card "
+			.. "shows up.\n"
 			.. `• If trust falls to {CallConfig.HangUpTrust}%, they hang up and won't pick up for a while.\n`
-			.. `• You get {CallConfig.MaxTurns} lines per call. Lines Roblox hides, and lines the caller didn't `
-			.. "catch, don't count.",
+			.. `• At the start of the day callers are {string.lower(dumbest.Name)} and pay at {dumbest.PayTrust}% `
+			.. `trust. The closer your team gets to quota, the sharper they get, up to {sharpest.PayTrust}%.`,
 	},
 	{
 		title = "Read the caller file",
 		text = "When a call starts, the caller's file pops up. Press <b>FILE</b> on the call screen to see it "
 			.. "again.\n\n"
-			.. "• <b>Soft spot</b>: what they care about. Build your story around it.\n"
-			.. "• <b>Red flag</b>: what makes them nervous. Stay away from it.\n"
-			.. "• <b>Pays with</b>: the ways they can pay. Ask for one of those.\n"
-			.. "• <b>Can spare</b>: about how much money they have.\n"
-			.. `• <b>Smarts</b>: how sharp callers are right now. At the start of the day they're `
-			.. `{string.lower(dumbest.Name)} and pay at {dumbest.PayTrust}% trust. The closer your team gets to `
-			.. `quota, the sharper they get, up to {sharpest.PayTrust}%.`,
+			.. "• <b>Soft spot</b>: what they care about. Pick the cards that play to it.\n"
+			.. "• <b>Red flag</b>: what makes them nervous. That's the trap card.\n"
+			.. "• <b>Weak to</b>: the kind of hook they fall for: <b>Tech</b>, <b>Greed</b>, <b>Fear</b>, "
+			.. "<b>Heart</b> or <b>Shopping</b>. Use an app with the same badge.\n"
+			.. "• <b>Can spare</b>: about how much money they have. The mini-game takes a share of it.\n"
+			.. "• <b>Smarts</b>: how sharp callers are right now.",
 	},
 	{
-		title = "Pick a story",
-		text = "Match your story to their soft spot:\n\n"
-			.. "• Worried about a virus? You're from the computer help desk.\n"
-			.. "• Waiting on a refund? You're from the refund department.\n"
-			.. "• Loves prizes? They just won something.\n"
-			.. "• Package never came? You're from the delivery company.\n\n"
-			.. "Use the rest of their file too. Ask about their pet or their hobby; people love talking about "
-			.. "themselves. Stay patient and friendly: rude or pushy callers lose trust fast.",
+		title = "Hooks and mini-games",
+		text = "Past the pay line, the third card turns into a gold <b>HOOK</b>: one for every scam app you own "
+			.. "(the › button cycles through them).\n\n"
+			.. `• A hook that <b>matches</b> what they're weak to always lands, and pays {math.round(ScamConfig.MatchBonus * 100)}% `
+			.. `extra. One that doesn't needs trust well past the line, or it costs {-ScamConfig.HookMismatchTrust} trust.\n`
+			.. "• When it lands, the app's <b>mini-game</b> opens: slide a card through a slot, close pop-ups, catch "
+			.. "hearts... Each one is a sentence long and takes about 15 seconds. Mouse or finger only.\n"
+			.. `• You can't lose: a mini-game always pays at least {math.round(ScamConfig.MinScore * 100)}% of what it `
+			.. `could. A perfect run pays {math.round((ScamConfig.PerfectScore - 1) * 100)}% extra.\n`
+			.. "• The money lands in your <b>Wallet</b> straight away and counts for the quota. The caller says "
+			.. "goodbye, none the wiser.",
 	},
 	{
-		title = "Getting paid",
-		text = "Once trust is past the pay line, ask for the money.\n\n"
-			.. "• <b>Gift card</b>: they buy one and read you the code. Type it into <b>Gift Cards</b>.\n"
-			.. "• <b>Credit card</b>: they read the card number, expiry and security code. Enter them in "
-			.. `<b>Card Terminal</b> and charge up to what they can spare. {CallConfig.DeclinesBeforeFreeze} `
-			.. "declines and the card is frozen.\n"
-			.. "• <b>Donation</b>: tell them your fundraiser ID from <b>GiveHope</b> first, then ask them to "
-			.. "donate.\n\n"
-			.. "Missed a code? Ask them to repeat it.",
-	},
-	{
-		title = "Talking and the filter",
-		text = "<b>Talk with the mic or type.</b> What the mic hears waits in the text box so you can fix it; "
-			.. "press <b>Send</b> or Enter. (Turn that off in Settings to send straight away.)\n\n"
-			.. "Roblox hides anything that looks like personal info: numbers, phone numbers, addresses, emails, "
-			.. "last names and links.\n"
-			.. "• A line that's mostly hidden isn't sent and doesn't use a line. Three <b>Ideas</b> pop up: "
-			.. "ready-made lines that fit the call. Tap one to say it.\n"
-			.. "• A few hidden words reach the caller as static. That line is free and never costs you trust.\n"
-			.. "• Stuck? Press the <b>lightbulb</b> for Ideas any time, and <b>Refresh</b> for new ones.\n"
-			.. "• Give your company a made-up name with words, not numbers.",
+		title = "Scamazon",
+		text = "Every scam app comes from <b>Scamazon</b> on your desktop, paid for with the cash you've made "
+			.. "this shift.\n\n"
+			.. "• You start with <b>Card Swiper</b> and <b>WalletDrop</b>. More apps mean a matching hook for every "
+			.. "kind of caller.\n"
+			.. `• Each app has three tiers: <b>Basic</b>, <b>Pro</b> (+{math.round((ScamConfig.Tiers[2].Bonus - 1) * 100)}% `
+			.. `payout, a little longer and easier) and <b>Elite</b> (+{math.round((ScamConfig.Tiers[3].Bonus - 1) * 100)}% `
+			.. "and a helper that plays along).\n"
+			.. "• <b>TRY IT</b> on an app's page plays its mini-game for practice, no money.\n"
+			.. "• Apps reset every shift, so buy what you need each time. Spending never takes anything away "
+			.. "from the team's total.",
 	},
 	{
 		title = "Quota and reviews",
@@ -98,11 +105,11 @@ local LESSONS: { { title: string, text: string } } = {
 			.. "the review gives you tips for next time.\n"
 			.. "• Trash, messy desks and smoking computers show up around the office. Hold the prompt to fix them "
 			.. "for a small bonus; a tidy office warms callers up too.\n"
-			.. "• Everything you earn goes to your career cash. Spend it on headsets, computers and routers at the "
-			.. "<b>equipment store</b>: walk up to the vendor and use the Shop prompt.\n"
+			.. "• Everything you earn goes to your career cash too. Spend it on headsets, computers and routers at "
+			.. "the <b>Tech Store</b>: talk to the dealer.\n"
 			.. "• Leave shift from the Start menu to go back to the lobby.\n\n"
-			.. "<b>Real life tip:</b> this is a comedy game. Real companies never ask for gift cards, card numbers "
-			.. "or donations over the phone. If a caller does, hang up.",
+			.. "<b>Real life tip:</b> this is a comedy game. Real companies never ask you to swipe a card, install "
+			.. "an update or pay a fee over the phone. If a caller does, hang up.",
 	},
 }
 

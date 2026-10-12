@@ -6,15 +6,12 @@
 	CallStore.Start()                           loads your leads (also tells the server you're ready)
 	CallStore.State / File / Leads / Payouts
 	CallStore.Changed(state, previous)  FileChanged(file)  LeadsChanged(leads)  Line(line)  YourLine(line)
-	CallStore.Payout(payout)  Notice(text)  Ideas(ideas)
+	CallStore.Payout(payout)  Notice(text)  Cards(cards)  Game(game)
 	CallStore.Login(username) -> Result     (yields)
 	CallStore.Logoff()
 	CallStore.StartCall(leadId) -> Result   (yields)
-	CallStore.Answer(accept) / Say(text, spoken?) / HangUp()
-	CallStore.AskIdeas(followUp?) / UseIdea(id)   ready-made lines to say (the server answers with Ideas);
-	                                           followUp: new ones for the caller's latest line while open (free)
-	CallStore.RedeemGiftCard(code) -> Result   ChargeCard(number, exp, cvv, amount) -> Result   (yield)
-	CallStore.PayoutsOf(method) -> { Payout }
+	CallStore.Answer(accept) / Pick(cardId) / Refresh() / HangUp()
+	CallStore.GameDone(callId, score, perfect)    the mini-game's result (score 0-1)
 	CallStore.IsConnected() -> boolean
 ]]
 
@@ -40,7 +37,8 @@ local CallStore = {
 	YourLine = Signal.new(),
 	Payout = Signal.new(),
 	Notice = Signal.new(),
-	Ideas = Signal.new(),
+	Cards = Signal.new(),
+	Game = Signal.new(),
 }
 
 local Call: any
@@ -84,51 +82,24 @@ function CallStore.Answer(accept: boolean)
 	Call.packets.Answer.send(accept)
 end
 
--- spoken: the line came from the microphone (speech-to-text), so the caller allows for misheard words.
-function CallStore.Say(text: string, spoken: boolean?)
-	if CallStore.IsConnected() and string.find(text, "%S") then
-		Call.packets.Say.send({ Text = string.sub(text, 1, CallConfig.MaxSayLength), Spoken = spoken == true })
+function CallStore.Pick(id: number)
+	if CallStore.IsConnected() then
+		Call.packets.Pick.send(id)
 	end
 end
 
-function CallStore.AskIdeas(followUp: boolean?)
+function CallStore.Refresh()
 	if CallStore.IsConnected() then
-		Call.packets.AskIdeas.send(followUp == true)
+		Call.packets.Refresh.send(nil)
 	end
 end
 
-function CallStore.UseIdea(id: number)
-	if CallStore.IsConnected() then
-		Call.packets.UseIdea.send(id)
-	end
+function CallStore.GameDone(callId: number, score: number, perfect: boolean)
+	Call.packets.GameDone.send({ CallId = callId, Score = math.clamp(score, 0, 1), Perfect = perfect == true })
 end
 
 function CallStore.HangUp()
 	Call.packets.HangUp.send(nil)
-end
-
-function CallStore.RedeemGiftCard(code: string)
-	return invoke(Call.queries.RedeemGiftCard, code)
-end
-
-function CallStore.ChargeCard(number: string, exp: string, cvv: string, amount: number)
-	return invoke(Call.queries.ChargeCard, {
-		Number = number,
-		Exp = exp,
-		Cvv = cvv,
-		Amount = math.clamp(math.floor(amount), 0, 4294967295),
-	})
-end
-
--- Payouts of one kind ("gift_card" | "card" | "donation"), newest first.
-function CallStore.PayoutsOf(method: string): { any }
-	local out = {}
-	for _, payout in CallStore.Payouts do
-		if payout.Method == method then
-			table.insert(out, payout)
-		end
-	end
-	return out
 end
 
 function CallStore.Start()
@@ -164,9 +135,14 @@ function CallStore.Start()
 	Call.packets.Notice.listen(function(text)
 		CallStore.Notice:Fire(text)
 	end)
-	Call.packets.Ideas.listen(function(ideas)
-		if current(ideas.CallId) then
-			CallStore.Ideas:Fire(ideas)
+	Call.packets.Cards.listen(function(cards)
+		if current(cards.CallId) then
+			CallStore.Cards:Fire(cards)
+		end
+	end)
+	Call.packets.Game.listen(function(game)
+		if current(game.CallId) then
+			CallStore.Game:Fire(game)
 		end
 	end)
 

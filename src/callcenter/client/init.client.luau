@@ -55,6 +55,7 @@ local booted = LoadingController.RunSteps({
 		run = function()
 			require(Workstation.CallStore).Start()
 			require(Workstation.ShopStore).Start()
+			require(Workstation.ScamStore).Start()
 			require(Workstation.ChatTags).Start()
 			require(Workstation.Sfx).Start()
 			require(Workstation.WorkstationController).Start()

@@ -1,7 +1,7 @@
 --[[
 	WalletApp (client)
-	The Wallet window: your take this shift, the team's total against today's quota, time until the
-	performance review, and your recent payouts.
+	The Wallet window: your take this shift (and what's left to spend after Scamazon), the team's total
+	against today's quota, time until the performance review, and your recent payouts (by scam app).
 
 	WalletApp.Start(window)
 ]]
@@ -11,15 +11,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Client = script.Parent.Parent
 local Theme = require(Client:WaitForChild("Ui").Theme)
-local Format = require(ReplicatedStorage:WaitForChild("Shared").Util.Format)
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Format = require(Shared.Util.Format)
+local ScamConfig = require(Shared.Config.ScamConfig)
 local CallStore = require(script.Parent.CallStore)
 local Ledger = require(script.Parent.Ledger)
-
-local METHOD_LOOK = {
-	gift_card = { "GIFT CARD", "PaymentGiftCard" },
-	card = { "CARD", "PaymentCard" },
-	donation = { "DONATION", "PaymentDonation" },
-}
 
 local player = Players.LocalPlayer
 
@@ -45,6 +41,10 @@ local function renderStats()
 	local day = ReplicatedStorage:GetAttribute("ShiftDay") or 1
 
 	body.PersonalCard.Value.Text = money(personal)
+	local balance = player:GetAttribute("ShiftBalance")
+	body.PersonalCard.Sub.Text = if type(balance) == "number" and balance < personal
+		then `{money(balance)} left to spend`
+		else "this shift"
 	body.TeamCard.Value.Text = money(team)
 	body.TeamCard.Sub.Text = `of {money(quota)} quota`
 	body.TeamCard.Value.TextColor3 = if quota > 0 and team >= quota then Theme.Green else Theme.NativeText
@@ -60,11 +60,10 @@ end
 
 local function renderPayouts()
 	Ledger.fill(body, "Payout", CallStore.Payouts, function(payout)
-		local look = METHOD_LOOK[payout.Method]
-		return if look then look[1] else string.upper(payout.Label)
+		return string.upper(payout.Label)
 	end, function(payout)
-		local look = METHOD_LOOK[payout.Method]
-		return Theme[if look then look[2] else "Accent"]
+		local app = ScamConfig.App(payout.App)
+		return if app then Color3.fromHex(app.Color) else Theme.Accent
 	end)
 end
 
@@ -72,6 +71,7 @@ function WalletApp.Start(window: Frame)
 	body = window:WaitForChild("Body")
 	CallStore.Payout:Connect(renderPayouts)
 	player:GetAttributeChangedSignal("ShiftPersonal"):Connect(renderStats)
+	player:GetAttributeChangedSignal("ShiftBalance"):Connect(renderStats)
 	for _, name in { "ShiftTeam", "ShiftQuota", "ShiftDay", "ShiftDayEndsAt" } do
 		ReplicatedStorage:GetAttributeChangedSignal(name):Connect(renderStats)
 	end

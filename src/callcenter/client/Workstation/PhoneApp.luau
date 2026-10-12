@@ -1,13 +1,14 @@
 --[[
 	PhoneApp (client)
 	The Phone window: your leads on the left, the call on the right (caller card with the trust meter, the
-	conversation, and a talk bar with mic / text / ideas / send / caller voice).
+	conversation, and the three choice cards under it).
 
-	What the mic hears goes in the text box first (Settings: "Check mic lines"), so you can fix it before the
-	caller hears it; press Send or Enter. Lines Roblox hides aren't sent and don't use a line, and three
-	ready-made lines (Ideas) pop up so the call can go on. Ideas also work any time from the lightbulb (Ideas) button, and
-	change with what the caller just said. Asking uses an on-call tip (the number on the button): 3 free per
-	shift, then Extra Tips (Robux). Out of tips, the button offers Extra Tips.
+	You never type. Each turn the caller's reply comes with three cards (lines you could say next); click one
+	to say it, or press 1 / 2 / 3. Once trust is past the pay line the third slot holds a gold HOOK card, one
+	per scam app you own (the › button cycles through them). A hook that lands opens the app's mini-game
+	(ScamGameApp); when it's over the money shows up and the caller says goodbye. REFRESH (R) swaps the
+	cards: free twice per call, then it uses an on-call tip, then it costs a pick. A short hint under the
+	cards says what works on this caller (Settings: Hints on calls).
 
 	After a caller hangs up on you, the idle screen offers to save the call (Save My Call).
 
@@ -21,6 +22,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CallConfig = require(Shared.Config.CallConfig)
+local ScamConfig = require(Shared.Config.ScamConfig)
 local Format = require(Shared.Util.Format)
 
 local Client = script.Parent.Parent
@@ -36,12 +38,13 @@ local CallStore = require(script.Parent.CallStore)
 local ShopStore = require(script.Parent.ShopStore)
 local CallVoice = require(script.Parent.CallVoice)
 local LeadAvatar = require(script.Parent.LeadAvatar)
+local ScamGameApp = require(script.Parent.ScamGameApp)
+local Sfx = require(script.Parent.Sfx)
 
 local Phase = CallConfig.Phase
 local Outcome = CallConfig.Outcome
 local Status = CallConfig.LeadStatus
 local LineStatus = CallConfig.LineStatus
-local IdeaReason = CallConfig.IdeaReason
 
 local STATUS_LOOK = {
 	[Status.Available] = { "AVAILABLE", "LeadAvailableBg", "GreenText" },
@@ -68,17 +71,36 @@ local OUTCOME_TEXT = {
 	[Outcome.None] = { "CALL ENDED", "DarkMuted" },
 }
 
+local TONE_COLOR = {
+	Friendly = Theme.ToneFriendly,
+	Story = Theme.ToneStory,
+	Push = Theme.TonePush,
+	["Small talk"] = Theme.ToneSmallTalk,
+	Hook = Theme.Gold,
+}
+
 -- Chat bubbles are sized from the measured text (Roblox's AutomaticSize collapses wrapped text to nothing).
 local BUBBLE_MAX_WIDTH = 320
 local BUBBLE_PAD_X = 28 -- matches the bubble's UIPadding (14 left + 14 right)
 local BUBBLE_PAD_Y = 20 -- 10 top + 10 bottom
-local CAPTION_HEIGHT = 18 -- the note under one of your lines ("Not sent", "Idea")
+local CAPTION_HEIGHT = 18 -- the note under one of your lines ("The hook landed!")
 
 -- Notes under your own lines, by YourLine.Status.
 local STATUS_CAPTION = {
-	[LineStatus.Hidden] = { "Not sent: Roblox hid this line. No line used.", "TrustLow" },
-	[LineStatus.PartlyHidden] = { "Some words were hidden, so it's free.", "TrustMid" },
-	[LineStatus.Idea] = { "Idea", "DarkMuted" },
+	[LineStatus.HookLanded] = { "The hook landed!", "GreenText" },
+	[LineStatus.HookMissed] = { "They didn't fall for it.", "TrustLow" },
+}
+
+local PICK_KEYS = {
+	[Enum.KeyCode.One] = 1,
+	[Enum.KeyCode.Two] = 2,
+	[Enum.KeyCode.Three] = 3,
+	[Enum.KeyCode.KeypadOne] = 1,
+	[Enum.KeyCode.KeypadTwo] = 2,
+	[Enum.KeyCode.KeypadThree] = 3,
+	[Enum.KeyCode.DPadUp] = 1,
+	[Enum.KeyCode.DPadLeft] = 2,
+	[Enum.KeyCode.DPadDown] = 3,
 }
 
 local PhoneApp = {}
@@ -86,16 +108,17 @@ local PhoneApp = {}
 local player = Players.LocalPlayer
 
 local ui: any
+local window: Frame
 local rowLeads: { [number]: number } = {} -- slot -> lead id currently drawn
 local shownCallId = 0
 local connectedAt = 0
 local order = 0
 local lastPaid = 0
-local sending = false
 local payAt = 70 -- the current caller's pay line (it depends on how sharp they are)
-local micDraft: string? = nil -- what the mic heard, waiting in the text box to be checked and sent
-local ideasOpen = false
-local ideasWanted = false -- asked for ideas and still want them (false once closed, used or a line is sent)
+local normals: { any } = {} -- the cards on screen that aren't hooks
+local hooks: { any } = {} -- the hook cards (one per owned app)
+local hookIndex = 1
+local freeLeft = ScamConfig.FreeRefreshes
 
 local function firstName(name: string): string
 	return string.match(name, "^(%S+)") or name
@@ -178,8 +201,9 @@ local function addBubble(text: string, mine: boolean, status: number?)
 			rowHeight += CAPTION_HEIGHT
 		end
 	end
-	if status == LineStatus.Hidden then
-		label.BackgroundColor3 = Theme.PhoneHead -- greyed out: it never reached the caller
+	if status == LineStatus.HookLanded or status == LineStatus.HookMissed then
+		label.BackgroundColor3 = if status == LineStatus.HookLanded then Theme.Gold else Theme.PhoneHead
+		label.TextColor3 = if status == LineStatus.HookLanded then Theme.NativeText else Theme.White
 	end
 	row.Size = UDim2.new(1, 0, 0, rowHeight)
 	scrollToBottom()
@@ -318,82 +342,161 @@ local function updateStatusStrip(state: any)
 	end
 end
 
-local function updateTalkBar(state: any)
+-- ---------------------------------------------------------------------------
+-- Cards
+-- ---------------------------------------------------------------------------
+
+local function paintCard(slot: number, card: any?)
+	local button = ui.cards:FindFirstChild(`Card{slot}`)
+	if not button then
+		return
+	end
+	button.Visible = card ~= nil
+	if not card then
+		return
+	end
+	local hook = card.App ~= ""
+	button.Text = card.Text
+	button:SetAttribute("CardId", card.Id)
+	local stroke = button:FindFirstChildOfClass("UIStroke")
+	if stroke then
+		stroke.Color = if hook then Theme.Gold else Theme.PhoneLine
+		stroke.Thickness = if hook then 2 else 1
+	end
+	local tag = button:FindFirstChild("Tag")
+	if tag then
+		tag.Text = string.upper(card.Tone)
+		tag.BackgroundColor3 = TONE_COLOR[card.Tone] or Theme.ToneFriendly
+		tag.TextColor3 = if hook then Theme.NativeText else Theme.White
+	end
+	local cycle = button:FindFirstChild("CycleButton")
+	if cycle then
+		cycle.Visible = hook and #hooks > 1
+		if cycle.Visible then
+			cycle.Text = `{hookIndex}/{#hooks} ›`
+		end
+	end
+end
+
+local function paintCards()
+	for slot = 1, ScamConfig.Cards do
+		local card
+		if slot == ScamConfig.Cards and #hooks > 0 then
+			card = hooks[hookIndex]
+		else
+			card = normals[slot]
+		end
+		paintCard(slot, card)
+	end
+end
+
+local function hideCards()
+	normals, hooks = {}, {}
+	hookIndex = 1
+	ui.cards.Visible = false
+end
+
+local function showCards(cards: any)
+	if not CallStore.IsConnected() then
+		return
+	end
+	normals, hooks = {}, {}
+	for _, card in cards.Options do
+		table.insert(if card.App ~= "" then hooks else normals, card)
+	end
+	hookIndex = 1
+	freeLeft = cards.FreeLeft
+	paintCards()
+	ui.cards.Visible = true
+	local hint = ui.hint
+	local wanted = SettingsStore.Settings.CallHints ~= false and cards.Hint ~= ""
+	hint.Visible = wanted
+	hint.Hint.Text = cards.Hint
+	hint.Hint.TextColor3 = if #hooks > 0 then Theme.Gold else Theme.Yellow
+	PhoneApp.renderTalk()
+end
+
+local function pick(slot: number)
+	local button = ui.cards:FindFirstChild(`Card{slot}`)
+	local id = button and button.Visible and button:GetAttribute("CardId")
+	if type(id) == "number" and CallStore.IsConnected() and ui.cards.Visible then
+		Sfx.Play("Click")
+		hideCards()
+		CallStore.Pick(id)
+	end
+end
+
+local function cycleHook()
+	if #hooks > 1 then
+		hookIndex = hookIndex % #hooks + 1
+		paintCards()
+	end
+end
+
+local function refresh()
+	if not CallStore.IsConnected() or not ui.cards.Visible then
+		return
+	end
+	local state = CallStore.State
+	if freeLeft <= 0 and ShopStore.TipsLeft() <= 0 and state and (state.LinesLeft or 0) <= 1 then
+		Notify.show("Phone", "No free refreshes and no picks to spare. Pick a card.", Theme.Yellow)
+		return
+	end
+	Sfx.Play("Click")
+	hideCards()
+	CallStore.Refresh()
+end
+
+-- The refresh button's badge and the picks left.
+function PhoneApp.renderTalk()
+	local state = CallStore.State
 	local connected = state ~= nil and state.Phase == Phase.Connected
 	local talk = ui.talk
-	talk.InputBox.TextEditable = connected
-	talk.InputBox.PlaceholderText = if connected then "Say something..." else "Waiting for the call..."
-	talk.SendButton.BackgroundColor3 = if connected then Theme.Accent else Theme.PhoneHead
-	local sendIcon = talk.SendButton:FindFirstChild("Icon")
-	if sendIcon then
-		sendIcon.ImageTransparency = if connected then 0 else 0.6
+	local count = talk.RefreshButton:FindFirstChild("Count")
+	if count then
+		local tips = ShopStore.TipsLeft()
+		if not connected then
+			count.Text = ""
+		elseif freeLeft > 0 then
+			count.Text = `{freeLeft} FREE`
+			count.BackgroundColor3 = Theme.Yellow
+		elseif tips > 0 then
+			count.Text = `{tips} {if tips == 1 then "TIP" else "TIPS"}`
+			count.BackgroundColor3 = Theme.Yellow
+		else
+			count.Text = "1 PICK"
+			count.BackgroundColor3 = Theme.Red
+		end
+		count.TextColor3 = if count.BackgroundColor3 == Theme.Red then Theme.White else Theme.NativeText
+		count.Visible = count.Text ~= ""
 	end
-
+	local lines = talk:FindFirstChild("Lines")
+	if lines then
+		local left = if state then (state.LinesLeft or CallConfig.MaxTurns) else 0
+		lines.Text = if connected then `{left} {if left == 1 then "PICK" else "PICKS"} LEFT` else ""
+		lines.TextColor3 = if left <= 3 then Theme.TrustLow else Theme.DarkMuted
+	end
+	talk.RefreshButton.BackgroundColor3 = if connected and ui.cards.Visible then Theme.PhoneHead else Theme.PhonePanel
 	local thinking = ui.thinking
-	local drafting = connected and micDraft ~= nil and talk.InputBox.Text ~= ""
-	local stroke = talk.InputBox:FindFirstChildOfClass("UIStroke")
-	if stroke then
-		stroke.Color = if drafting then Theme.Yellow else Theme.PhoneLine
-	end
 	if state and connected and state.Thinking then
 		thinking.Text = `{firstName(state.Lead.DisplayName)} is thinking...`
-			.. (if drafting then " Check your mic line, then Send." else "")
-	elseif drafting then
-		thinking.Text = "Your mic heard this. Fix it if it's wrong, then press Send or Enter."
-	elseif connected and CallVoice.MicOn then
-		thinking.Text = if CallVoice.Hearing then "Hearing you..." else "Listening. Just talk."
+	elseif state and connected and state.Hook ~= "" then
+		thinking.Text = "The hook landed. Take the money!"
 	else
 		thinking.Text = ""
 	end
 end
 
--- The mic and caller-voice buttons are grey circles with white icons (ImageConfig): the mic turns blue when
--- it's on (green while it hears you); the caller-voice button goes dark with a faded icon when voices are off.
+-- The caller-voice button: a grey circle with a white icon; dark with a faded icon when voices are off.
 local ICON_BUTTON = Color3.fromHex("#3A404C")
 
-local function paintVoiceButtons()
+local function paintVoiceButton()
 	local talk = ui.talk
-	local micOn = CallVoice.MicOn
-	talk.MicButton.BackgroundColor3 = if micOn then (if CallVoice.Hearing then Theme.TrustHigh else Theme.Accent) else ICON_BUTTON
 	talk.VoiceButton.BackgroundColor3 = if CallVoice.VoiceEnabled then ICON_BUTTON else Theme.PhoneHead
 	local voiceIcon = talk.VoiceButton:FindFirstChild("Icon")
 	if voiceIcon then
 		voiceIcon.ImageTransparency = if CallVoice.VoiceEnabled then 0 else 0.6
 	end
-	updateTalkBar(CallStore.State)
-end
-
--- ---------------------------------------------------------------------------
--- Ideas (ready-made lines)
--- ---------------------------------------------------------------------------
-
-local function closeIdeas()
-	ideasOpen = false
-	ideasWanted = false
-	ui.ideas.Visible = false
-end
-
-local function askIdeas()
-	if ShopStore.TipsLeft() <= 0 then
-		closeIdeas()
-		Notify.show("Out of tips", `You've used your free tips this shift. Get {ShopConfig.TipsPerPurchase} more?`, Theme.Yellow)
-		ShopStore.BuyProduct("ExtraTips")
-		return
-	end
-	ideasWanted = true
-	CallStore.AskIdeas()
-end
-
--- The number of tips left, on the lightbulb (Ideas) button.
-local function renderTips()
-	local count = ui.talk.IdeasButton:FindFirstChild("Count")
-	if not count then
-		return
-	end
-	local tips = ShopStore.TipsLeft()
-	count.Text = if tips <= 0 then "+" elseif tips > 99 then "99+" else tostring(tips)
-	count.BackgroundColor3 = if tips > 0 then Theme.Yellow else Theme.Red
-	count.TextColor3 = if tips > 0 then Theme.NativeText else Theme.White
 end
 
 -- "Save the call" on the idle screen after a caller hung up on you.
@@ -427,75 +530,6 @@ local function saveCall()
 	end
 end
 
-local function showIdeas(ideas: any)
-	if not CallStore.IsConnected() then
-		return
-	end
-	-- Ideas the player asked for, but closed (or answered) before they arrived, stay closed. Ideas for a
-	-- hidden line always show.
-	if ideas.Reason ~= IdeaReason.Blocked and not ideasWanted then
-		return
-	end
-	ideasWanted = true
-	local panel = ui.ideas
-	panel.Reason.Text = if ideas.Reason == IdeaReason.Blocked
-		then "Roblox hid your last line, so it wasn't sent and didn't use a line. Try one of these:"
-		else `Tap a line to say it. {ShopStore.TipsLeft()} {if ShopStore.TipsLeft() == 1 then "tip" else "tips"} left.`
-	for index = 1, 3 do
-		local button = panel:FindFirstChild(`Option{index}`)
-		if button then
-			local option = ideas.Options[index]
-			button.Visible = option ~= nil
-			if option then
-				button.Text = option.Text
-				button:SetAttribute("IdeaId", option.Id)
-			end
-		end
-	end
-	panel.Visible = true
-	ideasOpen = true
-end
-
-local function useIdea(index: number)
-	local button = ui.ideas:FindFirstChild(`Option{index}`)
-	local id = button and button:GetAttribute("IdeaId")
-	if type(id) == "number" and CallStore.IsConnected() then
-		closeIdeas()
-		CallStore.UseIdea(id)
-	end
-end
-
--- Clears what the mic heard (a new call, the call ended, or the line was sent).
-local function clearDraft()
-	if micDraft ~= nil then
-		micDraft = nil
-		if ui.talk.InputBox.Text ~= "" and not ui.talk.InputBox:IsFocused() then
-			ui.talk.InputBox.Text = ""
-		end
-	end
-end
-
--- A sentence the mic heard: straight to the caller, or into the text box to check first.
-local function onHeard(text: string)
-	if not CallStore.IsConnected() then
-		return
-	end
-	if SettingsStore.Settings.MicReview == false then
-		closeIdeas()
-		CallStore.Say(text, true)
-		return
-	end
-	local box = ui.talk.InputBox
-	local current = box.Text
-	local untouched = current == "" or current == micDraft
-	local combined = if current == "" then text else `{current} {text}`
-	combined = string.sub(combined, 1, CallConfig.MaxSayLength)
-	box.Text = combined
-	-- Only a draft nobody has edited counts as the mic's own words (the caller allows for misheard words).
-	micDraft = if untouched then combined else nil
-	updateTalkBar(CallStore.State)
-end
-
 local function renderCall(state: any, previous: any)
 	if not state then
 		ui.idle.Visible = true
@@ -511,9 +545,10 @@ local function renderCall(state: any, previous: any)
 		shownCallId = state.CallId
 		CallVoice.StopSpeaking() -- the last caller's backlog doesn't spill into this call
 		lastPaid = 0
+		freeLeft = ScamConfig.FreeRefreshes
 		clearTranscript()
-		closeIdeas()
-		clearDraft()
+		hideCards()
+		ui.hint.Visible = false
 		LeadAvatar.render(card.Portrait.View, state.Lead)
 		card.NameBar.DisplayName.Text = string.upper(state.Lead.DisplayName)
 		card.Username.Text = `@{state.Lead.Username}`
@@ -532,11 +567,11 @@ local function renderCall(state: any, previous: any)
 		and not (previous ~= nil and previous.CallId == state.CallId and previous.Phase == Phase.Ended)
 	if justEnded then
 		addSystem((OUTCOME_TEXT[state.Outcome] or OUTCOME_TEXT[Outcome.None])[1])
-		if CallVoice.MicOn then
-			CallVoice.SetMic(false)
-		end
-		closeIdeas()
-		clearDraft()
+		hideCards()
+		ui.hint.Visible = false
+	end
+	if state.Thinking then
+		hideCards()
 	end
 
 	payAt = state.PayAt or payAt
@@ -545,8 +580,8 @@ local function renderCall(state: any, previous: any)
 	if lines then
 		local left = state.LinesLeft or CallConfig.MaxTurns
 		lines.Visible = state.Phase == Phase.Connected
-		lines.Text = `{left} {if left == 1 then "LINE" else "LINES"} LEFT`
-		lines.TextColor3 = if left <= 5 then Theme.TrustLow else Theme.DarkMuted
+		lines.Text = `{left} {if left == 1 then "PICK" else "PICKS"} LEFT`
+		lines.TextColor3 = if left <= 3 then Theme.TrustLow else Theme.DarkMuted
 	end
 	card.PaidBadge.Visible = state.Paid
 	if state.Paid and lastPaid > 0 then
@@ -558,34 +593,16 @@ local function renderCall(state: any, previous: any)
 	ui.answer.Visible = state.Phase == Phase.Incoming
 	ui.talk.Visible = state.Phase ~= Phase.Incoming
 	updateStatusStrip(state)
-	updateTalkBar(state)
+	PhoneApp.renderTalk()
 	renderLeads()
-end
-
-local function send()
-	if sending then
-		return
-	end
-	local box = ui.talk.InputBox
-	local text = box.Text
-	if not CallStore.IsConnected() or not string.find(text, "%S") then
-		return
-	end
-	sending = true
-	local spoken = micDraft ~= nil and text == micDraft
-	micDraft = nil
-	box.Text = ""
-	closeIdeas()
-	CallStore.Say(text, spoken)
-	updateTalkBar(CallStore.State)
-	sending = false
 end
 
 -- ---------------------------------------------------------------------------
 -- Public API
 -- ---------------------------------------------------------------------------
 
-function PhoneApp.Start(window: Frame)
+function PhoneApp.Start(phoneWindow: Frame)
+	window = phoneWindow
 	local body = window:WaitForChild("Body")
 	local call = body:WaitForChild("CallView")
 	local convo = call:WaitForChild("Conversation")
@@ -597,11 +614,13 @@ function PhoneApp.Start(window: Frame)
 		transcript = convo:WaitForChild("Transcript"),
 		templates = convo:WaitForChild("Templates"),
 		thinking = convo:WaitForChild("Thinking"),
+		hint = convo:WaitForChild("HintStrip"),
+		cards = convo:WaitForChild("Cards"),
 		talk = convo:WaitForChild("Talk"),
 		answer = convo:WaitForChild("Answer"),
-		ideas = convo:WaitForChild("Ideas"),
 	}
-	ui.ideas.Visible = false
+	ui.cards.Visible = false
+	ui.hint.Visible = false
 	ui.card.Status.Text = ""
 
 	-- If the server can't reach Claude (no key, key rejected, HTTP off), say so where calls start.
@@ -639,81 +658,50 @@ function PhoneApp.Start(window: Frame)
 		CallStore.Answer(false)
 	end)
 
-	local talk = ui.talk
-	ButtonFx.attach(talk.SendButton, 1.04, 0.95)
-	talk.SendButton.MouseButton1Click:Connect(send)
-	talk.InputBox.FocusLost:Connect(function(enterPressed)
-		if enterPressed then
-			send()
-			if CallStore.IsConnected() then
-				task.defer(function()
-					talk.InputBox:CaptureFocus()
-				end)
+	-- The cards
+	for slot = 1, ScamConfig.Cards do
+		local button = ui.cards:FindFirstChild(`Card{slot}`)
+		if button then
+			ButtonFx.attach(button, 1.02, 0.98)
+			button.MouseButton1Click:Connect(function()
+				pick(slot)
+			end)
+			local cycle = button:FindFirstChild("CycleButton")
+			if cycle then
+				cycle.MouseButton1Click:Connect(cycleHook)
 			end
 		end
-	end)
-	ButtonFx.attach(talk.MicButton, 1.06, 0.94)
-	talk.MicButton.MouseButton1Click:Connect(function()
-		if not CallVoice.MicOn and not CallStore.IsConnected() then
-			Notify.show("Phone", "Turn the mic on once the call connects.", Theme.Yellow)
-			return
-		end
-		local ok, message = CallVoice.SetMic(not CallVoice.MicOn)
-		if not ok and message then
-			Notify.show("Voice", message, Theme.Yellow)
-		end
-	end)
+	end
+	local talk = ui.talk
+	ButtonFx.attach(talk.RefreshButton, 1.04, 0.95)
+	talk.RefreshButton.MouseButton1Click:Connect(refresh)
 	ButtonFx.attach(talk.VoiceButton, 1.06, 0.94)
 	talk.VoiceButton.MouseButton1Click:Connect(function()
 		CallVoice.SetVoiceEnabled(not CallVoice.VoiceEnabled)
 		Notify.show("Phone", if CallVoice.VoiceEnabled then "Caller voice on." else "Caller voice off. Lines still show as text.")
 	end)
-	CallVoice.Changed:Connect(paintVoiceButtons)
-	CallVoice.Heard:Connect(onHeard)
-	paintVoiceButtons()
-	talk.InputBox:GetPropertyChangedSignal("Text"):Connect(function()
-		if micDraft ~= nil and talk.InputBox.Text ~= micDraft then
-			micDraft = nil -- they edited what the mic heard
-		end
-		updateTalkBar(CallStore.State)
-	end)
-	-- Enter sends a mic line waiting in the box without clicking into it first.
+	CallVoice.Changed:Connect(paintVoiceButton)
+	paintVoiceButton()
 	UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
-		if processed or input.KeyCode ~= Enum.KeyCode.Return then
+		if processed or not window.Visible or not CallStore.IsConnected() or ScamGameApp.IsOpen() then
 			return
 		end
-		if micDraft ~= nil and window.Visible and CallStore.IsConnected() then
-			send()
+		local slot = PICK_KEYS[input.KeyCode]
+		if slot then
+			pick(slot)
+		elseif input.KeyCode == Enum.KeyCode.R or input.KeyCode == Enum.KeyCode.ButtonY then
+			refresh()
+		elseif input.KeyCode == Enum.KeyCode.Tab or input.KeyCode == Enum.KeyCode.DPadRight then
+			cycleHook()
+		end
+	end)
+	SettingsStore.Changed:Connect(function(settings)
+		if ui.hint.Hint.Text ~= "" and ui.cards.Visible then
+			ui.hint.Visible = settings.CallHints ~= false
 		end
 	end)
 
-	-- Ideas
-	local ideas = ui.ideas
-	ButtonFx.attach(talk.IdeasButton, 1.06, 0.94)
-	talk.IdeasButton.MouseButton1Click:Connect(function()
-		if ideasOpen then
-			closeIdeas()
-		elseif CallStore.IsConnected() then
-			askIdeas()
-		else
-			Notify.show("Phone", "Ideas show up once the call connects.", Theme.Yellow)
-		end
-	end)
-	ButtonFx.attach(ideas.RefreshButton, 1.04, 0.95)
-	ideas.RefreshButton.MouseButton1Click:Connect(askIdeas)
-	ideas.CloseButton.MouseButton1Click:Connect(closeIdeas)
-	for index = 1, 3 do
-		local button = ideas:FindFirstChild(`Option{index}`)
-		if button then
-			ButtonFx.attach(button, 1.02, 0.97)
-			button.MouseButton1Click:Connect(function()
-				useIdea(index)
-			end)
-		end
-	end
-	CallStore.Ideas:Connect(showIdeas)
-
-	-- Tips left and Save My Call
+	-- Save My Call
 	local saveBar = ui.idle:FindFirstChild("SaveCall")
 	if saveBar then
 		saveBar.Visible = false
@@ -721,24 +709,20 @@ function PhoneApp.Start(window: Frame)
 		saveBar.SaveButton.MouseButton1Click:Connect(saveCall)
 	end
 	ShopStore.Changed:Connect(function()
-		renderTips()
+		PhoneApp.renderTalk()
 		renderSave()
 	end)
 	ShopStore.PricesLoaded:Connect(renderSave)
 	CallStore.Changed:Connect(renderSave)
-	renderTips()
 	renderSave()
 
 	CallStore.LeadsChanged:Connect(renderLeads)
 	CallStore.Changed:Connect(renderCall)
+	CallStore.Cards:Connect(showCards)
 	CallStore.Line:Connect(function(line)
 		addBubble(line.Text, false)
 		renderTrust(line.Trust)
 		showDelta(line.Delta)
-		if ideasOpen then
-			ideasWanted = true
-			CallStore.AskIdeas(true) -- fresh ideas for what the caller just said (free while they're open)
-		end
 		local state = CallStore.State
 		if state then
 			-- Don't read out "(The line crackles.)" or words the filter hid.
@@ -753,9 +737,12 @@ function PhoneApp.Start(window: Frame)
 	CallStore.YourLine:Connect(function(line)
 		addBubble(line.Text, true, line.Status)
 	end)
+	CallStore.Game:Connect(function(game)
+		ScamGameApp.Play(game)
+	end)
 	CallStore.Payout:Connect(function(payout)
 		lastPaid = payout.Amount
-		addSystem(`{firstName(payout.LeadName)} paid {money(payout.Amount)} · {string.lower(payout.Label)}`)
+		addSystem(`{firstName(payout.LeadName)} paid {money(payout.Amount)} · {payout.Label}`)
 		local state = CallStore.State
 		if state then
 			ui.card.PaidBadge.Visible = true
