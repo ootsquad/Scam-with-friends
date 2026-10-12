@@ -12,6 +12,7 @@
 			random = Random,          -- seeded, so a replay lays out the same
 			easier = boolean,         -- Pro and up: bigger targets, slower spawns
 			helper = boolean,         -- Elite: a helper that plays along a little
+			touch = boolean,          -- a phone: targets a third bigger (big(ctx, n))
 			report = (raw) -> (),     -- how it's going, 0..1 (called whenever it changes)
 			done = (raw, perfect) -> (),   -- finish early (the game's over)
 			pointer = () -> Vector2,  -- where the mouse / finger is, in the arena's own pixels (before UIScale)
@@ -36,6 +37,7 @@ type Ctx = {
 	random: Random,
 	easier: boolean,
 	helper: boolean,
+	touch: boolean,
 	report: (number) -> (),
 	done: (number, boolean) -> (),
 	pointer: () -> Vector2,
@@ -160,6 +162,11 @@ local function popIn(instance: GuiObject)
 	TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 end
 
+-- A size, a third bigger on a touch screen (fingers are wider than mouse pointers).
+local function big(ctx: Ctx, n: number): number
+	return if ctx.touch then math.round(n * 1.3) else n
+end
+
 -- The arena in its own pixels (the desktop's UIScale doesn't count).
 local function arenaSize(ctx: Ctx): Vector2
 	local size = ctx.arena.Size
@@ -231,7 +238,7 @@ function ScamGames.Swipe(ctx: Ctx)
 	local terminal = frame(ctx.arena, "Terminal", UDim2.new(1, -80, 0, 110), UDim2.fromOffset(40, size.Y / 2 - 55), Color3.fromHex("#22262C"), 16)
 	frame(terminal, "Slot", UDim2.new(1, -40, 0, 8), UDim2.fromOffset(20, 51), Color3.fromHex("#0A0B0D"), 4)
 	label(terminal, "SLIDE THE CARD THROUGH  ›››", 14, Theme.DarkMuted, { Position = UDim2.fromOffset(0, 12), Size = UDim2.new(1, 0, 0, 20) })
-	local card = frame(ctx.arena, "Card", UDim2.fromOffset(120, 76), UDim2.fromOffset(0, 0), Theme.Accent, 10)
+	local card = frame(ctx.arena, "Card", UDim2.fromOffset(big(ctx, 120), big(ctx, 76)), UDim2.fromOffset(0, 0), Theme.Accent, 10)
 	label(card, "CHAOS BANK", 12, Theme.White, { Position = UDim2.fromOffset(0, 8), Size = UDim2.new(1, 0, 0, 16) })
 	frame(card, "Stripe", UDim2.new(1, 0, 0, 14), UDim2.fromOffset(0, 32), INK)
 	local startX = 100
@@ -297,7 +304,7 @@ function ScamGames.Drop(ctx: Ctx)
 	local wallet = frame(ctx.arena, "Wallet", UDim2.fromOffset(150, 110), UDim2.fromOffset(0, 0), Color3.fromHex("#92400E"), 14)
 	frame(wallet, "Flap", UDim2.new(1, -20, 0, 30), UDim2.fromOffset(10, -12), Color3.fromHex("#B45309"), 8)
 	label(wallet, "WALLET", 16, Theme.White)
-	local card = frame(ctx.arena, "Card", UDim2.fromOffset(110, 70), UDim2.fromOffset(0, 0), Theme.Accent, 10)
+	local card = frame(ctx.arena, "Card", UDim2.fromOffset(big(ctx, 110), big(ctx, 70)), UDim2.fromOffset(0, 0), Theme.Accent, 10)
 	label(card, "💳", 30, Theme.White)
 	local function placeWallet()
 		centreAt(wallet, Vector2.new(ctx.random:NextNumber(size.X * 0.5, size.X - 90), ctx.random:NextNumber(70, size.Y - 70)))
@@ -438,9 +445,9 @@ function ScamGames.Clicker(ctx: Ctx)
 		every = 0.55,
 		lifetime = 1.6,
 		target = math.floor(ctx.seconds / 0.65),
-		size = 64,
+		size = big(ctx, 64),
 		spawn = function(centre)
-			local cash = button(ctx.arena, "Cash", UDim2.fromOffset(64, 64), UDim2.fromOffset(0, 0), CASH, "$", 32)
+			local cash = button(ctx.arena, "Cash", UDim2.fromOffset(big(ctx, 64), big(ctx, 64)), UDim2.fromOffset(0, 0), CASH, "$", 32)
 			centreAt(cash, centre)
 			cash.TextSize = 30
 			return cash, cash
@@ -469,7 +476,8 @@ function ScamGames.PopUps(ctx: Ctx)
 			local bar = frame(popup, "Bar", UDim2.new(1, 0, 0, 26), UDim2.fromOffset(0, 0), Color3.fromHex("#D6313B"), 8)
 			label(bar, POPUP_TITLES[ctx.random:NextInteger(1, #POPUP_TITLES)], 11, Theme.White, { Size = UDim2.new(1, -36, 1, 0), Position = UDim2.fromOffset(8, 0), TextXAlignment = Enum.TextXAlignment.Left })
 			label(popup, "Click OK to install cleaner", 11, Theme.NativeMuted, { Position = UDim2.fromOffset(0, 30), Size = UDim2.new(1, 0, 0, 40) })
-			local x = button(bar, "Close", UDim2.fromOffset(if ctx.easier then 44 else 32, 22), UDim2.new(1, if ctx.easier then -46 else -34, 0, 2), INK, "✕", 4)
+			local xw = big(ctx, if ctx.easier then 44 else 32)
+			local x = button(bar, "Close", UDim2.fromOffset(xw, 22), UDim2.new(1, -xw - 2, 0, 2), INK, "✕", 4)
 			x.TextSize = 14
 			return x, popup -- the ✕ is what you click; the whole pop-up goes with it
 		end,
@@ -658,7 +666,7 @@ function ScamGames.Scratch(ctx: Ctx)
 	local left = #tiles
 	local total = #tiles
 	local pressing = false
-	local radius = if ctx.easier then 34 else 24
+	local radius = big(ctx, if ctx.easier then 34 else 24)
 	local function scratchAt(point: Vector2)
 		for i = #tiles, 1, -1 do
 			local tile = tiles[i]
@@ -954,7 +962,7 @@ function ScamGames.Parcels(ctx: Ctx)
 			return
 		end
 		parcelColor = if ctx.random:NextNumber() < 0.5 then leftColor else rightColor
-		local p = button(ctx.arena, "Parcel", UDim2.fromOffset(90, 90), UDim2.fromOffset(0, 0), parcelColor, "📦", 10)
+		local p = button(ctx.arena, "Parcel", UDim2.fromOffset(big(ctx, 90), big(ctx, 90)), UDim2.fromOffset(0, 0), parcelColor, "📦", 10)
 		p.TextSize = 36
 		centreAt(p, Vector2.new(size.X / 2, size.Y / 2))
 		popIn(p)
@@ -1138,7 +1146,8 @@ function ScamGames.Hearts(ctx: Ctx)
 		if clock >= 0.7 and spawned < total then
 			clock = 0
 			spawned += 1
-			local heart = button(ctx.arena, "Heart", UDim2.fromOffset(if ctx.easier then 70 else 56, if ctx.easier then 70 else 56), UDim2.fromOffset(0, 0), Color3.fromHex("#E11D48"), "♥", 28)
+			local hs = big(ctx, if ctx.easier then 70 else 56)
+			local heart = button(ctx.arena, "Heart", UDim2.fromOffset(hs, hs), UDim2.fromOffset(0, 0), Color3.fromHex("#E11D48"), "♥", 28)
 			heart.TextSize = 30
 			centreAt(heart, Vector2.new(ctx.random:NextNumber(50, size.X - 50), size.Y + 30))
 			hearts[heart] = ctx.random:NextNumber(-20, 20)
@@ -1300,7 +1309,7 @@ function ScamGames.Cables(ctx: Ctx)
 	end
 	for i = 1, n do
 		local home = Vector2.new(85, rowH * i)
-		local plug = frame(ctx.arena, `Plug{i}`, UDim2.fromOffset(80, 44), UDim2.fromOffset(0, 0), COLORS[i], 8)
+		local plug = frame(ctx.arena, `Plug{i}`, UDim2.fromOffset(big(ctx, 80), big(ctx, 44)), UDim2.fromOffset(0, 0), COLORS[i], 8)
 		centreAt(plug, home)
 		label(plug, "⚡", 20, Theme.White)
 		local cable = frame(ctx.arena, `Cable{i}`, UDim2.fromOffset(0, 6), UDim2.fromOffset(home.X, home.Y - 3), COLORS[i], 3)

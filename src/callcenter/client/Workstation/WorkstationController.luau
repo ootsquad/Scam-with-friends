@@ -30,6 +30,7 @@ local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
 local Avatar = require(Ui.Avatar)
 local ButtonFx = require(Ui.ButtonFx)
+local Device = require(Ui.Device)
 local Images = require(Ui.Images)
 local Motion = require(Ui.Motion)
 local Notify = require(Ui.Notify)
@@ -539,6 +540,31 @@ function WorkstationController.Start()
 
 	local windows = desktop.Windows
 	local apps = desktop.Taskbar.Apps
+	-- Phone mode: the Phone, Scamazon and mini-game windows have full-width variants with the same children.
+	-- Swap them in under the usual names so every controller works unchanged; the tray's stats go (the
+	-- HUD and the Wallet have them) so the clock and the taskbar apps fit side by side.
+	for _, name in { "PhoneWindow", "ScamazonWindow", "ScamGameWindow" } do
+		local mobile = windows:FindFirstChild(name .. "Mobile")
+		if not mobile then
+			continue
+		end
+		if Device.IsPhone() then
+			local original = windows:FindFirstChild(name)
+			if original then
+				original:Destroy()
+			end
+			mobile.Name = name
+			mobile:SetAttribute("Mobile", true)
+		else
+			mobile:Destroy()
+		end
+	end
+	if Device.IsPhone() then
+		local tray = desktop.Taskbar.Tray
+		tray.Stats.Visible = false
+		tray.Size = UDim2.new(0, 160, 0, 56)
+		tray.Clock.Position = UDim2.fromOffset(14, 4)
+	end
 	WindowManager.init(root, windows)
 	Notify.init(desktop.Notifications)
 	for _, app in APPS do

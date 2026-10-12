@@ -23,6 +23,8 @@ Together, the crew has to hit the day's quota before the clock runs out, or ever
   username. After your first login, sitting at any desk logs you straight in.
 - The desktop opens with your apps. Stand up to log off.
 - Each day lasts 15 minutes. The clock starts when the first person logs in.
+- On a phone or tablet the desktop comes up bigger, every window opens fitted to the screen, and the Phone,
+  Scamazon and mini-game windows use full-width layouts. Everything is tap and drag; nothing needs a keyboard.
 - While you walk around, the top of the screen shows the day, the time left, your floor and the team against the
   quota. New players get a short **first-shift checklist**.
 

@@ -12,6 +12,9 @@
 
 	After a caller hangs up on you, the idle screen offers to save the call (Save My Call).
 
+	On phones (the window's Mobile attribute, WorkstationController) the leads list and the call view share
+	the space: leads while idle, the call once one starts.
+
 	PhoneApp.Start(window)
 ]]
 
@@ -531,14 +534,17 @@ local function saveCall()
 end
 
 local function renderCall(state: any, previous: any)
+	local mobile = window:GetAttribute("Mobile") == true
 	if not state then
 		ui.idle.Visible = true
 		ui.call.Visible = false
+		ui.leads.Visible = true
 		renderLeads()
 		return
 	end
 	ui.idle.Visible = false
 	ui.call.Visible = true
+	ui.leads.Visible = not mobile
 
 	local card = ui.card
 	if state.CallId ~= shownCallId then

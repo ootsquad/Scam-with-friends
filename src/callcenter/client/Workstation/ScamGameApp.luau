@@ -27,6 +27,7 @@ local Format = require(Shared.Util.Format)
 local Client = script.Parent.Parent
 local Ui = Client:WaitForChild("Ui")
 local ButtonFx = require(Ui.ButtonFx)
+local Device = require(Ui.Device)
 local Theme = require(Ui.Theme)
 local WindowManager = require(Ui.WindowManager)
 
@@ -171,6 +172,7 @@ local function startGame()
 		random = Random.new(game.seed),
 		easier = tier >= 2,
 		helper = tier >= 3,
+		touch = Device.IsPhone(),
 		report = function(value: number)
 			if token == mine and running then
 				raw = math.clamp(value, 0, 1)

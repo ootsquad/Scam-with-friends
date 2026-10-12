@@ -9,9 +9,15 @@
 	                                    while windows keep their designed pixel sizes (desktop)
 
 	UiScale.SetMultiplier(n) applies the player's Interface size setting to virtual roots.
+
+	Phone mode (Device.IsPhone): the design canvas is 900x506 instead, so the same screens come out a third
+	bigger on a phone.
 ]]
 
-local DESIGN_SIZE = Vector2.new(1280, 720)
+local Device = require(script.Parent.Device)
+
+local CANVAS_SIZE = Vector2.new(1280, 720) -- fixed canvases (the boot screen) are always this size
+local DESIGN_SIZE = if Device.IsPhone() then Vector2.new(900, 506) else CANVAS_SIZE
 
 type Binding = {
 	gui: ScreenGui,
@@ -30,7 +36,8 @@ local function apply(binding: Binding)
 	if size.X <= 0 or size.Y <= 0 then
 		return
 	end
-	local fit = math.min(size.X / DESIGN_SIZE.X, size.Y / DESIGN_SIZE.Y)
+	local design = if binding.virtual then DESIGN_SIZE else CANVAS_SIZE
+	local fit = math.min(size.X / design.X, size.Y / design.Y)
 	if binding.virtual then
 		local s = fit * multiplier
 		binding.scale.Scale = s
@@ -67,6 +74,11 @@ function UiScale.SetMultiplier(value: number)
 	for _, binding in bindings do
 		apply(binding)
 	end
+end
+
+-- The design canvas (1280x720, or 900x506 in phone mode).
+function UiScale.DesignSize(): Vector2
+	return DESIGN_SIZE
 end
 
 -- Current design-pixel scale of a virtual root (for converting mouse movement).

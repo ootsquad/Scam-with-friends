@@ -9,7 +9,11 @@
 	WindowManager.open(name) / close(name) / minimize(name) / toggle(name) / focus(name)
 	WindowManager.isOpen(name) -> boolean
 	WindowManager.raise(frame)        puts a dialog (not a registered window) above every window
+	WindowManager.fit(frame)          phone mode: shrinks a dialog that doesn't fit the screen (no-op otherwise)
 	WindowManager.styleClose(button)  the red X close button look, for dialogs
+
+	Phone mode (Device.IsPhone): every window opens centred and fitted to the screen (shrunk if it's too big),
+	and there's no dragging or minimizing to fuss with on a touch screen.
 	WindowManager.Changed:Connect(function(name, state) end)   state: "open" | "minimized" | "closed"
 ]]
 
@@ -18,6 +22,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Signal = require(ReplicatedStorage:WaitForChild("Shared").Util.Signal)
 local ButtonFx = require(script.Parent.ButtonFx)
+local Device = require(script.Parent.Device)
 local Motion = require(script.Parent.Motion)
 local Theme = require(script.Parent.Theme)
 local UiScale = require(script.Parent.UiScale)
@@ -108,10 +113,18 @@ local function setState(entry: Entry, state: WindowState)
 	WindowManager.Changed:Fire(entry.name, state)
 end
 
-local function fitZoom(entry: Entry): number
+local PHONE = Device.IsPhone()
+
+-- How much a frame has to zoom to fill the desktop area (never shrunk on a desktop; shrunk to fit on a phone).
+local function fitFrame(frame: GuiObject): number
 	local area = areaSize()
-	local size = entry.frame.Size
-	return math.max(1, math.min((area.X - 32) / size.X.Offset, (area.Y - 24) / size.Y.Offset))
+	local size = frame.Size
+	local zoom = math.min((area.X - 32) / size.X.Offset, (area.Y - 24) / size.Y.Offset)
+	return if PHONE then math.min(1.25, zoom) else math.max(1, zoom)
+end
+
+local function fitZoom(entry: Entry): number
+	return fitFrame(entry.frame)
 end
 
 local function clampOffset(entry: Entry, x: number, y: number): (number, number)
@@ -144,6 +157,11 @@ function WindowManager.open(name: string)
 	end
 	if entry.state ~= "open" then
 		setState(entry, "open")
+		if PHONE and not entry.maximized then
+			entry.maximized = true
+			entry.restorePosition = entry.frame.Position
+			entry.frame.Position = UDim2.new(0.5, 0, 0.5, 0)
+		end
 		local target = if entry.maximized then fitZoom(entry) else 1
 		entry.zoom.Scale = target * 0.94
 		Motion.tween(entry.zoom, Motion.MEDIUM, { Scale = target })
@@ -208,6 +226,21 @@ end
 function WindowManager.raise(frame: GuiObject)
 	topZ += 1
 	frame.ZIndex = topZ
+	WindowManager.fit(frame)
+end
+
+-- Phone mode: a dialog that doesn't fit the screen is shrunk to fit (through a UIScale of its own).
+function WindowManager.fit(frame: GuiObject)
+	if not PHONE then
+		return
+	end
+	local zoom = frame:FindFirstChild("FitScale") :: UIScale?
+	if not zoom then
+		zoom = Instance.new("UIScale")
+		zoom.Name = "FitScale"
+		zoom.Parent = frame
+	end
+	(zoom :: UIScale).Scale = math.min(1, fitFrame(frame))
 end
 
 -- Close: red X at rest, white X on a red square when hovered (like Windows).
